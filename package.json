@@ -1,0 +1,18 @@
+{
+  "name": "school-erp",
+  "version": "1.0.0",
+  "description": "School ERP System",
+  "main": "main.js",
+  "scripts": {
+    "start": "python app.py",
+    "electron": "electron .",
+    "build": "echo 'Build scripts would go here'"
+  },
+  "dependencies": {
+    "bootstrap": "^5.1.3",
+    "bootstrap-icons": "^1.8.1"
+  },
+  "devDependencies": {
+    "electron": "^22.0.0"
+  }
+}
