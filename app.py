@@ -6384,7 +6384,9 @@ class ForgotPasswordForm(FlaskForm):
 # ==================== MAIN APPLICATION ====================
 
 if __name__ == '__main__':
-    ip_add = "192.168.29.22"
+    with app.app_context():
+        create_tables()
     setup_logging()
-    create_tables()
+    #create_tables()
+
     app.run(debug=True, port=5000)
