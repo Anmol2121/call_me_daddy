@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Debug Fee Check{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Fee Debug Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <h6>Current Context</h6>
+                        <p>School ID: {{ current_user.school_id }}</p>
+                        <p>View Session: {{ view_session.name }} (ID: {{ view_session.id }})</p>
+                        <p>Total Fee Structures: {{ fee_structures|length }}</p>
+                        <p>Total Student Fees: {{ student_fees|length }}</p>
+                    </div>
+                    
+                    <!-- Fee Structures -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6>Fee Structures</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if fee_structures %}
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Amount</th>
+                                        <th>Frequency</th>
+                                        <th>Class</th>
+                                        <th>Session ID</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fs in fee_structures %}
+                                    <tr>
+                                        <td>{{ fs.id }}</td>
+                                        <td>{{ fs.name }}</td>
+                                        <td>₹{{ fs.amount }}</td>
+                                        <td>{{ fs.frequency }}</td>
+                                        <td>
+                                            {% if fs.class_id %}
+                                                {{ fs.class_.name if fs.class_ else 'Unknown' }}
+                                            {% else %}
+                                                All Classes
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ fs.session_id }}</td>
+                                        <td>{{ fs.created_at.strftime('%d %b %Y') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="text-center py-3">
+                                <p class="text-muted">No fee structures found</p>
+                                <a href="{{ url_for('create_fee_structure') }}" class="btn btn-primary">
+                                    Create Fee Structure
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Student Fees -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6>Student Fees</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if student_fees %}
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Student</th>
+                                        <th>Fee Structure</th>
+                                        <th>Amount</th>
+                                        <th>Paid</th>
+                                        <th>Status</th>
+                                        <th>Session ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sf in student_fees %}
+                                    <tr>
+                                        <td>{{ sf.id }}</td>
+                                        <td>{{ sf.student.first_name if sf.student else 'Unknown' }} {{ sf.student.last_name if sf.student else '' }}</td>
+                                        <td>{{ sf.fee_structure.name if sf.fee_structure else 'Unknown' }}</td>
+                                        <td>₹{{ sf.fee_amount }}</td>
+                                        <td>₹{{ sf.paid_amount }}</td>
+                                        <td>{{ sf.status }}</td>
+                                        <td>{{ sf.session_id }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="text-center py-3">
+                                <p class="text-muted">No student fees found</p>
+                                <p>Fee structures need to be assigned to students</p>
+                                <a href="{{ url_for('assign_fee_to_students_bulk') }}" class="btn btn-success">
+                                    Assign Fees to Students
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Assignment Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>Fee Assignment Status</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if assignment_data %}
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Fee Structure</th>
+                                        <th>Assigned Students</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in assignment_data %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ data.fee_structure.name }}</strong><br>
+                                            <small class="text-muted">₹{{ data.fee_structure.amount }}</small>
+                                        </td>
+                                        <td>{{ data.assigned_count }}</td>
+                                        <td>
+                                            {% if data.assigned_count > 0 %}
+                                            <span class="badge bg-success">Assigned</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">Not Assigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if data.assigned_count == 0 %}
+                                            <a href="{{ url_for('assign_fee_to_students', fee_id=data.fee_structure.id) }}" 
+                                               class="btn btn-sm btn-primary">
+                                                Assign
+                                            </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="text-center py-3">
+                                <p class="text-muted">No fee structures to check</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

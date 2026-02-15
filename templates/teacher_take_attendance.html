@@ -1,0 +1,356 @@
+<!-- templates/teacher_take_attendance.html -->
+{% extends "base.html" %}
+{% block title %}Take Attendance · {{ class_obj.name }}{% endblock %}
+{% block header %}Take Attendance · {{ class_obj.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('teacher_attendance_dashboard') }}">Attendance</a></li>
+<li class="breadcrumb-item active">{{ class_obj.name }}</li>
+{% endblock %}
+
+{% block actions %}
+<div class="d-flex gap-2">
+    <a href="{{ url_for('view_class_attendance', class_id=class_obj.id) }}" class="btn btn-outline-dark btn-sm px-4">
+        <i class="fas fa-chart-bar me-2"></i>View Reports
+    </a>
+    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-outline-primary btn-sm px-4">
+        <i class="fas fa-arrow-left me-2"></i>Back
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column: Class Info & Date Picker -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    Class Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-1">{{ class_obj.name }}</h4>
+                    <p class="text-muted mb-3">{{ assignment.subject }}</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <span class="badge bg-primary">{{ class_obj.code }}</span>
+                        <span class="badge bg-secondary">{{ enrollments|length }} Students</span>
+                        {% if assignment.is_class_teacher %}
+                        <span class="badge bg-success">Class Teacher</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div><i class="fas fa-door-open text-muted me-2"></i>Room Number</div>
+                        <span class="fw-bold text-dark">{{ class_obj.room_number or 'N/A' }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div><i class="fas fa-users text-muted me-2"></i>Capacity</div>
+                        <span class="fw-bold text-dark">{{ enrollments|length }}/{{ class_obj.capacity }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div><i class="fas fa-calendar-alt text-muted me-2"></i>Session</div>
+                        <span class="fw-bold text-dark">{{ context.current_session.name }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="fw-bold text-dark mb-3">Attendance Legend</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Present</span>
+                        <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Absent</span>
+                        <span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Late</span>
+                        <span class="badge bg-info"><i class="fas fa-hourglass-half me-1"></i>Half Day</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Selection Card -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-calendar-day text-primary me-2"></i>
+                    Select Date
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('take_attendance', class_id=class_obj.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Attendance Date</label>
+                        <input type="date" class="form-control" name="date" 
+                               value="{{ form.date.data.strftime('%Y-%m-%d') if form.date.data else date.today().strftime('%Y-%m-%d') }}"
+                               max="{{ date.today().strftime('%Y-%m-%d') }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Load Attendance
+                    </button>
+                </form>
+
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="fw-bold text-dark mb-3">Quick Stats</h6>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="display-6 fw-bold text-dark">{{ enrollments|length }}</div>
+                            <div class="text-muted small">Total Students</div>
+                        </div>
+                        <div class="col-6">
+                            {% set present_count = existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length %}
+                            <div class="display-6 fw-bold text-success">{{ present_count }}</div>
+                            <div class="text-muted small">Present Today</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Attendance Table -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="fas fa-clipboard-check text-primary me-2"></i>
+                            Mark Attendance
+                        </h5>
+                        <small class="text-muted">Date: {{ attendance_date.strftime('%B %d, %Y') }}</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-{% if existing_attendance %}success{% else %}warning{% endif %}">
+                            <i class="fas fa-{% if existing_attendance %}check-circle{% else %}clock{% endif %} me-1"></i>
+                            {% if existing_attendance %}Already Marked{% else %}Not Marked{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('take_attendance', class_id=class_obj.id) }}">
+                {{ form.hidden_tag() }}
+                <input type="hidden" name="date" value="{{ attendance_date.strftime('%Y-%m-%d') }}">
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4" style="width: 10%;">Roll No.</th>
+                                    <th style="width: 30%;">Student Details</th>
+                                    <th style="width: 25%;">Status</th>
+                                    <th style="width: 25%;">Notes</th>
+                                    <th class="pe-4" style="width: 10%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for enrollment in enrollments %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <span class="badge bg-primary rounded-pill">{{ enrollment.roll_number }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-user text-muted"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold text-dark mb-1">{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</div>
+                                                <div class="text-muted small">{{ enrollment.student.student_id }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select class="form-select attendance-status" 
+                                                name="status_{{ enrollment.student_id }}" 
+                                                data-student-id="{{ enrollment.student_id }}">
+                                            <option value="present" {% if existing_attendance.get(enrollment.student_id, {}).status == 'present' %}selected{% endif %}>✅ Present</option>
+                                            <option value="absent" {% if existing_attendance.get(enrollment.student_id, {}).status == 'absent' %}selected{% endif %}>❌ Absent</option>
+                                            <option value="late" {% if existing_attendance.get(enrollment.student_id, {}).status == 'late' %}selected{% endif %}>⏰ Late</option>
+                                            <option value="half_day" {% if existing_attendance.get(enrollment.student_id, {}).status == 'half_day' %}selected{% endif %}>🕐 Half Day</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" 
+                                               class="form-control attendance-notes" 
+                                               name="notes_{{ enrollment.student_id }}"
+                                               placeholder="Optional notes..."
+                                               value="{{ existing_attendance.get(enrollment.student_id, {}).notes or '' }}">
+                                    </td>
+                                    <td class="pe-4">
+                                        <button type="button" class="btn btn-outline-primary btn-sm mark-present" 
+                                                data-student-id="{{ enrollment.student_id }}" title="Mark Present">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm mark-absent" 
+                                                data-student-id="{{ enrollment.student_id }}" title="Mark Absent">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white border-0 py-4 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted">
+                            <span id="presentCount">{{ existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length }}</span> present, 
+                            <span id="absentCount">{{ existing_attendance.values()|selectattr('status', 'equalto', 'absent')|list|length }}</span> absent of {{ enrollments|length }} students
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" onclick="markAll('present')">
+                                <i class="fas fa-check-double me-2"></i>Mark All Present
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="markAll('absent')">
+                                <i class="fas fa-times-circle me-2"></i>Mark All Absent
+                            </button>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>Save Attendance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Attendance Summary -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-chart-pie text-primary me-2"></i>
+                    Attendance Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-muted">Present Students</div>
+                                <h3 class="mb-0 fw-bold text-dark" id="summaryPresent">
+                                    {{ existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length }}
+                                </h3>
+                                <small class="text-success">
+                                    {{ ((existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100)|round(1) if enrollments|length > 0 else 0) }}%
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-times-circle fa-2x"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-muted">Absent Students</div>
+                                <h3 class="mb-0 fw-bold text-dark" id="summaryAbsent">
+                                    {{ existing_attendance.values()|selectattr('status', 'equalto', 'absent')|list|length }}
+                                </h3>
+                                <small class="text-danger">
+                                    {{ ((existing_attendance.values()|selectattr('status', 'equalto', 'absent')|list|length / enrollments|length * 100)|round(1) if enrollments|length > 0 else 0) }}%
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Attendance Distribution</span>
+                        <span class="text-muted" id="attendancePercentage">
+                            {{ ((existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100)|round(1) if enrollments|length > 0 else 0) }}%
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-success" id="attendanceBar" 
+                             style="width: {{ (existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100) if enrollments|length > 0 else 0 }}%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update summary when attendance changes
+function updateSummary() {
+    const presentCount = document.querySelectorAll('select.attendance-status option:checked[value="present"]').length;
+    const absentCount = document.querySelectorAll('select.attendance-status option:checked[value="absent"]').length;
+    const totalStudents = {{ enrollments|length }};
+
+    document.getElementById('presentCount').textContent = presentCount;
+    document.getElementById('absentCount').textContent = absentCount;
+    document.getElementById('summaryPresent').textContent = presentCount;
+    document.getElementById('summaryAbsent').textContent = absentCount;
+
+    const attendancePercentage = totalStudents > 0 ? ((presentCount / totalStudents) * 100).toFixed(1) : 0;
+    document.getElementById('attendancePercentage').textContent = attendancePercentage + '%';
+    document.getElementById('attendanceBar').style.width = attendancePercentage + '%';
+}
+
+// Quick mark buttons
+document.querySelectorAll('.mark-present').forEach(button => {
+    button.addEventListener('click', function() {
+        const studentId = this.dataset.studentId;
+        const select = document.querySelector(`select[name="status_${studentId}"]`);
+        select.value = 'present';
+        updateSummary();
+    });
+});
+
+document.querySelectorAll('.mark-absent').forEach(button => {
+    button.addEventListener('click', function() {
+        const studentId = this.dataset.studentId;
+        const select = document.querySelector(`select[name="status_${studentId}"]`);
+        select.value = 'absent';
+        updateSummary();
+    });
+});
+
+// Mark all functionality
+function markAll(status) {
+    document.querySelectorAll('select.attendance-status').forEach(select => {
+        select.value = status;
+    });
+    updateSummary();
+}
+
+// Initialize summary on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateSummary();
+    document.querySelectorAll('select.attendance-status').forEach(select => {
+        select.addEventListener('change', updateSummary);
+    });
+});
+
+// Form submission confirmation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const presentCount = document.querySelectorAll('select.attendance-status option:checked[value="present"]').length;
+    if (presentCount === 0) {
+        if (!confirm('No students marked as present. Are you sure you want to save?')) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

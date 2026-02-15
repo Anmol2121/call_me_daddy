@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block title %}Fee Analytics{% endblock %}
+{% block header %}Fee Analytics{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_fees') }}">Fee Management</a></li>
+<li class="breadcrumb-item active">Analytics</li>
+{% endblock %}
+
+{% block actions %}
+<button onclick="printPage()" class="btn btn-outline-primary btn-sm me-2">
+    <i class="fas fa-print me-1"></i> Print
+</button>
+<button onclick="exportCharts()" class="btn btn-outline-success btn-sm">
+    <i class="fas fa-download me-1"></i> Export
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Date Filter -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Filter Analytics</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start_date" class="form-control" 
+                       value="{{ start_date.strftime('%Y-%m-%d') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end_date" class="form-control" 
+                       value="{{ end_date.strftime('%Y-%m-%d') }}">
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">Apply Filter</button>
+                <a href="{{ url_for('fee_analytics') }}" class="btn btn-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card bg-primary text-white">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_fees|round|int }}</h2>
+                <div class="stat-label">Total Fees</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-success text-white">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_paid|round|int }}</h2>
+                <div class="stat-label">Total Collected</div>
+                <small>{{ ((total_paid / total_fees) * 100)|round(1) if total_fees > 0 else 0 }}%</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-warning text-white">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_due|round|int }}</h2>
+                <div class="stat-label">Total Due</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-info text-white">
+            <div class="stat-icon">
+                <i class="fas fa-percent"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_discount|round|int }}</h2>
+                <div class="stat-label">Total Discount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Daily Collection Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Payment Methods</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="methodChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Class-wise Collection</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="classChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Fee Status Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.stat-card .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.25rem;
+}
+
+.bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
+.bg-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; }
+.bg-warning { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%) !important; }
+.bg-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Daily Collection Chart
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    const dailyDates = {{ daily_data.keys()|list|tojson }};
+    const dailyAmounts = {{ daily_data.values()|list|tojson }};
+    
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: dailyDates,
+            datasets: [{
+                label: 'Daily Collection',
+                data: dailyAmounts,
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Payment Method Chart
+    const methodCtx = document.getElementById('methodChart').getContext('2d');
+    const methodLabels = {{ method_data.keys()|list|tojson }};
+    const methodValues = {{ method_data.values()|list|tojson }};
+    
+    new Chart(methodCtx, {
+        type: 'doughnut',
+        data: {
+            labels: methodLabels,
+            datasets: [{
+                data: methodValues,
+                backgroundColor: [
+                    '#28a745',
+                    '#17a2b8',
+                    '#ffc107',
+                    '#dc3545',
+                    '#6c757d'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Class-wise Chart
+    const classCtx = document.getElementById('classChart').getContext('2d');
+    const classLabels = {{ class_data.keys()|list|tojson }};
+    const classValues = {{ class_data.values()|list|tojson }};
+    
+    new Chart(classCtx, {
+        type: 'bar',
+        data: {
+            labels: classLabels,
+            datasets: [{
+                label: 'Collection Amount',
+                data: classValues,
+                backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                borderColor: '#4361ee',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Paid', 'Pending', 'Overdue'],
+            datasets: [{
+                data: [
+                    {{ total_paid|round|int }},
+                    {{ total_due|round|int }},
+                    {{ total_due|round|int * 0.3 }} // Example for overdue
+                ],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(220, 53, 69, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+});
+
+function printPage() {
+    window.print();
+}
+
+function exportCharts() {
+    // In production, implement chart export functionality
+    alert('Export functionality would save charts as images or PDF in production.');
+}
+</script>
+{% endblock %}

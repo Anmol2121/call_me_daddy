@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Edit Teacher{% endblock %}
+{% block header %}Edit Teacher Details{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_teachers') }}">Teachers</a></li>
+<li class="breadcrumb-item active">Edit Teacher</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Edit Teacher Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_teacher', teacher_id=teacher.id) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Teacher ID Badge -->
+                    <div class="d-flex align-items-center mb-4 p-3 bg-light rounded">
+                        <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                            {{ teacher.full_name[0]|upper }}
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Teacher ID: {{ teacher.id }}</h5>
+                            <p class="text-muted mb-0">
+                                Created: {{ teacher.created_at.strftime('%d %b %Y') }}
+                                {% if teacher.last_login %}
+                                | Last Login: {{ teacher.last_login.strftime('%d %b %Y %H:%M') }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Full Name *</label>
+                            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else ""), 
+                                           placeholder="Enter full name") }}
+                            {% for error in form.full_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Email Address *</label>
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), 
+                                        placeholder="teacher@example.com") }}
+                            {% for error in form.email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">Teacher will use this email to login</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Phone Number</label>
+                            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), 
+                                        placeholder="+1 234 567 8900") }}
+                            {% for error in form.phone.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">For emergency contact</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Account Status *</label>
+                            {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                            {% for error in form.status.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">Inactive teachers cannot login</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Primary Subjects</label>
+                        {{ form.subjects(class="form-control", 
+                                       placeholder="e.g., Mathematics, Physics, Chemistry (comma separated)") }}
+                        <small class="text-muted">Subjects this teacher is qualified to teach</small>
+                    </div>
+                    
+                    <!-- Password Status -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Account Security</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas {% if teacher.must_change_password %}fa-exclamation-triangle text-warning{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+                                        <div>
+                                            <strong>Password Status:</strong>
+                                            {% if teacher.must_change_password %}
+                                            <span class="badge bg-warning">Change Required</span>
+                                            {% else %}
+                                            <span class="badge bg-success">Updated</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('reset_teacher_password', teacher_id=teacher.id) }}" 
+                                       class="btn btn-outline-warning btn-sm w-100">
+                                        <i class="fas fa-key me-1"></i> Reset Password
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Warning Alert -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-circle me-2"></i>Important Notes</h6>
+                        <ul class="mb-0">
+                            <li>Changing email will affect teacher's login credentials</li>
+                            <li>Account status changes take effect immediately</li>
+                            <li>All changes are logged for audit purposes</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('manage_teachers') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary" 
+                                onclick="return confirm('Save changes to teacher {{ teacher.full_name }}?')">
+                            <i class="fas fa-save me-1"></i> Update Teacher
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Info -->
+    <div class="col-md-4">
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('view_teacher_details', teacher_id=teacher.id) }}" 
+                       class="btn btn-outline-info mb-2">
+                        <i class="fas fa-eye me-1"></i> View Full Profile
+                    </a>
+                    <a href="{{ url_for('reset_teacher_password', teacher_id=teacher.id) }}" 
+                       class="btn btn-outline-warning mb-2">
+                        <i class="fas fa-key me-1"></i> Reset Password
+                    </a>
+                    <a href="{{ url_for('manage_teachers') }}" 
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Teachers
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Info -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Account Information</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Teacher ID:</th>
+                        <td>{{ teacher.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Role:</th>
+                        <td><span class="badge bg-primary">Teacher</span></td>
+                    </tr>
+                    <tr>
+                        <th>Created:</th>
+                        <td>{{ teacher.created_at.strftime('%d %b %Y') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Last Login:</th>
+                        <td>
+                            {% if teacher.last_login %}
+                            {{ teacher.last_login.strftime('%d %b %Y %H:%M') }}
+                            {% else %}
+                            <span class="text-muted">Never logged in</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Session Started:</th>
+                        <td>
+                            {% if teacher.first_session %}
+                            {{ teacher.first_session.name }}
+                            {% else %}
+                            <span class="text-muted">Not recorded</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-lg {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

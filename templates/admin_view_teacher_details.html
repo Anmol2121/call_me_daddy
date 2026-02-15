@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Teacher Details - {{ teacher.full_name }}{% endblock %}
+{% block header %}Teacher Details: {{ teacher.full_name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_teachers') }}">Teachers</a></li>
+<li class="breadcrumb-item active">Details</li>
+{% endblock %}
+
+{% block actions %}
+<div class="btn-group">
+    <a href="{{ url_for('edit_teacher', teacher_id=teacher.id) }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-edit me-1"></i> Edit Teacher
+    </a>
+    <a href="{{ url_for('reset_teacher_password', teacher_id=teacher.id) }}" class="btn btn-warning btn-sm">
+        <i class="fas fa-key me-1"></i> Reset Password
+    </a>
+    <a href="{{ url_for('manage_teachers') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Back
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column - Profile -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="avatar-xl bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3">
+                    {{ teacher.full_name[0]|upper }}
+                </div>
+                <h4>{{ teacher.full_name }}</h4>
+                <p class="text-muted">{{ teacher.email }}</p>
+                
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    {% if teacher.is_active %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                    
+                    {% if teacher.must_change_password %}
+                    <span class="badge bg-warning">Password Reset Required</span>
+                    {% endif %}
+                </div>
+                
+                <div class="list-group list-group-flush text-start">
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Teacher ID:</span>
+                        <strong>#{{ teacher.id }}</strong>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Phone:</span>
+                        <span>{{ teacher.phone or 'Not provided' }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Account Created:</span>
+                        <span>{{ teacher.created_at.strftime('%d %b %Y') }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Last Login:</span>
+                        <span>
+                            {% if teacher.last_login %}
+                            {{ teacher.last_login.strftime('%d %b %Y %H:%M') }}
+                            {% else %}
+                            <span class="text-muted">Never</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Current Session Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="display-6">{{ current_assignments|length }}</div>
+                        <div class="text-muted small">Classes</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        {% set total_students = namespace(count=0) %}
+                        {% for assignment in current_assignments %}
+                            {% set total_students.count = total_students.count + assignment.class_.student_enrollments|selectattr('is_active')|list|length %}
+                        {% endfor %}
+                        <div class="display-6">{{ total_students.count }}</div>
+                        <div class="text-muted small">Students</div>
+                    </div>
+                </div>
+                
+                {% set class_teacher_count = current_assignments|selectattr('is_class_teacher')|list|length %}
+                {% if class_teacher_count > 0 %}
+                <div class="alert alert-info">
+                    <i class="fas fa-user-tie me-2"></i>
+                    Class Teacher for {{ class_teacher_count }} class(es)
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column - Assignments & History -->
+    <div class="col-md-8">
+        <!-- Current Session Assignments -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>
+                    Current Session Assignments
+                    <span class="badge bg-light text-dark ms-2">{{ context.current_session.name }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if current_assignments %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Subject</th>
+                                <th>Role</th>
+                                <th>Students</th>
+                                <th>Room</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in current_assignments %}
+                            <tr>
+                                <td>
+                                    <strong>{{ assignment.class_.name }}</strong>
+                                    <div class="small text-muted">{{ assignment.class_.code }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ assignment.subject }}</span>
+                                </td>
+                                <td>
+                                    {% if assignment.is_class_teacher %}
+                                    <span class="badge bg-primary">Class Teacher</span>
+                                    {% else %}
+                                    <span class="badge bg-info">Subject Teacher</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ assignment.class_.student_enrollments|selectattr('is_active')|list|length }}/{{ assignment.class_.capacity }}
+                                </td>
+                                <td>{{ assignment.class_.room_number or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+                    <h5>No Current Assignments</h5>
+                    <p class="text-muted">This teacher is not assigned to any classes in the current session.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Assignment History -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Assignment History
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if sessions_data %}
+                <div class="accordion" id="historyAccordion">
+                    {% for data in sessions_data %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" 
+                                    type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#session{{ data.session.id }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <strong>{{ data.session.name }}</strong>
+                                    <span class="badge bg-secondary ms-2">{{ data.assignments|length }} assignments</span>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="session{{ data.session.id }}" 
+                             class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
+                             data-bs-parent="#historyAccordion">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Class</th>
+                                                <th>Subject</th>
+                                                <th>Role</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for assignment in data.assignments %}
+                                            <tr>
+                                                <td>{{ assignment.class_.name }}</td>
+                                                <td>{{ assignment.subject }}</td>
+                                                <td>
+                                                    {% if assignment.is_class_teacher %}
+                                                    <span class="badge bg-primary">Class Teacher</span>
+                                                    {% else %}
+                                                    <span class="badge bg-info">Subject Teacher</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-0">No assignment history found</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-xl {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

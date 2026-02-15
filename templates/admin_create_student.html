@@ -1,0 +1,247 @@
+<!-- templates/admin_create_student.html -->
+{% extends "base.html" %}
+{% block title %}Add Student{% endblock %}
+{% block header %}Add New Student{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('create_student') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <h5 class="mb-4">Student Personal Information</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name *</label>
+                            {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), placeholder="Enter first name") }}
+                            {% for error in form.first_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name *</label>
+                            {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else ""), placeholder="Enter last name") }}
+                            {% for error in form.last_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date of Birth *</label>
+                            {{ form.date_of_birth(class="form-control" + (" is-invalid" if form.date_of_birth.errors else ""), type="date") }}
+                            {% for error in form.date_of_birth.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gender *</label>
+                            {{ form.gender(class="form-select" + (" is-invalid" if form.gender.errors else "")) }}
+                            {% for error in form.gender.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else ""), placeholder="Enter full address", rows="2") }}
+                        {% for error in form.address.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="mb-4">Parent/Guardian Information</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Father's Name</label>
+                            {{ form.father_name(class="form-control" + (" is-invalid" if form.father_name.errors else ""), placeholder="Enter father's name") }}
+                            {% for error in form.father_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mother's Name</label>
+                            {{ form.mother_name(class="form-control" + (" is-invalid" if form.mother_name.errors else ""), placeholder="Enter mother's name") }}
+                            {% for error in form.mother_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number</label>
+                            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="Enter phone number") }}
+                            {% for error in form.phone.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Parent Email</label>
+                            {{ form.parent_email(class="form-control" + (" is-invalid" if form.parent_email.errors else ""), placeholder="parent@example.com") }}
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> Same email can be used for multiple siblings
+                            </small>
+                            {% for error in form.parent_email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="mb-4">Academic Information</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Class *</label>
+                            {{ form.class_id(class="form-select" + (" is-invalid" if form.class_id.errors else "")) }}
+                            {% for error in form.class_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">Student will be automatically enrolled in this class</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Section (Optional)</label>
+                            {{ form.section(class="form-control" + (" is-invalid" if form.section.errors else ""), placeholder="e.g., A, B, C") }}
+                            <small class="text-muted">Leave blank if not applicable</small>
+                            {% for error in form.section.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>A unique Student ID and School Email will be automatically generated</li>
+                            <li>Student will be automatically enrolled in the selected class</li>
+                            <li>A roll number will be automatically assigned</li>
+                            <li>Same parent email can be used for multiple siblings</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manage_students') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Class Information Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Available Classes (Session: {{ context.current_session.name }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Code</th>
+                                <th>Capacity</th>
+                                <th>Enrolled</th>
+                                <th>Available</th>
+                                <th>Room</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for class in classes %}
+                                {% set enrolled_count = class.student_enrollments|selectattr('is_active')|list|length %}
+                                {% set available = class.capacity - enrolled_count %}
+                                <tr class="{% if available <= 0 %}table-danger{% elif available <= 2 %}table-warning{% else %}table-success{% endif %}">
+                                    <td>{{ class.name }}</td>
+                                    <td><span class="badge bg-secondary">{{ class.code }}</span></td>
+                                    <td>{{ class.capacity }}</td>
+                                    <td>{{ enrolled_count }}</td>
+                                    <td>{{ available }}</td>
+                                    <td>{{ class.room_number or 'N/A' }}</td>
+                                    <td>
+                                        {% if available <= 0 %}
+                                        <span class="badge bg-danger">Full</span>
+                                        {% elif available <= 2 %}
+                                        <span class="badge bg-warning">Limited</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Available</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to generate email preview
+    function generateEmailPreview() {
+        const firstName = document.querySelector('input[name="first_name"]').value.toLowerCase();
+        const lastName = document.querySelector('input[name="last_name"]').value.toLowerCase();
+        
+        if (firstName && lastName) {
+            const year = new Date().getFullYear().toString().slice(-2);
+            const schoolCode = "{{ current_user.school.code[:3]|upper if current_user.school.code else 'SCH' }}";
+            const randomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            
+            const studentId = `STU-${year}-${schoolCode}-${randomCode}`;
+            const emailPreview = `${firstName}.${lastName}.${studentId.toLowerCase()}@{{ current_user.school.email.split('@')[1] if current_user.school.email and '@' in current_user.school.email else 'schoolerp.com' }}`;
+            
+            document.getElementById('emailPreview').innerText = `Email will be: ${emailPreview}`;
+            document.getElementById('studentIdPreview').innerText = `Student ID: ${studentId}`;
+        }
+    }
+    
+    // Add event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstNameInput = document.querySelector('input[name="first_name"]');
+        const lastNameInput = document.querySelector('input[name="last_name"]');
+        
+        if (firstNameInput) {
+            firstNameInput.addEventListener('input', generateEmailPreview);
+        }
+        if (lastNameInput) {
+            lastNameInput.addEventListener('input', generateEmailPreview);
+        }
+        
+        // Show email preview section
+        const emailPreviewSection = `
+            <div class="card mt-3 bg-light">
+                <div class="card-body">
+                    <h6><i class="bi bi-envelope text-primary"></i> Generated Information Preview</h6>
+                    <div id="studentIdPreview" class="text-success fw-bold"></div>
+                    <div id="emailPreview" class="text-info"></div>
+                    <small class="text-muted">This information will be generated automatically upon submission.</small>
+                </div>
+            </div>
+        `;
+        
+        const form = document.querySelector('form');
+        if (form) {
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.insertAdjacentHTML('beforebegin', emailPreviewSection);
+            }
+        }
+    });
+</script>
+{% endblock %}

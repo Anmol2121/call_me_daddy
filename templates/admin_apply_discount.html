@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Apply Fee Discount{% endblock %}
+{% block header %}Apply Fee Discount{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_student_fees') }}">Student Fees</a></li>
+<li class="breadcrumb-item active">Apply Discount</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Apply Fee Discount</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.student_id.label(class="form-label") }}
+                        {{ form.student_id(class="form-select") }}
+                        {% if form.student_id.errors %}
+                        <div class="text-danger">
+                            {% for error in form.student_id.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.discount_type.label(class="form-label") }}
+                            {{ form.discount_type(class="form-select") }}
+                            {% if form.discount_type.errors %}
+                            <div class="text-danger">
+                                {% for error in form.discount_type.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.value.label(class="form-label") }}
+                            <div class="input-group">
+                                {% if form.discount_type.data == 'percentage' %}
+                                {{ form.value(class="form-control", placeholder="e.g., 10 for 10%") }}
+                                <span class="input-group-text">%</span>
+                                {% else %}
+                                <span class="input-group-text">₹</span>
+                                {{ form.value(class="form-control", placeholder="e.g., 500") }}
+                                {% endif %}
+                            </div>
+                            {% if form.value.errors %}
+                            <div class="text-danger">
+                                {% for error in form.value.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.reason.label(class="form-label") }}
+                        {{ form.reason(class="form-control", placeholder="e.g., Scholarship, Sibling discount, etc.") }}
+                        {% if form.reason.errors %}
+                        <div class="text-danger">
+                            {% for error in form.reason.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.valid_from.label(class="form-label") }}
+                            {{ form.valid_from(class="form-control", type="date") }}
+                            {% if form.valid_from.errors %}
+                            <div class="text-danger">
+                                {% for error in form.valid_from.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.valid_to.label(class="form-label") }}
+                            {{ form.valid_to(class="form-control", type="date") }}
+                            {% if form.valid_to.errors %}
+                            <div class="text-danger">
+                                {% for error in form.valid_to.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> This discount will be automatically applied to all eligible fee payments 
+                        for the selected student during the specified validity period.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('manage_student_fees') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Common Discount Types</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-primary-light rounded mb-3">
+                            <h6 class="text-primary">Scholarship</h6>
+                            <small class="text-muted">Academic achievement</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-success-light rounded mb-3">
+                            <h6 class="text-success">Sibling Discount</h6>
+                            <small class="text-muted">Multiple children from same family</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-warning-light rounded">
+                            <h6 class="text-warning">Early Payment</h6>
+                            <small class="text-muted">Payment before due date</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-info-light rounded">
+                            <h6 class="text-info">Staff Concession</h6>
+                            <small class="text-muted">Children of school staff</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('valid_from').value = today;
+    
+    // Set valid_to to 3 months from now by default
+    const threeMonthsLater = new Date();
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    const threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
+    document.getElementById('valid_to').value = threeMonthsLaterStr;
+    
+    // Update value placeholder based on discount type
+    const discountType = document.getElementById('discount_type');
+    const valueInput = document.getElementById('value');
+    
+    discountType.addEventListener('change', function() {
+        if (this.value === 'percentage') {
+            valueInput.placeholder = 'e.g., 10 for 10%';
+        } else {
+            valueInput.placeholder = 'e.g., 500';
+        }
+    });
+});
+</script>
+{% endblock %}

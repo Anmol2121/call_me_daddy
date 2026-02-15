@@ -1,0 +1,122 @@
+<!-- templates/admin_create_session.html -->
+{% extends "base.html" %}
+{% block title %}Create Session{% endblock %}
+{% block header %}Create New Academic Session{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_sessions') }}">Sessions</a></li>
+<li class="breadcrumb-item active">Create Session</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('create_session') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <h5 class="mb-4">Session Information</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Session Name *</label>
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), 
+                                       placeholder="e.g., 2024-2025") }}
+                            <small class="text-muted">Format: YYYY-YYYY (e.g., 2024-2025)</small>
+                            {% for error in form.name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Academic Year</label>
+                            <input type="text" class="form-control" 
+                                   value="{{ form.name.data if form.name.data else 'Auto-generated' }}" 
+                                   readonly>
+                            <small class="text-muted">Based on session name</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Date *</label>
+                            {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else ""), 
+                                            type="date") }}
+                            {% for error in form.start_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Date *</label>
+                            {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), 
+                                          type="date") }}
+                            {% for error in form.end_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 form-check">
+                        {{ form.set_current(class="form-check-input") }}
+                        <label class="form-check-label" for="set_current">
+                            <strong>Set as Current Session</strong>
+                        </label>
+                        <small class="text-muted d-block">
+                            This will make this session active for new admissions and enrollments.
+                            Any previous current session will be marked as historical.
+                        </small>
+                    </div>
+                    
+                    <!-- Copy Data from Previous Session -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Copy Data from Previous Session (Optional)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="copy_classes" name="copy_classes">
+                                <label class="form-check-label" for="copy_classes">
+                                    Copy Class Structure
+                                </label>
+                                <small class="text-muted d-block">
+                                    Creates same classes with same names and capacities
+                                </small>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="copy_teachers" name="copy_teachers">
+                                <label class="form-check-label" for="copy_teachers">
+                                    Copy Teacher List
+                                </label>
+                                <small class="text-muted d-block">
+                                    Adds all active teachers to the new session
+                                </small>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> Student data is not copied automatically. 
+                                Students need to be enrolled in the new session separately.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Important:</strong> Once created, session dates cannot be changed.
+                        Make sure all information is correct before submitting.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manage_sessions') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

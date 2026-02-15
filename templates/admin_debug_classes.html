@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Debug - Classes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">All Classes by Session</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Current Context -->
+                    <div class="alert alert-info mb-4">
+                        <h6>Current Context</h6>
+                        <p>School: {{ context.school.name }}</p>
+                        <p>School ID: {{ context.school.id }}</p>
+                        <p>Current Session: {{ context.current_session.name if context.current_session else 'None' }} (ID: {{ context.current_session.id if context.current_session else 'N/A' }})</p>
+                        <p>View Session: {{ context.view_session.name if context.view_session else 'None' }} (ID: {{ context.view_session.id if context.view_session else 'N/A' }})</p>
+                    </div>
+                    
+                    <!-- Classes by Session -->
+                    {% for data in sessions_data %}
+                    <div class="card mb-3 {% if data.session.id == context.view_session.id %}border-primary{% endif %}">
+                        <div class="card-header {% if data.session.id == context.view_session.id %}bg-primary text-white{% elif data.session.id == context.current_session.id %}bg-success text-white{% endif %}">
+                            <h6 class="mb-0">
+                                Session: {{ data.session.name }} (ID: {{ data.session.id }})
+                                {% if data.session.id == context.current_session.id %}
+                                <span class="badge bg-light text-dark ms-2">Current</span>
+                                {% endif %}
+                                {% if data.session.id == context.view_session.id %}
+                                <span class="badge bg-warning text-dark ms-2">Viewing</span>
+                                {% endif %}
+                                - Classes: {{ data.classes_count }}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if data.classes %}
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Code</th>
+                                        <th>Capacity</th>
+                                        <th>Room</th>
+                                        <th>Session ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for class in data.classes %}
+                                    <tr>
+                                        <td>{{ class.id }}</td>
+                                        <td>{{ class.name }}</td>
+                                        <td>{{ class.code }}</td>
+                                        <td>{{ class.capacity }}</td>
+                                        <td>{{ class.room_number or 'N/A' }}</td>
+                                        <td>{{ class.session_id }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <p class="text-muted">No classes in this session</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Quick Actions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="btn-group">
+                                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+                                    Back to Dashboard
+                                </a>
+                                <a href="{{ url_for('create_class') }}" class="btn btn-success">
+                                    Create New Class
+                                </a>
+                                <a href="{{ url_for('manage_classes') }}" class="btn btn-info">
+                                    Manage Classes
+                                </a>
+                                <a href="{{ url_for('switch_to_current_session') }}" class="btn btn-warning">
+                                    Switch to Current Session
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

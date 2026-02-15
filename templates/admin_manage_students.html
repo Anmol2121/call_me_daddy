@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% block title %}Manage Students{% endblock %}
+{% block header %}Manage Students{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Students</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('create_student') }}" class="btn btn-primary">
+    <i class="fas fa-user-plus me-2"></i>Add New Student
+</a>
+<button class="btn btn-outline-secondary ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#searchPanel">
+    <i class="fas fa-search me-2"></i>Advanced Search
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Total Students</h6>
+                        <h3 class="mb-0">{{ student_data|length }}</h3>
+                        <small class="text-success">{{ enrolled_count }} enrolled</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Enrolled</h6>
+                        <h3 class="mb-0">{{ enrolled_count }}</h3>
+                        <small class="text-muted">{{ (enrolled_count / student_data|length * 100)|round(1) if student_data|length > 0 else 0 }}%</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Not Enrolled</h6>
+                        <h3 class="mb-0">{{ not_enrolled_count }}</h3>
+                        <small class="text-warning">Needs enrollment</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Unique Parents</h6>
+                        <h3 class="mb-0">{{ unique_parents }}</h3>
+                        <small class="text-info">{{ (student_data|length / unique_parents)|round(1) if unique_parents > 0 else 0 }} avg siblings</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Search Panel -->
+        <div class="collapse" id="searchPanel">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('manage_students') }}" id="searchForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Name, ID, Email, Parent...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Class</label>
+                                <select class="form-select" name="class_id">
+                                    <option value="">All Classes</option>
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}" {% if selected_class == class.id %}selected{% endif %}>{{ class.name }} ({{ class.code }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Parent Email</label>
+                                <input type="email" class="form-control" name="parent_email" value="{{ parent_email }}" placeholder="parent@example.com">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                                    <option value="enrolled" {% if status_filter == 'enrolled' %}selected{% endif %}>Enrolled</option>
+                                    <option value="not_enrolled" {% if status_filter == 'not_enrolled' %}selected{% endif %}>Not Enrolled</option>
+                                </select>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Apply Filters
+                                </button>
+                                <a href="{{ url_for('manage_students') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Students Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Student List</h5>
+                    <span class="text-muted">{{ student_data|length }} students found</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Student Name</th>
+                                <th>Class/Roll</th>
+                                <th>Parent Name</th>
+                                <th>Contact</th>
+                                <th>Siblings</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in student_data %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ item.student.student_id }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                            {{ item.student.first_name[0] }}{{ item.student.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            <strong>{{ item.student.first_name }} {{ item.student.last_name }}</strong>
+                                            <div class="small text-muted">{{ item.student.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if item.enrolled %}
+                                        <span class="fw-bold">{{ item.class_name }}</span>
+                                        <div class="small text-muted">Roll: {{ item.roll_number }}</div>
+                                    {% else %}
+                                        <span class="badge bg-warning-light text-warning">Not Enrolled</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.student.father_name %}
+                                        <div>{{ item.student.father_name }} (Father)</div>
+                                    {% endif %}
+                                    {% if item.student.mother_name %}
+                                        <div class="small text-muted">{{ item.student.mother_name }} (Mother)</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div><i class="fas fa-phone-alt me-1 small text-muted"></i> {{ item.student.phone or 'N/A' }}</div>
+                                    <div><i class="fas fa-envelope me-1 small text-muted"></i> {{ item.student.parent_email or 'N/A' }}</div>
+                                </td>
+                                <td>
+                                    {% if item.siblings_count > 1 %}
+                                        <span class="badge bg-info-light text-info" data-bs-toggle="tooltip" title="{{ item.siblings_count }} students share this parent email">
+                                            <i class="fas fa-users me-1"></i>{{ item.siblings_count }}
+                                        </span>
+                                        <a href="{{ url_for('view_siblings', parent_email=item.student.parent_email) }}" class="small text-decoration-none">
+                                            View all
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.student.is_active %}
+                                        <span class="badge bg-success-light text-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger-light text-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('view_student_details', student_id=item.student.id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('edit_student', student_id=item.student.id) }}" class="btn btn-outline-warning" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if not item.enrolled %}
+                                        <a href="{{ url_for('enroll_student') }}?student_id={{ item.student.id }}" class="btn btn-outline-success" data-bs-toggle="tooltip" title="Enroll">
+                                            <i class="fas fa-user-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                        <button type="button" class="btn btn-outline-danger" onclick="resetPassword({{ item.student.id }})" data-bs-toggle="tooltip" title="Reset Password">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No students found matching your criteria</p>
+                                    <a href="{{ url_for('create_student') }}" class="btn btn-primary">
+                                        <i class="fas fa-user-plus me-2"></i>Add New Student
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function resetPassword(studentId) {
+    if(confirm('Are you sure you want to reset password for this student?')) {
+        window.location.href = "{{ url_for('reset_student_password', student_id=0) }}".replace('0', studentId);
+    }
+}
+
+// Auto-submit form on select change (optional)
+document.querySelectorAll('#searchForm select').forEach(select => {
+    select.addEventListener('change', function() {
+        document.getElementById('searchForm').submit();
+    });
+});
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+<style>
+.bg-primary-light { background: rgba(67, 97, 238, 0.1); }
+.bg-success-light { background: rgba(16, 185, 129, 0.1); }
+.bg-warning-light { background: rgba(245, 158, 11, 0.1); }
+.bg-danger-light { background: rgba(239, 68, 68, 0.1); }
+.bg-info-light { background: rgba(14, 165, 233, 0.1); }
+</style>
+{% endblock %}

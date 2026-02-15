@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+{% block title %}Fee Management{% endblock %}
+{% block header %}Fee Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Fee Management</li>
+{% endblock %}
+
+{% block actions %}
+<div class="dropdown">
+    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-plus me-1"></i> Quick Actions
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{{ url_for('create_fee_structure') }}"><i class="fas fa-money-bill-wave me-2"></i> Create Fee Structure</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('assign_fee_to_students_bulk') }}"><i class="fas fa-users me-2"></i> Bulk Assign Fees</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('manage_student_fees') }}"><i class="fas fa-credit-card me-2"></i> Collect Payments</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{{ url_for('fee_reports') }}"><i class="fas fa-chart-bar me-2"></i> View Reports</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Fee Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-primary">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_fees|default(0)|round|int }}</h2>
+                <div class="stat-label">Total Fees</div>
+                <small class="text-muted">All fee structures</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_collected|default(0)|round|int }}</h2>
+                <div class="stat-label">Total Collected</div>
+                <small class="text-muted">{{ collection_rate|default(0)|round(1) }}% collected</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_pending|default(0)|round|int }}</h2>
+                <div class="stat-label">Pending Fees</div>
+                <small class="text-muted">{{ pending_count|default(0) }} records</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">{{ overdue_count|default(0) }}</h2>
+                <div class="stat-label">Overdue Fees</div>
+                <small class="text-muted">₹{{ total_overdue|default(0)|round|int }} amount</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fee Structures Section -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Fee Structures</h5>
+                    <a href="{{ url_for('create_fee_structure') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> Create Fee Structure
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if fee_structures %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Frequency</th>
+                                <th>Applicable To</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fee in fee_structures %}
+                            <tr>
+                                <td>
+                                    <strong>{{ fee.name }}</strong>
+                                </td>
+                                <td>{{ fee.description|default('No description', true) }}</td>
+                                <td>
+                                    <strong>₹{{ fee.amount }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ fee.frequency|title }}</span>
+                                </td>
+                                <td>
+                                    {% if fee.class_id %}
+                                        Class: {{ fee.class_.name if fee.class_ else 'N/A' }}
+                                    {% else %}
+                                        All Classes
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if fee.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if fee.student_fees|length == 0 %}
+                                        <form method="POST" action="{{ url_for('delete_fee_structure', fee_id=fee.id) }}" 
+                                              onsubmit="return confirm('Are you sure you want to delete this fee structure?');">
+                                            <button type="submit" class="btn btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Fee Structures Found</h4>
+                    <p class="text-muted mb-4">Create fee structures to start tracking fees</p>
+                    <a href="{{ url_for('create_fee_structure') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i> Create Fee Structure
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Class-wise Fee Summary -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Class-wise Fee Summary</h5>
+            </div>
+            <div class="card-body">
+                {% if class_fee_summary %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Students</th>
+                                <th>Total Fees</th>
+                                <th>Collected</th>
+                                <th>Due</th>
+                                <th>Collection %</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for class in class_fee_summary %}
+                            <tr>
+                                <td>
+                                    <strong>{{ class.name }}</strong>
+                                    <div class="small text-muted">{{ class.code }}</div>
+                                </td>
+                                <td>{{ class.total_students }}</td>
+                                <td>₹{{ class.total_fees|default(0)|round|int }}</td>
+                                <td>
+                                    <span class="text-success">₹{{ class.total_collected|default(0)|round|int }}</span>
+                                </td>
+                                <td>
+                                    <span class="{% if class.total_due|default(0) > 0 %}text-danger{% else %}text-success{% endif %}">
+                                        ₹{{ class.total_due|default(0)|round|int }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% set collection_rate = class.collection_rate|default(0) %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                            <div class="progress-bar {% if collection_rate >= 80 %}bg-success{% elif collection_rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ collection_rate|round|int }}%">
+                                            </div>
+                                        </div>
+                                        <span class="small">{{ collection_rate|round|int }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('class_fee_details', class_id=class.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chalkboard fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">No class fee data available</p>
+                    <a href="{{ url_for('assign_fee_to_students_bulk') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-users me-1"></i> Assign Fees to Classes
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('manage_student_fees') }}" class="card-link-item">
+                            <div class="card-icon bg-primary">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="card-link-content">
+                                <h6>Student Fees</h6>
+                                <p>View and collect fees from students</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('fee_reports') }}" class="card-link-item">
+                            <div class="card-icon bg-success">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="card-link-content">
+                                <h6>Fee Reports</h6>
+                                <p>Generate detailed fee reports</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('assign_fee_to_students_bulk') }}" class="card-link-item">
+                            <div class="card-icon bg-warning">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="card-link-content">
+                                <h6>Bulk Assign</h6>
+                                <p>Assign fees to multiple students</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('fee_analytics') }}" class="card-link-item">
+                            <div class="card-icon bg-info">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="card-link-content">
+                                <h6>Analytics</h6>
+                                <p>Detailed fee analytics</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                <div class="activity-timeline">
+                    {% for activity in recent_activities[:3] %}
+                    <div class="activity-item">
+                        <div class="activity-icon bg-{{ activity.color }}">
+                            <i class="{{ activity.icon }}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6>{{ activity.title }}</h6>
+                            <p>{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.time }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-alt fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">No recent activity</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-icon-primary {
+    background-color: rgba(67, 97, 238, 0.1);
+    color: #4361ee;
+}
+
+.stat-icon-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.stat-icon-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.stat-icon-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.card-link-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #f8f9fa;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+}
+
+.card-link-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+    font-size: 1.25rem;
+}
+
+.card-link-content h6 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.card-link-content p {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.activity-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.activity-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.activity-icon {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.activity-content {
+    padding-bottom: 1rem;
+}
+
+.activity-content h6 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.activity-content p {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.activity-content small {
+    font-size: 0.75rem;
+}
+
+.bg-primary { background-color: #4361ee !important; }
+.bg-success { background-color: #10b981 !important; }
+.bg-warning { background-color: #f59e0b !important; }
+.bg-info { background-color: #06b6d4 !important; }
+.bg-danger { background-color: #ef4444 !important; }
+</style>
+{% endblock %}

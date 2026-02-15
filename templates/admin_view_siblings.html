@@ -1,0 +1,130 @@
+<!-- templates/admin_view_siblings.html -->
+{% extends "base.html" %}
+{% block title %}Siblings - {{ parent_email }}{% endblock %}
+{% block header %}Siblings Information{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('manage_students') }}" class="btn btn-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back to Students
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-people-fill me-2"></i>
+            Siblings with Parent Email: {{ parent_email }}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if sibling_data %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Date of Birth</th>
+                        <th>Class</th>
+                        <th>Roll No.</th>
+                        <th>School Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in sibling_data %}
+                    <tr>
+                        <td>
+                            <strong>{{ data.student.student_id }}</strong>
+                        </td>
+                        <td>
+                            <strong>{{ data.student.first_name }} {{ data.student.last_name }}</strong>
+                            <div class="small text-muted">{{ data.student.gender|title }}</div>
+                        </td>
+                        <td>
+                            {{ data.student.date_of_birth.strftime('%Y-%m-%d') }}
+                        </td>
+                        <td>
+                            {% if data.enrollment %}
+                            <span class="badge bg-success">{{ data.enrollment.class_.name }}</span>
+                            {% else %}
+                            <span class="badge bg-warning">Not Enrolled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if data.enrollment %}
+                            <span class="badge bg-primary">{{ data.enrollment.roll_number }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="small">{{ data.student.email }}</div>
+                            <small class="text-muted">School Email</small>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('manage_students') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Note:</strong> All these siblings share the same parent email address. 
+            School communications will be sent to this email.
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people display-1 text-muted"></i>
+            <h4 class="mt-3">No Siblings Found</h4>
+            <p class="text-muted">No students found with this parent email.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Parent Contact Information -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Parent Contact Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Parent Email:</th>
+                        <td>{{ parent_email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Children:</th>
+                        <td><span class="badge bg-primary">{{ sibling_data|length }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ sibling_data[0].student.phone if sibling_data else 'Not available' }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="d-grid gap-2">
+                    <a href="mailto:{{ parent_email }}" class="btn btn-outline-primary">
+                        <i class="bi bi-envelope me-2"></i> Send Email to Parent
+                    </a>
+                    {% if sibling_data and sibling_data[0].student.phone %}
+                    <a href="tel:{{ sibling_data[0].student.phone }}" class="btn btn-outline-success">
+                        <i class="bi bi-telephone me-2"></i> Call Parent
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

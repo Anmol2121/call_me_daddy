@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Bulk Assign Fees{% endblock %}
+{% block header %}Bulk Assign Fees to Students{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_fees') }}">Fee Management</a></li>
+<li class="breadcrumb-item active">Bulk Assign</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Assign Fee to Multiple Students</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="">
+                    <div class="mb-3">
+                        <label for="fee_structure_id" class="form-label">Select Fee Structure</label>
+                        <select class="form-control" id="fee_structure_id" name="fee_structure_id" required>
+                            <option value="">-- Select Fee Structure --</option>
+                            {% for fee in fee_structures %}
+                            <option value="{{ fee.id }}">
+                                {{ fee.name }} - ₹{{ fee.amount }} ({{ fee.frequency }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="due_date" name="due_date" 
+                               value="{{ date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Assign to Classes</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all_classes" name="class_ids" value="all">
+                            <label class="form-check-label" for="all_classes">
+                                All Classes (All Active Students)
+                            </label>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <label class="form-label">Or select specific classes:</label>
+                            <div class="row">
+                                {% for class in classes %}
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="class_{{ class.id }}" 
+                                               name="class_ids" value="{{ class.id }}">
+                                        <label class="form-check-label" for="class_{{ class.id }}">
+                                            {{ class.name }} ({{ class.code }})
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This will assign the selected fee to all active students in the chosen classes.
+                        Students who already have this fee will not be assigned again.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('manage_fees') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-users me-2"></i> Assign Fee to Students
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Available Fee Structures</h5>
+            </div>
+            <div class="card-body">
+                {% if fee_structures %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Amount</th>
+                                <th>Frequency</th>
+                                <th>Applicable To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fee in fee_structures %}
+                            <tr>
+                                <td>{{ fee.name }}</td>
+                                <td>₹{{ fee.amount }}</td>
+                                <td>{{ fee.frequency }}</td>
+                                <td>
+                                    {% if fee.class_id %}
+                                    Class: {{ fee.class_.name if fee.class_ else 'N/A' }}
+                                    {% else %}
+                                    All Classes
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Fee Structures Found</h5>
+                    <p class="text-muted">Create fee structures first before assigning to students.</p>
+                    <a href="{{ url_for('create_fee_structure') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i> Create Fee Structure
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-check-input:checked {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('due_date').min = today;
+    
+    // Handle "All Classes" checkbox
+    const allClassesCheckbox = document.getElementById('all_classes');
+    const classCheckboxes = document.querySelectorAll('input[name="class_ids"]:not([value="all"])');
+    
+    allClassesCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            classCheckboxes.forEach(cb => {
+                cb.checked = false;
+                cb.disabled = true;
+            });
+        } else {
+            classCheckboxes.forEach(cb => {
+                cb.disabled = false;
+            });
+        }
+    });
+    
+    // Handle individual class checkboxes
+    classCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            if (this.checked) {
+                allClassesCheckbox.checked = false;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

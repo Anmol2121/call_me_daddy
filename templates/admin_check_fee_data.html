@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Check Fee Data{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Fee Data Health Check</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <h6>Session: {{ context.view_session.name }}</h6>
+                        <p>School: {{ context.school.name }}</p>
+                    </div>
+                    
+                    {% if issues %}
+                    <div class="alert alert-warning">
+                        <h6>Issues Found:</h6>
+                        <ul>
+                            {% for issue in issues %}
+                            <li>{{ issue }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    {% if fixes %}
+                    <h6>Suggested Fixes:</h6>
+                    <div class="row">
+                        {% for fix in fixes %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>{{ fix.name }}</h6>
+                                    <p>Applicable to {{ fix.applicable_students }} students</p>
+                                    <a href="{{ url_for('assign_fee_to_students', fee_id=fix.fee_structure_id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        Assign Fees
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        No fee data issues found!
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+                            Back to Dashboard
+                        </a>
+                        <a href="{{ url_for('assign_fee_to_students_bulk') }}" class="btn btn-success">
+                            Bulk Assign Fees
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Assign Fee to Students{% endblock %}
+{% block header %}Assign Fee to Students{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_fee_structures') }}">Fee Structures</a></li>
+<li class="breadcrumb-item active">Assign Fee</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Assign Fee to Students</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Fee Structure:</strong> {{ fee_structure.name }} - ₹{{ fee_structure.amount }} ({{ fee_structure.frequency|title }})
+                    {% if fee_structure.class_id %}
+                    <br><strong>Class:</strong> {{ fee_structure.class_.name }}
+                    {% else %}
+                    <br><strong>Class:</strong> All Classes
+                    {% endif %}
+                </div>
+                
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.fee_structure_id.label(class="form-label") }}
+                        {{ form.fee_structure_id(class="form-select", disabled=true) }}
+                        <small class="text-muted">This fee structure will be assigned to students</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.due_date.label(class="form-label") }}
+                        {{ form.due_date(class="form-control", type="date") }}
+                        {% if form.due_date.errors %}
+                        <div class="text-danger">
+                            {% for error in form.due_date.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> This will assign the fee to 
+                        {% if fee_structure.class_id %}
+                        all students in <strong>{{ fee_structure.class_.name }}</strong>
+                        {% else %}
+                        <strong>all students</strong> in the school
+                        {% endif %}
+                        for the current session.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('manage_fee_structures') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Students to be Assigned</h5>
+            </div>
+            <div class="card-body">
+                {% if fee_structure.class_id %}
+                    {% set enrollments = fee_structure.class_.student_enrollments|selectattr('is_active')|list %}
+                    {% set students_count = enrollments|length %}
+                {% else %}
+                    {% set students = context.school.students|selectattr('is_active')|list %}
+                    {% set students_count = students|length %}
+                {% endif %}
+                
+                <div class="text-center">
+                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                    <h4>{{ students_count }} Students</h4>
+                    <p class="text-muted">
+                        {% if fee_structure.class_id %}
+                        All active students in {{ fee_structure.class_.name }}
+                        {% else %}
+                        All active students in the school
+                        {% endif %}
+                        will receive this fee.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('due_date').min = today;
+});
+</script>
+{% endblock %}

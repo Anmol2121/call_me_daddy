@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Record Fee Payment{% endblock %}
+{% block header %}Record Fee Payment{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_student_fees') }}">Student Fees</a></li>
+<li class="breadcrumb-item active">Record Payment</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('manage_student_fees') }}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-arrow-left me-1"></i> Back to Fees
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Record Payment</h5>
+            </div>
+            <div class="card-body">
+                <!-- Student Information -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h6>Student Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Name:</strong> {{ student_fee.student.first_name }} {{ student_fee.student.last_name }}</p>
+                                <p><strong>Student ID:</strong> {{ student_fee.student.student_id }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Class:</strong> {{ student_fee.class_.name if student_fee.class_ else 'N/A' }}</p>
+                                <p><strong>Fee Structure:</strong> {{ student_fee.fee_structure.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Fee Details -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h6>Fee Details</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p><strong>Total Fee:</strong> ₹{{ student_fee.fee_amount }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>Discount:</strong> ₹{{ student_fee.discount_amount }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>Fine:</strong> ₹{{ student_fee.fine_amount }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p><strong>Net Amount:</strong> ₹{{ student_fee.net_amount }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>Already Paid:</strong> ₹{{ student_fee.paid_amount }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="text-danger"><strong>Balance Due:</strong> ₹{{ remaining_amount }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Due Date:</strong> {{ student_fee.due_date.strftime('%d %b %Y') }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Status:</strong> 
+                                    <span class="badge bg-{{ 'success' if student_fee.status == 'paid' else 'warning' if student_fee.status == 'partial' else 'danger' }}">
+                                        {{ student_fee.status|title }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Form -->
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Payment Details</h6>
+                        <form method="POST" id="paymentForm">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Payment Amount *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="amount" 
+                                           name="amount" 
+                                           step="0.01" 
+                                           min="0.01" 
+                                           max="{{ remaining_amount }}"
+                                           value="{{ remaining_amount if remaining_amount > 0 else '' }}"
+                                           required>
+                                </div>
+                                <div class="form-text">Maximum amount: ₹{{ "%.2f"|format(remaining_amount) }}</div>
+                                {% if form.amount.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.amount.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    {{ form.payment_method.label(class="form-label") }}
+                                    {{ form.payment_method(class="form-select") }}
+                                    {% if form.payment_method.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.payment_method.errors %}
+                                        <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    {{ form.payment_date.label(class="form-label") }}
+                                    {{ form.payment_date(class="form-control", type="date") }}
+                                    {% if form.payment_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.payment_date.errors %}
+                                        <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.transaction_id.label(class="form-label") }}
+                                {{ form.transaction_id(class="form-control", placeholder="Optional") }}
+                                {% if form.transaction_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.transaction_id.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", placeholder="Optional notes about this payment") }}
+                                {% if form.notes.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check-circle me-2"></i> Record Payment
+                                </button>
+                                <a href="{{ url_for('manage_student_fees') }}" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #4361ee;
+    box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+}
+
+.btn-primary {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+.btn-primary:hover {
+    background-color: #3a56d4;
+    border-color: #3a56d4;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default if not set
+    const paymentDateField = document.getElementById('payment_date');
+    if (!paymentDateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        paymentDateField.value = today;
+    }
+    
+    // Validate amount on input
+    const amountField = document.getElementById('amount');
+    amountField.addEventListener('input', function() {
+        const maxAmount = parseFloat(this.max);
+        const currentAmount = parseFloat(this.value);
+        
+        if (currentAmount > maxAmount) {
+            this.value = maxAmount;
+        }
+        
+        if (currentAmount < 0) {
+            this.value = 0;
+        }
+    });
+    
+    // Form submission validation
+    const paymentForm = document.getElementById('paymentForm');
+    paymentForm.addEventListener('submit', function(e) {
+        const amount = parseFloat(amountField.value);
+        const maxAmount = parseFloat(amountField.max);
+        
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('Payment amount must be greater than 0');
+            return false;
+        }
+        
+        if (amount > maxAmount) {
+            e.preventDefault();
+            alert(`Payment amount cannot exceed ₹${maxAmount.toFixed(2)}`);
+            return false;
+        }
+        
+        return true;
+    });
+});
+</script>
+{% endblock %}

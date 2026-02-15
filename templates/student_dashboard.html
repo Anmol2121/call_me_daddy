@@ -1,0 +1,778 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard · EduManage Pro{% endblock %}
+{% block header %}Student Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block actions %}
+<div class="d-flex gap-2">
+    <button class="btn btn-outline-dark btn-sm px-3" onclick="window.print()">
+        <i class="fas fa-print me-2"></i>Print
+    </button>
+    <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#paymentModal">
+        <i class="fas fa-wallet me-2"></i>Pay Now
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Key Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-icon bg-primary-light">
+                <i class="fas fa-file-invoice-dollar text-primary"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number">₹{{ total_due|round|int if total_due else 0 }}</h3>
+                <p class="metric-label">Total Due</p>
+                <div class="metric-trend">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    {{ fees|length }} fee items
+                </div>
+            </div>
+            <a href="#fee-details" class="metric-link">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-icon bg-success-light">
+                <i class="fas fa-check-circle text-success"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number">₹{{ total_paid|round|int if total_paid else 0 }}</h3>
+                <p class="metric-label">Total Paid</p>
+                <div class="metric-trend">
+                    <i class="fas fa-check me-1"></i>
+                    {{ fees|selectattr('status', 'equalto', 'paid')|list|length }} paid
+                </div>
+            </div>
+            <span class="metric-link"></span>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-icon bg-warning-light">
+                <i class="fas fa-clock text-warning"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number {% if remaining_due > 0 %}text-warning{% else %}text-success{% endif %}">
+                    ₹{{ remaining_due|round|int if remaining_due else 0 }}
+                </h3>
+                <p class="metric-label">Balance Due</p>
+                <div class="metric-trend">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    {{ overdue_fees|length }} overdue
+                </div>
+            </div>
+            <a href="#overdue-section" class="metric-link">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-icon bg-info-light">
+                <i class="fas fa-chart-pie text-info"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number">
+                    {% if total_due > 0 %}
+                        {{ ((total_paid / total_due) * 100)|round|int }}%
+                    {% else %}
+                        100%
+                    {% endif %}
+                </h3>
+                <p class="metric-label">Payment Progress</p>
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-success" 
+                         style="width: {% if total_due > 0 %}{{ (total_paid / total_due * 100) }}%{% else %}100%{% endif %}">
+                    </div>
+                </div>
+            </div>
+            <span class="metric-link"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Payment Progress Doughnut -->
+    <div class="col-lg-6 mb-4">
+        <div class="card premium-card h-100">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie text-primary me-2"></i>
+                    Payment Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-center">
+                    <div style="position: relative; height: 200px; width: 200px;">
+                        <canvas id="paymentDoughnutChart"></canvas>
+                    </div>
+                </div>
+                <div class="row mt-4 text-center">
+                    <div class="col-4">
+                        <div class="p-2">
+                            <i class="fas fa-circle text-success me-1"></i>
+                            <span class="fw-bold">{{ fees|selectattr('status', 'equalto', 'paid')|list|length }}</span>
+                            <small class="text-muted d-block">Paid</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2">
+                            <i class="fas fa-circle text-warning me-1"></i>
+                            <span class="fw-bold">{{ fees|selectattr('status', 'in', ['pending','partial'])|list|length }}</span>
+                            <small class="text-muted d-block">Pending</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2">
+                            <i class="fas fa-circle text-danger me-1"></i>
+                            <span class="fw-bold">{{ overdue_fees|length }}</span>
+                            <small class="text-muted d-block">Overdue</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Payment Trend (Bar Chart) -->
+    <div class="col-lg-6 mb-4">
+        <div class="card premium-card h-100">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line text-primary me-2"></i>
+                    Monthly Payment Trend
+                </h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                {% if trend_labels and trend_data %}
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+                {% else %}
+                <div class="text-center py-5 flex-grow-1 d-flex align-items-center justify-content-center">
+                    <div>
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No payment data available for the last 6 months.</p>
+                    </div>
+                </div>
+                {% endif %}
+                <p class="text-muted small mt-3 text-center mb-0">
+                    *Monthly total payments (₹)
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue Alert -->
+{% if overdue_fees %}
+<div class="row mb-4" id="overdue-section">
+    <div class="col-12">
+        <div class="alert alert-danger border-0 shadow-sm" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Overdue Fees Alert</h5>
+                    <p class="mb-0">
+                        You have <strong>{{ overdue_fees|length }}</strong> overdue fee(s) totalling 
+                        <strong>₹{{ overdue_fees|sum(attribute='balance')|round|int }}</strong>. 
+                        Please clear them at the earliest to avoid late fines.
+                    </p>
+                </div>
+                <div class="ms-auto">
+                    <button class="btn btn-outline-danger" onclick="filterOverdue()">View Overdue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Fee Details Table -->
+<div class="row mb-4" id="fee-details">
+    <div class="col-12">
+        <div class="card premium-card">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-alt text-primary me-2"></i>
+                        Fee Details
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-dark btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="filterFees('all')">All</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterFees('pending')">Pending</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterFees('paid')">Paid</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterFees('overdue')">Overdue</a></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" id="exportBtn">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table premium-table mb-0" id="feeTable">
+                        <thead>
+                            <tr>
+                                <th>Fee</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fee in fees %}
+                            <tr data-status="{{ fee.status }}" data-due="{{ fee.due_date }}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-light p-2 me-3">
+                                            <i class="fas {% if 'tuition' in fee.fee_structure.name.lower() %}fa-graduation-cap{% elif 'exam' in fee.fee_structure.name.lower() %}fa-file-alt{% else %}fa-money-bill-wave{% endif %} text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold">{{ fee.fee_structure.name }}</span>
+                                            <small class="d-block text-muted">{{ fee.fee_structure.frequency|title }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="{% if fee.due_date < date.today() and fee.status not in ['paid','overdue'] %}text-danger{% endif %}">
+                                        {{ fee.due_date.strftime('%d %b %Y') }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">
+                                        {% set days = (fee.due_date - date.today()).days %}
+                                        {% if days > 0 %}In {{ days }} days{% elif days == 0 %}Today{% else %}{{ -days }} days ago{% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="fw-bold">₹{{ fee.fee_amount|round(2) }}</span>
+                                    {% if fee.discount_amount > 0 %}
+                                    <span class="badge bg-success-light text-success small d-inline-block ms-1">-₹{{ fee.discount_amount|round(2) }}</span>
+                                    {% endif %}
+                                    {% if fee.fine_amount > 0 %}
+                                    <span class="badge bg-danger-light text-danger small d-inline-block ms-1">+₹{{ fee.fine_amount|round(2) }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>₹{{ fee.paid_amount|round(2) }}</td>
+                                <td>
+                                    {% set balance = fee.net_amount - fee.paid_amount %}
+                                    <span class="fw-bold {% if balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                                        ₹{{ balance|round(2) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if fee.status == 'paid' %}
+                                        <span class="status-badge status-paid">
+                                            <i class="fas fa-check-circle"></i> Paid
+                                        </span>
+                                    {% elif fee.status == 'partial' %}
+                                        <span class="status-badge status-pending">
+                                            <i class="fas fa-clock"></i> Partial
+                                        </span>
+                                        <div class="progress mt-2" style="height: 4px;">
+                                            <div class="progress-bar bg-warning" 
+                                                 style="width: {{ (fee.paid_amount / fee.net_amount * 100)|round|int }}%">
+                                            </div>
+                                        </div>
+                                    {% elif fee.due_date < date.today() %}
+                                        <span class="status-badge status-overdue">
+                                            <i class="fas fa-exclamation-circle"></i> Overdue
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-pending">
+                                            <i class="fas fa-clock"></i> Pending
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewFeeDetails('{{ fee.id }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <div class="text-muted small">
+                    Showing {{ fees|length }} fees · Total Net: ₹{{ total_due|round|int }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card premium-card">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-history text-primary me-2"></i>
+                    Recent Payment History
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                <div class="row">
+                    {% for txn in recent_transactions[:4] %}
+                    <div class="col-md-3 mb-3">
+                        <div class="transaction-card p-3 border rounded-3">
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="rounded-circle bg-primary-light text-primary p-2">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <span class="badge {% if txn.status == 'success' %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ txn.status|title }}
+                                </span>
+                            </div>
+                            <div class="fw-bold text-dark mb-1">₹{{ txn.amount|round(2) }}</div>
+                            <div class="small text-muted">{{ txn.payment_method|title }}</div>
+                            <div class="small text-muted">{{ txn.transaction_date.strftime('%d %b %Y') }}</div>
+                            <div class="mt-2">
+                                <small class="text-muted">{{ txn.receipt_number }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">No transactions yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Information & Payment Instructions -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card premium-card h-100">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-graduate text-primary me-2"></i>
+                    My Profile
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="avatar-circle bg-primary text-white me-3">
+                        {{ student.first_name[0]|upper }}{{ student.last_name[0]|upper }}
+                    </div>
+                    <div>
+                        <h5 class="mb-1">{{ student.first_name }} {{ student.last_name }}</h5>
+                        <p class="text-muted mb-0">{{ student.student_id }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Class</div>
+                        <div class="fw-bold">{{ enrollment.class_.name if enrollment else 'Not enrolled' }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Roll Number</div>
+                        <div class="fw-bold">{{ enrollment.roll_number if enrollment else 'N/A' }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Parent</div>
+                        <div class="fw-bold">{{ student.father_name or student.mother_name or 'N/A' }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Contact</div>
+                        <div class="fw-bold">{{ student.phone or 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card premium-card h-100">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    Payment Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border-0 bg-light p-4">
+                    <div class="d-flex mb-3">
+                        <i class="fas fa-university text-primary me-3 fa-lg"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Bank Transfer</h6>
+                            <p class="text-muted small mb-0">Account: 1234567890 · IFSC: ABCD0123456</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <i class="fas fa-money-bill-wave text-success me-3 fa-lg"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Cash Payment</h6>
+                            <p class="text-muted small mb-0">At school accounts office during working hours</p>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <i class="fas fa-credit-card text-info me-3 fa-lg"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Online Gateway</h6>
+                            <p class="text-muted small mb-0">Coming soon</p>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-phone-alt text-primary me-3"></i>
+                    <div>
+                        <div class="fw-bold">Need help?</div>
+                        <div class="text-muted small">Contact accounts: {{ student.school.phone or 'school office' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal (simplified) -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white"><i class="fas fa-wallet me-2"></i>Make Payment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted">Please visit the school accounts office to complete your payment. For online options, stay tuned.</p>
+                <div class="alert alert-info border-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Cash and bank transfers are currently accepted at the office.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Premium Dashboard Styles */
+.metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    border-color: rgba(67,97,238,0.2);
+}
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #4361ee 0%, #7c3aed 100%);
+}
+.metric-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+.bg-primary-light { background: rgba(67,97,238,0.1); color: #4361ee; }
+.bg-success-light { background: rgba(16,185,129,0.1); color: #10b981; }
+.bg-warning-light { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.bg-info-light    { background: rgba(79,70,229,0.1); color: #4f46e5; }
+
+.metric-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.1rem;
+    line-height: 1.2;
+}
+.metric-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+.metric-trend {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+.metric-link {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    color: #64748b;
+    transition: all 0.3s ease;
+}
+.metric-card:hover .metric-link {
+    color: #4361ee;
+    transform: translateX(4px);
+}
+
+/* Premium Card */
+.premium-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+}
+.premium-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+/* Premium Table */
+.premium-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.premium-table th {
+    font-weight: 600;
+    color: #334155;
+    border-bottom: 2px solid #f1f5f9;
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.premium-table td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+    border-color: #f1f5f9;
+}
+.premium-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.status-paid    { background: rgba(16,185,129,0.1); color: #10b981; }
+.status-pending { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.status-overdue { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+/* Avatar */
+.avatar-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Progress Bar */
+.progress {
+    border-radius: 10px;
+    background: rgba(226,232,240,0.5);
+}
+.progress-bar {
+    border-radius: 10px;
+}
+
+/* Transaction Card */
+.transaction-card {
+    transition: all 0.2s ease;
+}
+.transaction-card:hover {
+    background: #f8fafc;
+    border-color: #667eea !important;
+}
+</style>
+
+<script>
+// Chart initialization – ensure charts are created only once
+document.addEventListener('DOMContentLoaded', function() {
+    // Doughnut chart for payment distribution
+    const paidCount = {{ fees|selectattr('status', 'equalto', 'paid')|list|length }};
+    const pendingCount = {{ fees|selectattr('status', 'in', ['pending','partial'])|list|length }};
+    const overdueCount = {{ overdue_fees|length }};
+    
+    const doughnutCtx = document.getElementById('paymentDoughnutChart')?.getContext('2d');
+    if (doughnutCtx) {
+        // Destroy any existing chart instance (if any) – useful if this script runs multiple times
+        let existingChart = Chart.getChart(doughnutCtx.canvas);
+        if (existingChart) existingChart.destroy();
+        
+        new Chart(doughnutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Paid', 'Pending', 'Overdue'],
+                datasets: [{
+                    data: [paidCount, pendingCount, overdueCount],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                maintainAspectRatio: false,
+                responsive: true
+            }
+        });
+    }
+
+    // Bar chart for monthly trend (if data exists)
+    {% if trend_labels and trend_data %}
+    const trendLabels = {{ trend_labels|tojson }};
+    const trendData = {{ trend_data|tojson }};
+
+    const trendCtx = document.getElementById('trendChart')?.getContext('2d');
+    if (trendCtx) {
+        let existingChart = Chart.getChart(trendCtx.canvas);
+        if (existingChart) existingChart.destroy();
+        
+        new Chart(trendCtx, {
+            type: 'bar',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Payments (₹)',
+                    data: trendData,
+                    backgroundColor: '#667eea',
+                    borderRadius: 6,
+                    barPercentage: 0.6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '₹' + context.parsed.y.toLocaleString('en-IN');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value.toLocaleString('en-IN');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+});
+
+// Filter table rows
+function filterFees(status) {
+    const rows = document.querySelectorAll('#feeTable tbody tr');
+    rows.forEach(row => {
+        const rowStatus = row.dataset.status;
+        if (status === 'all') {
+            row.style.display = '';
+        } else if (status === 'overdue') {
+            // Overdue rows have status 'pending'/'partial' but due date < today
+            const dueDate = new Date(row.dataset.due);
+            const today = new Date();
+            if ((rowStatus === 'pending' || rowStatus === 'partial') && dueDate < today) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        } else if (rowStatus === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterOverdue() {
+    filterFees('overdue');
+}
+
+function viewFeeDetails(feeId) {
+    // You can implement a modal or redirect
+    alert('Fee details for ID ' + feeId + ' – full details coming soon.');
+}
+
+// Export button (simple CSV)
+document.getElementById('exportBtn')?.addEventListener('click', function() {
+    const rows = [];
+    document.querySelectorAll('#feeTable tbody tr').forEach(row => {
+        if (row.style.display !== 'none') {
+            const cols = [];
+            row.querySelectorAll('td').forEach(td => {
+                cols.push(td.innerText.trim().replace(/\n/g, ' '));
+            });
+            rows.push(cols.join(','));
+        }
+    });
+    const csv = 'Fee, Due Date, Amount, Paid, Balance, Status, \n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'fee_statement.csv';
+    a.click();
+});
+</script>
+
+<!-- Ensure Chart.js is loaded -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

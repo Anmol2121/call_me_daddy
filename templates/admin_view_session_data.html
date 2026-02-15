@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% block title %}Session Data - {{ session_obj.name }}{% endblock %}
+{% block header %}Session Data: {{ session_obj.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_sessions') }}">Sessions</a></li>
+<li class="breadcrumb-item active">{{ session_obj.name }}</li>
+{% endblock %}
+
+{% block actions %}
+<div class="btn-group">
+    {% if session_obj.is_current %}
+    <span class="badge bg-success me-2">Current Session</span>
+    {% endif %}
+    <a href="{{ url_for('manage_sessions') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Back to Sessions
+    </a>
+    <a href="{{ url_for('switch_to_current_session') }}" class="btn btn-primary btn-sm" 
+       onclick="return confirm('Switch view back to current session?')">
+        <i class="fas fa-sync-alt me-1"></i> Switch to Current
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Session Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Session Name:</th>
+                        <td>{{ session_obj.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Start Date:</th>
+                        <td>{{ session_obj.start_date.strftime('%d %b %Y') }}</td>
+                    </tr>
+                    <tr>
+                        <th>End Date:</th>
+                        <td>{{ session_obj.end_date.strftime('%d %b %Y') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if session_obj.is_current %}
+                            <span class="badge bg-success">Current</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Historical</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6>Quick Statistics</h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="display-6">{{ class_data|length }}</div>
+                                <div class="text-muted small">Classes</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="display-6">
+                                    {% set total_students = namespace(count=0) %}
+                                    {% for class in class_data %}
+                                        {% set total_students.count = total_students.count + class.students|length %}
+                                    {% endfor %}
+                                    {{ total_students.count }}
+                                </div>
+                                <div class="text-muted small">Students</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Classes in this Session -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Classes in {{ session_obj.name }}</h5>
+    </div>
+    <div class="card-body">
+        {% if class_data %}
+        <div class="accordion" id="classesAccordion">
+            {% for data in class_data %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" 
+                            type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#class{{ data.class.id }}">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ data.class.name }}</strong> 
+                                <span class="badge bg-secondary ms-2">{{ data.class.code }}</span>
+                                {% if data.class_teacher %}
+                                <span class="badge bg-primary ms-1">
+                                    <i class="fas fa-user-tie me-1"></i>
+                                    {{ data.class_teacher.teacher.full_name }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="badge bg-info">{{ data.students|length }} students</span>
+                                <span class="badge bg-light text-dark">{{ data.class.room_number or 'No room' }}</span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+                <div id="class{{ data.class.id }}" 
+                     class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
+                     data-bs-parent="#classesAccordion">
+                    <div class="accordion-body">
+                        <!-- Class Teachers -->
+                        <div class="mb-3">
+                            <h6>Teachers Assigned:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for assignment in data.teachers %}
+                                <div class="badge {% if assignment.is_class_teacher %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    <i class="fas fa-chalkboard-teacher me-1"></i>
+                                    {{ assignment.teacher.full_name }}
+                                    {% if assignment.is_class_teacher %}
+                                    (Class Teacher)
+                                    {% else %}
+                                    ({{ assignment.subject }})
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span class="text-muted">No teachers assigned</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Students List -->
+                        <h6>Students ({{ data.students|length }}/{{ data.class.capacity }})</h6>
+                        {% if data.students %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Roll No.</th>
+                                        <th>Student ID</th>
+                                        <th>Name</th>
+                                        <th>Gender</th>
+                                        <th>Parent Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for enrollment in data.students %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary">{{ enrollment.roll_number }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ enrollment.student.student_id }}</strong>
+                                        </td>
+                                        <td>
+                                            {{ enrollment.student.first_name }} {{ enrollment.student.last_name }}
+                                        </td>
+                                        <td>{{ enrollment.student.gender|title }}</td>
+                                        <td>
+                                            {% if enrollment.student.parent_email %}
+                                            <span class="small">{{ enrollment.student.parent_email }}</span>
+                                            {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No students enrolled in this class for this session
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-chalkboard fa-3x text-muted mb-3"></i>
+            <h4 class="mb-3">No Classes Created</h4>
+            <p class="text-muted">No classes were created for this session.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Teachers in this Session -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Teachers in {{ session_obj.name }}</h5>
+    </div>
+    <div class="card-body">
+        {% if teachers %}
+        <div class="row">
+            {% for teacher in teachers %}
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="avatar-sm bg-warning-light text-warning rounded me-3">
+                                {{ teacher.full_name[0]|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ teacher.full_name }}</h6>
+                                <p class="text-muted small mb-2">{{ teacher.email }}</p>
+                                <!-- Get assignments for this teacher in this session -->
+                                {% set teacher_assignments = [] %}
+                                                {% for class_item in class_data %}
+                                                    {% for assignment in class_item.teachers %}
+                                                        {% if assignment.teacher_id == teacher.id %}
+                                                            {% set _ = teacher_assignments.append(assignment) %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endfor %}
+                                
+                                {% if teacher_assignments %}
+                                <div class="small">
+                                    <strong>Assigned Classes:</strong>
+                                    <ul class="mb-0 mt-1">
+                                        {% for assignment in teacher_assignments %}
+                                        <li>
+                                            {{ assignment.class_.name }} 
+                                            {% if assignment.is_class_teacher %}
+                                            <span class="badge bg-primary">Class Teacher</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">{{ assignment.subject }}</span>
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% else %}
+                                <span class="badge bg-light text-dark">No assignments</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-3">
+            <p class="text-muted mb-0">No teachers were active in this session</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Session Actions -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Session Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <a href="{{ url_for('switch_view_session', session_id=session_obj.id) }}" 
+                   class="btn btn-outline-primary w-100" 
+                   onclick="return confirm('Switch view to this session?')">
+                    <i class="fas fa-eye me-2"></i> View in Dashboard
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <button class="btn btn-outline-secondary w-100" onclick="printSessionData()">
+                    <i class="fas fa-print me-2"></i> Print Session Report
+                </button>
+            </div>
+            <div class="col-md-4 mb-3">
+                <button class="btn btn-outline-info w-100" onclick="exportSessionData()">
+                    <i class="fas fa-download me-2"></i> Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function printSessionData() {
+        window.print();
+    }
+    
+    function exportSessionData() {
+        alert('Export feature will be implemented soon.');
+    }
+</script>
+
+<style>
+    @media print {
+        .sidebar, .navbar, .actions, .btn {
+            display: none !important;
+        }
+        .accordion-button:not(.collapsed) {
+            color: black;
+        }
+        .accordion-button::after {
+            display: none;
+        }
+        .accordion-collapse.collapse {
+            display: block !important;
+        }
+    }
+</style>
+{% endblock %}

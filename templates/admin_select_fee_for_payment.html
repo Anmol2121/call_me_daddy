@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Select Fee for Payment{% endblock %}
+{% block header %}Select Fee for Payment{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_student_fees') }}">Student Fees</a></li>
+<li class="breadcrumb-item active">Select Fee</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('manage_student_fees') }}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-arrow-left me-1"></i> Back to Fees
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Pending Fees</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_fees %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Fee Structure</th>
+                                <th>Total Fee</th>
+                                <th>Paid</th>
+                                <th>Discount</th>
+                                <th>Fine</th>
+                                <th>Balance Due</th>
+                                <th>Due Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fee in pending_fees %}
+                            <tr>
+                                <td>
+                                    <strong>{{ fee.student.first_name }} {{ fee.student.last_name }}</strong>
+                                    <div class="small text-muted">{{ fee.student.student_id }}</div>
+                                </td>
+                                <td>{{ fee.fee_structure.name }}</td>
+                                <td>₹{{ "%.2f"|format(fee.fee_amount) }}</td>
+                                <td>₹{{ "%.2f"|format(fee.paid_amount) }}</td>
+                                <td>₹{{ "%.2f"|format(fee.discount_amount) }}</td>
+                                <td>₹{{ "%.2f"|format(fee.fine_amount) }}</td>
+                                <td class="fw-bold text-danger">
+                                    ₹{{ "%.2f"|format(fee.fee_amount - fee.discount_amount + fee.fine_amount - fee.paid_amount) }}
+                                </td>
+                                <td>
+                                    {% if fee.due_date < date.today() %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                    {% else %}
+                                        {{ fee.due_date.strftime('%d %b %Y') }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('record_fee_payment', student_fee_id=fee.id) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-credit-card me-1"></i> Record Payment
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-muted">No pending fees</h5>
+                    <p class="text-muted">All fees are paid or no fees assigned yet.</p>
+                    <a href="{{ url_for('manage_fees') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Fee Management
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

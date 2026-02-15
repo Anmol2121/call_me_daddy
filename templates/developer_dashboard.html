@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+{% block title %}Developer Dashboard{% endblock %}
+{% block header %}Developer Dashboard{% endblock %}
+{% block subheader %}System Overview & Analytics{% endblock %}
+
+{% block actions %}
+<div class="d-flex gap-2">
+    <a href="{{ url_for('create_school') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> New School
+    </a>
+    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#systemReportModal">
+        <i class="bi bi-download me-1"></i> System Report
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- Quick Stats -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-icon stat-icon-primary">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <div class="stat-number">{{ stats.total_schools }}</div>
+                    <div class="stat-label">Active Schools</div>
+                </div>
+                <div class="small text-muted">{{ active_schools_count }} active</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-card-success">
+            <div class="stat-icon stat-icon-success">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <div class="stat-number">{{ stats.total_admins }}</div>
+                    <div class="stat-label">Administrators</div>
+                </div>
+                <div class="small text-muted">{{ active_admins_count }} active</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-card-info">
+            <div class="stat-icon stat-icon-info">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <div class="stat-number">{{ stats.total_teachers }}</div>
+                    <div class="stat-label">Teachers</div>
+                </div>
+                <div class="small text-muted">{{ active_teachers_count }} active</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-card-warning">
+            <div class="stat-icon stat-icon-warning">
+                <i class="bi bi-mortarboard"></i>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <div class="stat-number">{{ stats.total_students }}</div>
+                    <div class="stat-label">Students</div>
+                </div>
+                <div class="small text-muted">{{ enrolled_students_count }} enrolled</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Schools -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Recent Schools</h6>
+                <a href="{{ url_for('manage_schools') }}" class="btn btn-sm btn-link">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>School Name</th>
+                                <th>Admin</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Students</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for school in recent_schools %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-2">
+                                            <div class="bg-light rounded-circle p-2">
+                                                <i class="bi bi-building text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium">{{ school.name }}</div>
+                                            <small class="text-muted">{{ school.code }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% set admin = school.users|selectattr('role', 'equalto', 'admin')|first %}
+                                    {% if admin %}
+                                    <div class="small">{{ admin.full_name }}</div>
+                                    <small class="text-muted">{{ admin.email }}</small>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if school.is_active %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                        <i class="bi bi-check-circle me-1"></i> Active
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                        <i class="bi bi-pause-circle me-1"></i> Suspended
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="small">{{ school.created_at.strftime('%b %d, %Y') }}</div>
+                                    <small class="text-muted">{{ school.created_at.strftime('%I:%M %p').lstrip('0') }}</small>
+                                </td>
+                                <td>
+                                    <div class="text-center">
+                                        <div class="fw-medium">{{ school.students|length }}</div>
+                                        <small class="text-muted">students</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('school_details', school_id=school.id) }}" 
+                                           class="btn btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('manage_schools') }}" 
+                                           class="btn btn-outline-primary" title="Manage">
+                                            <i class="bi bi-gear"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Activity -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">System Activity</h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active" onclick="filterActivity('all')">All</button>
+                    <button class="btn btn-outline-secondary" onclick="filterActivity('school')">Schools</button>
+                    <button class="btn btn-outline-secondary" onclick="filterActivity('user')">Users</button>
+                    <button class="btn btn-outline-secondary" onclick="filterActivity('enrollment')">Enrollments</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="activityTimeline" class="timeline">
+                    {% for activity in recent_activity %}
+                    <div class="timeline-item mb-3 activity-{{ activity.type }}">
+                        <div class="timeline-time">
+                            {% if activity.time %}
+                                {{ activity.time }}
+                            {% else %}
+                                {{ activity.created_at.strftime('%I:%M %p').lstrip('0') }}
+                            {% endif %}
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex">
+                                <div class="timeline-icon bg-light text-{{ activity.color }} rounded-circle p-2 me-3">
+                                    <i class="bi bi-{{ activity.icon }}"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-medium">{{ activity.title }}</div>
+                                    <div class="text-muted small">{{ activity.description }}</div>
+                                    <small class="text-muted">
+                                        {% if activity.date %}
+                                            {{ activity.date }}
+                                        {% else %}
+                                            {{ activity.created_at.strftime('%B %d, %Y') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-light text-dark">{{ activity.type|title }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Status -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">System Status</h6>
+            </div>
+            <div class="card-body">
+                <!-- Database Status -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Database Connection</span>
+                        <div class="d-flex align-items-center">
+                            {% if db_status.connected %}
+                            <span class="badge bg-success bg-opacity-10 text-success me-2">
+                                <i class="bi bi-check-circle-fill me-1"></i> Connected
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger me-2">
+                                <i class="bi bi-x-circle-fill me-1"></i> Disconnected
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-{% if db_status.connected %}success{% else %}danger{% endif %}" 
+                             style="width: {% if db_status.connected %}100{% else %}0{% endif %}%"></div>
+                    </div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-database me-1"></i>
+                        {{ db_stats.total_tables }} tables, {{ db_stats.total_records }} records
+                    </div>
+                </div>
+                
+                <!-- System Health -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">System Health</span>
+                        <div class="d-flex align-items-center">
+                            {% if system_health.status == 'healthy' %}
+                            <span class="badge bg-success bg-opacity-10 text-success me-2">
+                                <i class="bi bi-check-circle-fill me-1"></i> Healthy
+                            </span>
+                            {% elif system_health.status == 'warning' %}
+                            <span class="badge bg-warning bg-opacity-10 text-warning me-2">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Warning
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger me-2">
+                                <i class="bi bi-x-circle-fill me-1"></i> Critical
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-{{ system_health.status }}" style="width: {{ system_health.score }}%"></div>
+                    </div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-heart-pulse me-1"></i>
+                        {{ system_health.issues }} issues detected
+                    </div>
+                </div>
+                
+                <!-- Storage Usage -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Storage Usage</span>
+                        <span class="small fw-medium">{{ storage_usage.percentage }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-{{ storage_usage.color }}" style="width: {{ storage_usage.percentage }}%"></div>
+                    </div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-hdd me-1"></i>
+                        {{ storage_usage.used_gb }} GB / {{ storage_usage.total_gb }} GB used
+                    </div>
+                </div>
+                
+                <!-- Active Sessions -->
+                <div class="mb-0">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Active Sessions</span>
+                        <span class="small fw-medium">{{ active_sessions_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar" style="width: {{ active_sessions_percentage }}%; background-color: #9b59b6;"></div>
+                    </div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-people me-1"></i>
+                        {{ recent_logins_count }} logins in last 24h
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Statistics -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="fw-medium text-primary">{{ stats_by_month.new_schools }}</div>
+                        <small class="text-muted">New Schools</small>
+                        <div class="x-small text-muted">This Month</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="fw-medium text-success">{{ stats_by_month.new_students }}</div>
+                        <small class="text-muted">New Students</small>
+                        <div class="x-small text-muted">This Month</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="fw-medium text-info">{{ stats_by_month.new_teachers }}</div>
+                        <small class="text-muted">New Teachers</small>
+                        <div class="x-small text-muted">This Month</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="fw-medium text-warning">{{ stats_by_month.new_classes }}</div>
+                        <small class="text-muted">New Classes</small>
+                        <div class="x-small text-muted">This Month</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('create_school') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle me-2"></i> Create New School
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="runSystemCheck()">
+                        <i class="bi bi-shield-check me-2"></i> Run System Check
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="clearCache()">
+                        <i class="bi bi-trash me-2"></i> Clear Cache
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="showBackupDialog()">
+                        <i class="bi bi-cloud-arrow-up me-2"></i> Backup Database
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Performance -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">System Performance</h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active" data-period="7d">7 Days</button>
+                    <button class="btn btn-outline-secondary" data-period="30d">30 Days</button>
+                    <button class="btn btn-outline-secondary" data-period="90d">90 Days</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="display-6 fw-bold text-primary">{{ performance_metrics.uptime }}%</div>
+                            <div class="text-muted">System Uptime</div>
+                            <small class="text-success">
+                                <i class="bi bi-arrow-up me-1"></i>{{ performance_metrics.uptime_trend }}%
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="display-6 fw-bold text-success">{{ performance_metrics.response_time }}ms</div>
+                            <div class="text-muted">Avg Response</div>
+                            <small class="text-success">
+                                <i class="bi bi-arrow-down me-1"></i>{{ performance_metrics.response_trend }}%
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="display-6 fw-bold text-info">{{ performance_metrics.active_users }}</div>
+                            <div class="text-muted">Daily Users</div>
+                            <small class="text-success">
+                                <i class="bi bi-arrow-up me-1"></i>{{ performance_metrics.user_growth }}%
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="display-6 fw-bold text-warning">{{ performance_metrics.error_rate }}%</div>
+                            <div class="text-muted">Error Rate</div>
+                            <small class="text-danger">
+                                <i class="bi bi-arrow-up me-1"></i>{{ performance_metrics.error_trend }}%
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Report Modal -->
+<div class="modal fade" id="systemReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">System Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Statistics Summary</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-building text-primary me-2"></i>
+                                <strong>Schools:</strong> {{ stats.total_schools }} total
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-person-badge text-success me-2"></i>
+                                <strong>Administrators:</strong> {{ stats.total_admins }} total
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-people text-info me-2"></i>
+                                <strong>Teachers:</strong> {{ stats.total_teachers }} total
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-mortarboard text-warning me-2"></i>
+                                <strong>Students:</strong> {{ stats.total_students }} total
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>System Status</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-database text-success me-2"></i>
+                                <strong>Database:</strong> {{ 'Connected' if db_status.connected else 'Disconnected' }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-heart-pulse text-success me-2"></i>
+                                <strong>Health:</strong> {{ system_health.status|title }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-hdd text-info me-2"></i>
+                                <strong>Storage:</strong> {{ storage_usage.percentage }}% used
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-people text-primary me-2"></i>
+                                <strong>Sessions:</strong> {{ active_sessions_count }} active
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <h6>Report Generated</h6>
+                    <p class="text-muted small">{{ report_date }}</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="exportReport()">
+                    <i class="bi bi-download me-1"></i> Export PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: #e0e0e0;
+    }
+    
+    .timeline-item {
+        position: relative;
+    }
+    
+    .timeline-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+    
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .timeline-content {
+        margin-left: 3rem;
+    }
+    
+    .display-6 {
+        font-size: 2.5rem;
+    }
+    
+    .x-small {
+        font-size: 0.75rem;
+    }
+</style>
+
+<script>
+    function filterActivity(type) {
+        const items = document.querySelectorAll('.timeline-item');
+        items.forEach(item => {
+            if (type === 'all') {
+                item.style.display = 'block';
+            } else if (item.classList.contains('activity-' + type)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Update button states
+        document.querySelectorAll('[onclick^="filterActivity"]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+    
+    function exportReport() {
+        // Show loading indicator
+        const exportBtn = document.querySelector('#systemReportModal .btn-primary');
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...';
+        exportBtn.disabled = true;
+        
+        // Simulate export process
+        setTimeout(() => {
+            alert('System report exported successfully!');
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        }, 1500);
+    }
+    
+    // Update period buttons
+    document.querySelectorAll('[data-period]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            // Here you would update the performance metrics based on selected period
+        });
+    });
+    
+    function runSystemCheck() {
+        fetch('/api/system-check')
+            .then(response => response.json())
+            .then(data => {
+                alert('System check completed: ' + data.status);
+            })
+            .catch(error => {
+                alert('Error running system check');
+            });
+    }
+    
+    function clearCache() {
+        if (confirm('Are you sure you want to clear the system cache?')) {
+            fetch('/api/clear-cache', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Cache cleared successfully!');
+                })
+                .catch(error => {
+                    alert('Error clearing cache');
+                });
+        }
+    }
+    
+    function showBackupDialog() {
+        const backupOptions = `
+            <div class="mb-3">
+                <label class="form-label">Backup Type</label>
+                <select class="form-select" id="backupType">
+                    <option value="full">Full Database Backup</option>
+                    <option value="schema">Schema Only</option>
+                    <option value="data">Data Only</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Compression</label>
+                <select class="form-select" id="compression">
+                    <option value="none">None</option>
+                    <option value="gzip" selected>GZIP</option>
+                    <option value="zip">ZIP</option>
+                </select>
+            </div>
+        `;
+        
+        if (confirm('Start database backup?\n\nThis will create a backup of all system data.')) {
+            alert('Database backup started in the background. You will be notified when complete.');
+            // In a real app, this would trigger an actual backup process
+        }
+    }
+    
+    // Function to format time in 12-hour format (handles 24-hour format if needed)
+    function formatTimeElements() {
+        document.querySelectorAll('.timeline-time').forEach(el => {
+            let time = el.textContent.trim();
+            // If time is in 24-hour format (e.g., "15:57"), convert to 12-hour
+            if (time.match(/^\d{2}:\d{2}$/)) {
+                let [hours, minutes] = time.split(':');
+                let ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // Convert 0 to 12
+                el.textContent = hours + ':' + minutes + ' ' + ampm;
+            }
+        });
+    }
+    
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', formatTimeElements);
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+<!-- templates/admin_manage_sessions.html -->
+{% extends "base.html" %}
+{% block title %}Manage Sessions{% endblock %}
+{% block header %}Manage Academic Sessions{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Sessions</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('create_session') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus-circle me-1"></i> Create Session
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if sessions %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Session Name</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Statistics</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td>
+                            <strong>{{ session.name }}</strong>
+                            {% if session.is_current %}
+                            <span class="badge bg-success ms-2">Current</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ session.start_date.strftime('%d %b %Y') }} - {{ session.end_date.strftime('%d %b %Y') }}
+                        </td>
+                        <td>
+                            {% if session.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set class_count = session.classes|selectattr('is_active')|list|length %}
+                            {% set enrollment_count = namespace(count=0) %}
+                            {% for class in session.classes %}
+                                {% set enrollment_count.count = enrollment_count.count + class.student_enrollments|selectattr('is_active')|list|length %}
+                            {% endfor %}
+                            
+                            <div class="small">
+                                <span class="badge bg-primary">{{ class_count }} classes</span>
+                                <span class="badge bg-info">{{ enrollment_count.count }} students</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if not session.is_current %}
+                                <form method="POST" action="{{ url_for('switch_session', session_id=session.id) }}" 
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-outline-primary" 
+                                            onclick="return confirm('Make {{ session.name }} the current session?')">
+                                        <i class="fas fa-toggle-on"></i> Set Current
+                                    </button>
+                                </form>
+                                {% endif %}
+                                
+                                <a href="{{ url_for('view_session_data', session_id=session.id) }}" 
+                                   class="btn btn-outline-info">
+                                    <i class="fas fa-eye"></i> View Data
+                                </a>
+                                
+                                {% if session.is_current %}
+                                <button class="btn btn-outline-success" disabled>
+                                    <i class="fas fa-check"></i> Current
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+            <h4 class="mt-3">No Academic Sessions</h4>
+            <p class="text-muted">Create your first academic session to get started.</p>
+            <a href="{{ url_for('create_session') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Create Session
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Session Management Guide -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Session Management Guide</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>How Sessions Work:</h6>
+                <ul>
+                    <li>Each session maintains separate data (classes, enrollments, teacher assignments)</li>
+                    <li>Only one session can be <strong>Current</strong> at a time</li>
+                    <li>New data (students, classes, teachers) is added to the current session</li>
+                    <li>You can view data from any historical session</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Best Practices:</h6>
+                <ul>
+                    <li>Create a new session at the start of each academic year</li>
+                    <li>Copy important data from previous session if needed</li>
+                    <li>Mark the new session as "Current" to start adding data</li>
+                    <li>Historical sessions remain accessible for reporting</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

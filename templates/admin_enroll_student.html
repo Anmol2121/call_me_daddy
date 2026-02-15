@@ -1,0 +1,104 @@
+<!-- templates/admin_enroll_student.html -->
+{% extends "base.html" %}
+{% block title %}Enroll Student{% endblock %}
+{% block header %}Enroll Student{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('enroll_student') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Student *</label>
+                        {{ form.student_id(class="form-select" + (" is-invalid" if form.student_id.errors else "")) }}
+                        {% for error in form.student_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <small class="text-muted">Select a student to enroll in the current session</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Class *</label>
+                        {{ form.class_id(class="form-select" + (" is-invalid" if form.class_id.errors else "")) }}
+                        {% for error in form.class_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <small class="text-muted">Classes available in current session: {{ context.current_session.name }}</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Roll Number *</label>
+                        {{ form.roll_number(class="form-control" + (" is-invalid" if form.roll_number.errors else ""), type="number", min="1") }}
+                        {% for error in form.roll_number.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <small class="text-muted">Unique roll number for this student in the selected class</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Enrolling student for session: <strong>{{ context.current_session.name }}</strong><br>
+                        Session dates: {{ context.current_session.start_date.strftime('%d %b %Y') }} to {{ context.current_session.end_date.strftime('%d %b %Y') }}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manage_students') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Display available seats -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Class Availability</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Capacity</th>
+                                <th>Enrolled</th>
+                                <th>Available</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for class in form.class_id.choices %}
+                                {% set class_obj = classes[loop.index0] %}
+                                {% if class_obj %}
+                                    {% set enrolled_count = class_obj.student_enrollments|selectattr('is_active')|list|length %}
+                                    {% set available = class_obj.capacity - enrolled_count %}
+                                    <tr>
+                                        <td>{{ class_obj.name }} ({{ class_obj.code }})</td>
+                                        <td>{{ class_obj.capacity }}</td>
+                                        <td>{{ enrolled_count }}</td>
+                                        <td>{{ available }}</td>
+                                        <td>
+                                            {% if available > 0 %}
+                                            <span class="badge bg-success">Available</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">Full</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

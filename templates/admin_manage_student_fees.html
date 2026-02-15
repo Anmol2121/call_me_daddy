@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+{% block title %}Manage Student Fees{% endblock %}
+{% block header %}Manage Student Fees{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Student Fees</li>
+{% endblock %}
+
+{% block actions %}
+<div class="dropdown">
+    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-plus me-1"></i> Quick Actions
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{{ url_for('create_fee_structure') }}"><i class="fas fa-money-bill-wave me-2"></i> Create Fee Structure</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('assign_fee_to_students_bulk') }}"><i class="fas fa-users me-2"></i> Bulk Assign Fees</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{{ url_for('fee_reports') }}"><i class="fas fa-chart-bar me-2"></i> View Reports</a></li>
+    </ul>
+</div>
+
+<!-- Filter Dropdown -->
+<div class="dropdown ms-2">
+    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-filter me-1"></i> Filter
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{{ url_for('manage_student_fees') }}">All Fees</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('manage_student_fees', status='pending') }}">Pending Only</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('manage_student_fees', status='partial') }}">Partial Only</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('manage_student_fees', status='paid') }}">Paid Only</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-primary">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_fees|default(0)|round|int }}</h2>
+                <div class="stat-label">Total Fees</div>
+                <small class="text-muted">All fee structures</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_paid|default(0)|round|int }}</h2>
+                <div class="stat-label">Total Collected</div>
+                <small class="text-muted">
+                    {% if total_fees > 0 %}
+                    {{ (total_paid/total_fees*100)|round|int }}% collected
+                    {% else %}
+                    0% collected
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ total_due|default(0)|round|int }}</h2>
+                <div class="stat-label">Total Due</div>
+                <small class="text-muted">
+                    {% set pending_fees = student_fees|selectattr('status', 'in', ['pending', 'partial'])|list %}
+                    {{ pending_fees|length }} records
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                {% set today = date.today() %}
+                {% set overdue_fees = [] %}
+                {% for fee in student_fees %}
+                    {% if fee.due_date < today and fee.status in ['pending', 'partial'] %}
+                        {% set _ = overdue_fees.append(fee) %}
+                    {% endif %}
+                {% endfor %}
+                <h2 class="stat-number">{{ overdue_fees|length }}</h2>
+                <div class="stat-label">Overdue Fees</div>
+                {% set overdue_amount = overdue_fees|sum(attribute='balance') %}
+                <small class="text-muted">₹{{ overdue_amount|round|int }} amount</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Filter Fees</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Student ID</label>
+                <input type="text" name="student_id" class="form-control" 
+                       value="{{ student_id }}" placeholder="Enter student ID">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Class</label>
+                <select name="class_id" class="form-select">
+                    <option value="">All Classes</option>
+                    {% for class in classes %}
+                    <option value="{{ class.id }}" {% if class_id|string == class.id|string %}selected{% endif %}>
+                        {{ class.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>Partial</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+                <a href="{{ url_for('manage_student_fees') }}" class="btn btn-secondary">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Student Fees Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Student Fee Records</h5>
+            <div>
+                <span class="badge bg-secondary">{{ student_fees|length }} records</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if student_fees %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="feesTable">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Fee Type</th>
+                        <th>Total Amount</th>
+                        <th>Discount</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fee in student_fees %}
+                    {% set today = date.today() %}
+                    {% set is_overdue = fee.due_date < today and fee.status in ['pending', 'partial'] %}
+                    <tr class="{% if is_overdue %}table-danger{% elif fee.status == 'paid' %}table-success{% elif fee.status == 'partial' %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ fee.student.first_name }} {{ fee.student.last_name }}</strong>
+                            <div class="small text-muted">{{ fee.student.student_id }}</div>
+                        </td>
+                        <td>
+                            {% if fee.class_id %}
+                                {{ fee.class_.name if fee.class_ else 'N/A' }}
+                            {% else %}
+                                All Classes
+                            {% endif %}
+                        </td>
+                        <td>{{ fee.fee_structure.name }}</td>
+                        <td>₹{{ fee.fee_amount }}</td>
+                        <td class="text-danger">-₹{{ fee.discount_amount }}</td>
+                        <td class="text-success">₹{{ fee.paid_amount }}</td>
+                        <td>
+                            <strong class="{% if fee.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ₹{{ fee.balance|round(2) }}
+                            </strong>
+                        </td>
+                        <td>
+                            {{ fee.due_date.strftime('%d %b %Y') }}
+                            {% if is_overdue %}
+                            <div class="small text-danger">
+                                <i class="fas fa-exclamation-circle"></i> Overdue
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if fee.status == 'paid' %}
+                            <span class="badge bg-success">Paid</span>
+                            {% elif fee.status == 'partial' %}
+                            <span class="badge bg-warning">Partial</span>
+                            {% elif is_overdue %}
+                            <span class="badge bg-danger">Overdue</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if fee.balance > 0 %}
+                                <a href="{{ url_for('record_fee_payment', student_fee_id=fee.id) }}" 
+                                   class="btn btn-primary" title="Record Payment">
+                                    <i class="fas fa-credit-card"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('view_student_details', student_id=fee.student_id) }}" 
+                                   class="btn btn-info" title="View Student">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-dark">
+                        <td colspan="3"><strong>Totals:</strong></td>
+                        <td><strong>₹{{ total_fees|default(0)|round|int }}</strong></td>
+                        <td class="text-danger"><strong>-₹{{ student_fees|sum(attribute='discount_amount')|round|int }}</strong></td>
+                        <td class="text-success"><strong>₹{{ total_paid|default(0)|round|int }}</strong></td>
+                        <td class="{% if total_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                            <strong>₹{{ total_due|default(0)|round|int }}</strong>
+                        </td>
+                        <td colspan="3">
+                            <strong>
+                                Collection Rate: 
+                                {% if total_fees > 0 %}
+                                {{ (total_paid/total_fees*100)|round(1) }}%
+                                {% else %}
+                                0%
+                                {% endif %}
+                            </strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <!-- Pagination (if needed) -->
+        {% if student_fees|length > 50 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-money-bill-wave fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No Fee Records Found</h4>
+            <p class="text-muted mb-4">
+                {% if fee_structures_count == 0 %}
+                No fee structures have been created yet.
+                {% elif stats and stats.has_unassigned_fees %}
+                Fee structures exist but are not assigned to students.
+                {% else %}
+                No student fees match your search criteria.
+                {% endif %}
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                {% if fee_structures_count == 0 %}
+                <a href="{{ url_for('create_fee_structure') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i> Create Fee Structure
+                </a>
+                {% elif stats and stats.has_unassigned_fees %}
+                <a href="{{ url_for('assign_fee_to_students_bulk') }}" class="btn btn-warning">
+                    <i class="fas fa-users me-2"></i> Assign Fees to Students
+                </a>
+                {% endif %}
+                <a href="{{ url_for('manage_student_fees') }}" class="btn btn-secondary">
+                    <i class="fas fa-sync me-2"></i> Clear Filters
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Batch Actions Card -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Batch Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-export fa-2x text-primary mb-3"></i>
+                        <h5>Export Data</h5>
+                        <p class="text-muted">Export fee records to Excel or PDF</p>
+                        <button onclick="exportData()" class="btn btn-outline-primary w-100">
+                            Export Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bullhorn fa-2x text-warning mb-3"></i>
+                        <h5>Send Reminders</h5>
+                        <p class="text-muted">Send fee reminders to parents</p>
+                        <button onclick="sendReminders()" class="btn btn-outline-warning w-100">
+                            Send Reminders
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-2x text-success mb-3"></i>
+                        <h5>View Analytics</h5>
+                        <p class="text-muted">Detailed fee analytics and reports</p>
+                        <a href="{{ url_for('fee_analytics') }}" class="btn btn-outline-success w-100">
+                            View Analytics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-icon-primary {
+    background-color: rgba(67, 97, 238, 0.1);
+    color: #4361ee;
+}
+
+.stat-icon-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.stat-icon-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.stat-icon-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.table-success {
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 2px;
+        border-radius: 0.25rem !important;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+}
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTables if available
+    if ($.fn.DataTable) {
+        $('#feesTable').DataTable({
+            pageLength: 25,
+            responsive: true,
+            order: [[7, 'asc']], // Sort by due date
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search records..."
+            }
+        });
+    }
+});
+
+function exportData() {
+    // Get current filter parameters
+    const params = new URLSearchParams(window.location.search);
+    const exportUrl = `/admin/fees/export?${params.toString()}`;
+    
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function sendReminders() {
+    if (confirm('Send fee reminders to parents with overdue fees?')) {
+        alert('This feature would send reminders in a production system.');
+        // In production, this would make an AJAX call to send reminders
+    }
+}
+</script>
+{% endblock %}

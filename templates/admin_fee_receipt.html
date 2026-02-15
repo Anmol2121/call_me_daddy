@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}Fee Receipt{% endblock %}
+{% block header %}Fee Receipt{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_student_fees') }}">Student Fees</a></li>
+<li class="breadcrumb-item active">Receipt</li>
+{% endblock %}
+
+{% block actions %}
+<button onclick="printPage()" class="btn btn-primary btn-sm me-2">
+    <i class="fas fa-print me-1"></i> Print Receipt
+</button>
+<button onclick="downloadPDF()" class="btn btn-success btn-sm">
+    <i class="fas fa-download me-1"></i> Download PDF
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Printable Receipt -->
+        <div class="card printable-area">
+            <div class="card-body p-5">
+                <!-- Header -->
+                <div class="text-center mb-4 border-bottom pb-4">
+                    <h1 class="text-primary">{{ context.school.name }}</h1>
+                    <p class="text-muted mb-1">{{ context.school.address }}</p>
+                    <p class="text-muted mb-0">
+                        Phone: {{ context.school.phone }} | Email: {{ context.school.email }}
+                    </p>
+                </div>
+                
+                <!-- Receipt Title -->
+                <div class="text-center mb-4">
+                    <h2 class="text-uppercase">FEE PAYMENT RECEIPT</h2>
+                    <p class="text-muted">Official Payment Confirmation</p>
+                </div>
+                
+                <!-- Receipt Details -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Receipt Number:</th>
+                                <td>{{ transaction.receipt_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>Date:</th>
+                                <td>{{ transaction.transaction_date.strftime('%d %b %Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Transaction ID:</th>
+                                <td>{{ transaction.transaction_id }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Payment Method:</th>
+                                <td>{{ transaction.payment_method|title }}</td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    <span class="badge bg-success">PAID</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Student Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Student Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">Student Name:</th>
+                                        <td>{{ transaction.student.first_name }} {{ transaction.student.last_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Student ID:</th>
+                                        <td>{{ transaction.student.student_id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Class:</th>
+                                        <td>
+                                            {% if transaction.student_fee %}
+                                                {{ transaction.student_fee.class_.name }}
+                                            {% else %}
+                                                Not specified
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">Parent/Guardian:</th>
+                                        <td>{{ transaction.student.father_name or 'Not specified' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Session:</th>
+                                        <td>
+                                            {% if transaction.student_fee %}
+                                                {{ transaction.student_fee.session.name }}
+                                            {% else %}
+                                                {{ context.current_session.name }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Details -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Payment Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Amount (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            {% if transaction.student_fee %}
+                                                {{ transaction.student_fee.fee_structure.name }} Payment
+                                            {% else %}
+                                                Fee Payment
+                                            {% endif %}
+                                        </td>
+                                        <td>₹{{ transaction.amount }}</td>
+                                    </tr>
+                                    <tr class="table-light">
+                                        <th class="text-end">Total Paid:</th>
+                                        <th>₹{{ transaction.amount }}</th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Notes:</strong> This receipt is computer generated and does not require a signature.
+                    Please keep this receipt for your records.
+                </div>
+                
+                <!-- Footer -->
+                <div class="mt-4 pt-4 border-top">
+                    <div class="row">
+                        <div class="col-md-6 text-center">
+                            <p class="mb-1">___________________</p>
+                            <small class="text-muted">Student/Parent Signature</small>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <p class="mb-1">___________________</p>
+                            <small class="text-muted">School Authority</small>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            Generated on: {{ now.strftime('%d %b %Y %I:%M %p') }} | 
+                            System: EduManage Pro
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="card mt-4 no-print">
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button onclick="printPage()" class="btn btn-primary">
+                        <i class="fas fa-print me-2"></i> Print Receipt
+                    </button>
+                    <button onclick="sendEmail()" class="btn btn-info">
+                        <i class="fas fa-envelope me-2"></i> Email to Parent
+                    </button>
+                    <a href="{{ url_for('manage_student_fees') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Fees
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.printable-area {
+    background-color: white;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .printable-area, .printable-area * {
+        visibility: visible;
+    }
+    
+    .printable-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+@page {
+    size: A4;
+    margin: 20mm;
+}
+</style>
+
+<script>
+function printPage() {
+    window.print();
+}
+
+function downloadPDF() {
+    alert('PDF download would be implemented with proper libraries (jsPDF, html2canvas).');
+    
+    // In production:
+    // 1. Use jsPDF + html2canvas to generate PDF
+    // 2. Or use server-side PDF generation (ReportLab, WeasyPrint)
+}
+
+function sendEmail() {
+    alert('Email functionality would send this receipt to the parent email.');
+}
+
+// Add current date/time for receipt generation
+document.addEventListener('DOMContentLoaded', function() {
+    // This would be handled server-side in production
+    // For demo, we'll just add a timestamp
+    const now = new Date();
+    console.log('Receipt generated at:', now.toLocaleString());
+});
+</script>
+{% endblock %}

@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+{% block title %}Fee Analytics Dashboard{% endblock %}
+{% block header %}Fee Analytics{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Fee Analytics</li>
+{% endblock %}
+
+{% block actions %}
+<div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-calendar-alt me-2"></i> {{ context.view_session.name }}
+    </button>
+    <ul class="dropdown-menu">
+        {% for session in context.all_sessions %}
+        <li><a class="dropdown-item" href="{{ url_for('switch_view_session', session_id=session.id) }}">{{ session.name }}</a></li>
+        {% endfor %}
+    </ul>
+</div>
+
+<button class="btn btn-success ms-2" onclick="window.print()">
+    <i class="fas fa-print me-2"></i> Export Report
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Overview Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon bg-primary-light text-primary">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <h2 class="stats-number">₹{{ stats.total_fees|default(0)|round|int }}</h2>
+            <div class="stats-label">Total Fees</div>
+            <div class="mt-2">
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light text-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 class="stats-number">₹{{ stats.total_paid|default(0)|round|int }}</h2>
+            <div class="stats-label">Collected</div>
+            <div class="mt-2">
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: {{ stats.collection_rate|default(0) }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light text-warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h2 class="stats-number">₹{{ stats.total_due|default(0)|round|int }}</h2>
+            <div class="stats-label">Pending</div>
+            <div class="mt-2">
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-warning" style="width: {{ (stats.total_due|default(0) / stats.total_fees|default(1) * 100)|round|int }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light text-info">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h2 class="stats-number">{{ stats.collection_rate|default(0)|round(1) }}%</h2>
+            <div class="stats-label">Collection Rate</div>
+            <div class="mt-2">
+                {% if stats.collection_rate|default(0) >= 80 %}
+                <span class="badge bg-success">Excellent</span>
+                {% elif stats.collection_rate|default(0) >= 50 %}
+                <span class="badge bg-warning">Average</span>
+                {% else %}
+                <span class="badge bg-danger">Needs Improvement</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Collection Trend - {{ context.view_session.name }}</h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_collection and monthly_collection.data|length > 0 %}
+                <canvas id="collectionChart" height="100"></canvas>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3 opacity-25"></i>
+                    <h5 class="text-muted mb-2">No Collection Data Available</h5>
+                    <p class="text-muted mb-4">No fee transactions recorded for this session yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Payment Methods</h5>
+            </div>
+            <div class="card-body">
+                {% if payment_methods and payment_methods.labels|length > 0 %}
+                <canvas id="paymentMethodChart" height="200"></canvas>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-credit-card fa-3x text-muted mb-3 opacity-25"></i>
+                    <h5 class="text-muted mb-2">No Payment Data Available</h5>
+                    <p class="text-muted mb-4">No payment method data recorded yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Class-wise Performance -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Class-wise Performance</h5>
+            </div>
+            <div class="card-body">
+                {% if class_distribution and class_distribution|length > 0 %}
+                <canvas id="classPerformanceChart" height="80"></canvas>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chalkboard fa-3x text-muted mb-3 opacity-25"></i>
+                    <h5 class="text-muted mb-2">No Class Data Available</h5>
+                    <p class="text-muted mb-4">No class-wise fee data available yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Statistics -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Detailed Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="text-center p-3 bg-primary-light rounded">
+                            <div class="text-primary fw-bold h4">{{ stats.student_count|default(0) }}</div>
+                            <div class="text-muted small">Students with Fees</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center p-3 bg-warning-light rounded">
+                            <div class="text-warning fw-bold h4">{{ stats.pending_students|default(0) + stats.partial_students|default(0) }}</div>
+                            <div class="text-muted small">Students with Dues</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center p-3 bg-success-light rounded">
+                            <div class="text-success fw-bold h4">₹{{ stats.total_discount|default(0)|round|int }}</div>
+                            <div class="text-muted small">Total Discount</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center p-3 bg-danger-light rounded">
+                            <div class="text-danger fw-bold h4">₹{{ stats.total_fine|default(0)|round|int }}</div>
+                            <div class="text-muted small">Total Fine</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center p-3 bg-info-light rounded">
+                            <div class="text-info fw-bold h4">{{ stats.paid_students|default(0) }}</div>
+                            <div class="text-muted small">Students Paid</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center p-3 bg-secondary-light rounded">
+                            <div class="text-secondary fw-bold h4">{{ stats.overdue_count|default(0) }}</div>
+                            <div class="text-muted small">Overdue Records</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Transactions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                <div class="list-group list-group-flush">
+                    {% for transaction in recent_transactions[:5] %}
+                    <div class="list-group-item border-0 px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">{{ transaction.student.first_name }} {{ transaction.student.last_name }}</div>
+                                <small class="text-muted">{{ transaction.transaction_date.strftime('%d %b, %I:%M %p') }}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-success fw-bold">₹{{ transaction.amount }}</div>
+                                <small class="text-muted">{{ transaction.payment_method|default('Not specified')|title }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('fee_reports') }}" class="btn btn-sm btn-outline-primary">
+                        View All Transactions <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3 opacity-25"></i>
+                    <h5 class="text-muted mb-2">No Recent Transactions</h5>
+                    <p class="text-muted mb-4">No fee transactions recorded in the last 30 days</p>
+                    <a href="{{ url_for('manage_student_fees') }}" class="btn btn-primary">
+                        <i class="fas fa-credit-card me-2"></i> Collect Fees
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Class-wise Performance Table -->
+{% if class_distribution and class_distribution|length > 0 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Class-wise Fee Collection Details</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 ps-4">Class</th>
+                                <th class="border-0 text-center">Students</th>
+                                <th class="border-0 text-center">Total Fees</th>
+                                <th class="border-0 text-center">Collected</th>
+                                <th class="border-0 text-center">Discount</th>
+                                <th class="border-0 text-center">Due</th>
+                                <th class="border-0 text-center">Collection Rate</th>
+                                <th class="border-0 text-center pe-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for class in class_distribution %}
+                            <tr class="hover-row">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light rounded p-2 me-3">
+                                            <i class="fas fa-chalkboard text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ class.class.name }}</div>
+                                            <div class="small text-muted">{{ class.class.code }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-bold">{{ class.student_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="fw-bold">₹{{ class.total_fees|default(0)|round|int }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-success fw-bold">₹{{ class.total_paid|default(0)|round|int }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-danger fw-bold">-₹{{ class.total_discount|default(0)|round|int }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="{% if class.total_due|default(0) > 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                                        ₹{{ class.total_due|default(0)|round|int }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    {% set rate = class.collection_rate|default(0) %}
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px; max-width: 100px;">
+                                            <div class="progress-bar {% if rate >= 80 %}bg-success{% elif rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ rate|round|int }}%">
+                                            </div>
+                                        </div>
+                                        <span class="small fw-bold">{{ rate|round(1) }}%</span>
+                                    </div>
+                                </td>
+                                <td class="text-center pe-4">
+                                    {% set rate = class.collection_rate|default(0) %}
+                                    {% if rate >= 80 %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i> Excellent
+                                    </span>
+                                    {% elif rate >= 50 %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock me-1"></i> Average
+                                    </span>
+                                    {% elif rate > 0 %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-exclamation me-1"></i> Needs Attention
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-info-circle me-1"></i> No Data
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Collection Trend Chart with real data
+    const collectionCtx = document.getElementById('collectionChart');
+    if (collectionCtx) {
+        const collectionChart = new Chart(collectionCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: {{ monthly_collection.labels|tojson|default([]) }},
+                datasets: [{
+                    label: 'Collection (₹)',
+                    data: {{ monthly_collection.data|tojson|default([]) }},
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#4361ee',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#4361ee',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return '₹' + context.parsed.y.toLocaleString('en-IN');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#64748b'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(100, 116, 139, 0.1)'
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            callback: function(value) {
+                                return '₹' + (value / 1000) + 'k';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Payment Method Chart with real data
+    const paymentCtx = document.getElementById('paymentMethodChart');
+    if (paymentCtx) {
+        const paymentChart = new Chart(paymentCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ payment_methods.labels|tojson|default([]) }},
+                datasets: [{
+                    data: {{ payment_methods.data|tojson|default([]) }},
+                    backgroundColor: [
+                        '#10b981', // Cash - Green
+                        '#4361ee', // Online - Blue
+                        '#f59e0b', // Bank Transfer - Orange
+                        '#8b5cf6', // Card - Purple
+                        '#64748b', // Cheque - Gray
+                        '#ef4444'  // Other - Red
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Class Performance Chart with real data
+    const classCtx = document.getElementById('classPerformanceChart');
+    if (classCtx) {
+        const classChart = new Chart(classCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [
+                    {% for class in class_distribution %}
+                    '{{ class.class.name }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Collection Rate %',
+                    data: [
+                        {% for class in class_distribution %}
+                        {{ class.collection_rate|default(0)|round(1) }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        {% for class in class_distribution %}
+                        {% if class.collection_rate|default(0) >= 80 %}
+                        '#10b981',
+                        {% elif class.collection_rate|default(0) >= 50 %}
+                        '#f59e0b',
+                        {% else %}
+                        '#ef4444',
+                        {% endif %}
+                        {% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    borderColor: [
+                        {% for class in class_distribution %}
+                        {% if class.collection_rate|default(0) >= 80 %}
+                        '#0da271',
+                        {% elif class.collection_rate|default(0) >= 50 %}
+                        '#d97706',
+                        {% else %}
+                        '#dc2626',
+                        {% endif %}
+                        {% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Collection Rate: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(100, 116, 139, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Add hover effects to table rows
+    document.querySelectorAll('.hover-row').forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(67, 97, 238, 0.02)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+});
+</script>
+
+<style>
+.stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+}
+
+.stats-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.bg-primary-light {
+    background-color: rgba(67, 97, 238, 0.1);
+}
+
+.bg-success-light {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.bg-warning-light {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.bg-danger-light {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.bg-info-light {
+    background-color: rgba(14, 165, 233, 0.1);
+}
+
+.bg-secondary-light {
+    background-color: rgba(100, 116, 139, 0.1);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+@media (max-width: 768px) {
+    .stats-number {
+        font-size: 1.5rem;
+    }
+    
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}

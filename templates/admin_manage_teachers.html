@@ -1,0 +1,725 @@
+{% extends "base.html" %}
+{% block title %}Manage Teachers{% endblock %}
+{% block header %}Manage Teachers{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Teachers</li>
+{% endblock %}
+
+{% block actions %}
+<div class="btn-group">
+    <a href="{{ url_for('create_teacher') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus-circle me-1"></i> Add Teacher
+    </a>
+    <a href="{{ url_for('assign_teacher') }}" class="btn btn-success btn-sm">
+        <i class="fas fa-person-chalkboard me-1"></i> Assign Teacher
+    </a>
+    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="fas fa-cog me-1"></i> More
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#"><i class="fas fa-file-export me-2"></i> Export List</a></li>
+        <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i> Print Roster</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i> View Statistics</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search teachers..." id="teacherSearch">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="password-reset">Password Reset Required</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="assignmentFilter">
+                    <option value="all">All Assignments</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="unassigned">Not Assigned</option>
+                    <option value="class-teacher">Class Teachers</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                    <i class="fas fa-redo me-1"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Summary Cards -->
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card stat-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Teachers</h6>
+                        <h2 class="mb-0">{{ teacher_data|length }}</h2>
+                    </div>
+                    <div class="avatar-md bg-primary-light text-primary rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    {% set active_count = teacher_data|selectattr('teacher.is_active')|list|length %}
+                    {% set inactive_count = teacher_data|rejectattr('teacher.is_active')|list|length %}
+                    <span class="badge bg-primary">Active: {{ active_count }}</span>
+                    <span class="badge bg-secondary ms-1">Inactive: {{ inactive_count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card stat-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Assigned Classes</h6>
+                        <h2 class="mb-0">
+                            {% set total_assignments = namespace(count=0) %}
+                            {% for data in teacher_data %}
+                                {% set total_assignments.count = total_assignments.count + data.assigned_classes|length %}
+                            {% endfor %}
+                            {{ total_assignments.count }}
+                        </h2>
+                    </div>
+                    <div class="avatar-md bg-success-light text-success rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="fas fa-chalkboard"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Average per teacher: 
+                        {% if teacher_data|length > 0 %}
+                            {{ (total_assignments.count / teacher_data|length)|round(1) }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card stat-card border-start border-warning border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Password Reset</h6>
+                        <h2 class="mb-0">
+                            {% set reset_count = teacher_data|selectattr('teacher.must_change_password')|list|length %}
+                            {{ reset_count }}
+                        </h2>
+                    </div>
+                    <div class="avatar-md bg-warning-light text-warning rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="fas fa-key"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    {% if reset_count > 0 %}
+                    <span class="badge bg-warning">{{ reset_count }} need attention</span>
+                    {% else %}
+                    <span class="badge bg-success">All updated</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card stat-card border-start border-info border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Class Teachers</h6>
+                        <h2 class="mb-0">
+                            {% set class_teacher_count = namespace(count=0) %}
+                            {% for data in teacher_data %}
+                                {% for class in data.assigned_classes %}
+                                    {% if class.is_class_teacher %}
+                                        {% set class_teacher_count.count = class_teacher_count.count + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {{ class_teacher_count.count }}
+                        </h2>
+                    </div>
+                    <div class="avatar-md bg-info-light text-info rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Leadership role</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teachers Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Teacher List</h5>
+            <div>
+                <span class="badge bg-light text-dark me-2">
+                    Showing {{ teacher_data|length }} teachers
+                </span>
+                <button class="btn btn-sm btn-outline-primary" onclick="toggleView()">
+                    <i class="fas fa-th-large me-1"></i> Card View
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if teacher_data %}
+        <!-- Table View -->
+        <div id="tableView">
+            <div class="table-responsive">
+                <table class="table table-hover" id="teachersTable">
+                    <thead>
+                        <tr>
+                            <th width="40">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll">
+                                </div>
+                            </th>
+                            <th>Teacher</th>
+                            <th>Contact</th>
+                            <th>Assigned Classes</th>
+                            <th>Subjects</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in teacher_data %}
+                        <tr data-status="{% if data.teacher.is_active %}active{% else %}inactive{% endif %}"
+                            data-password="{% if data.teacher.must_change_password %}reset{% else %}updated{% endif %}"
+                            data-assigned="{% if data.assigned_classes %}assigned{% else %}unassigned{% endif %}">
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input teacher-checkbox" type="checkbox" value="{{ data.teacher.id }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                        {{ data.teacher.full_name[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ data.teacher.full_name }}</strong>
+                                        <!-- Fixed line: Using format method instead of rjust filter -->
+                                        <div class="small text-muted">ID: T-{{ "%04d"|format(data.teacher.id) }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <div><i class="fas fa-envelope me-1"></i>{{ data.teacher.email }}</div>
+                                    <div><i class="fas fa-phone me-1"></i>{{ data.teacher.phone or 'Not provided' }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if data.assigned_classes %}
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for class in data.assigned_classes %}
+                                        <span class="badge bg-primary" data-bs-toggle="tooltip" title="{{ class.name }}">
+                                            {{ class.name[:3] }}
+                                            {% if class.is_class_teacher %}
+                                            <i class="fas fa-crown ms-1"></i>
+                                            {% endif %}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">Not assigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if data.subjects %}
+                                    <span class="small">{{ data.subjects[:30] }}{% if data.subjects|length > 30 %}...{% endif %}</span>
+                                {% else %}
+                                    <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    {% if data.teacher.is_active %}
+                                    <span class="badge bg-success mb-1">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary mb-1">Inactive</span>
+                                    {% endif %}
+                                    
+                                    {% if data.teacher.must_change_password %}
+                                    <span class="badge bg-warning">Password Reset</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('view_teacher_details', teacher_id=data.teacher.id) }}" 
+                                       class="btn btn-outline-info" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('edit_teacher', teacher_id=data.teacher.id) }}" 
+                                       class="btn btn-outline-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('reset_teacher_password', teacher_id=data.teacher.id) }}" 
+                                       class="btn btn-outline-warning" title="Reset Password"
+                                       onclick="return confirm('Reset password for {{ data.teacher.full_name }}?')">
+                                        <i class="fas fa-key"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                            data-bs-toggle="dropdown" title="More">
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('view_teacher_details', teacher_id=data.teacher.id) }}">
+                                                <i class="fas fa-info-circle me-2"></i> Full Profile
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('edit_teacher', teacher_id=data.teacher.id) }}">
+                                                <i class="fas fa-user-edit me-2"></i> Edit Details
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('reset_teacher_password', teacher_id=data.teacher.id) }}">
+                                                <i class="fas fa-key me-2"></i> Reset Password
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="#" 
+                                               onclick="return confirm('Deactivate {{ data.teacher.full_name }}?')">
+                                                <i class="fas fa-user-slash me-2"></i> Deactivate
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Bulk Actions -->
+            <div class="card bg-light mt-3" id="bulkActions" style="display: none;">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="small" id="selectedCount">0 teachers selected</span>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="bulkActivate()">
+                                <i class="fas fa-toggle-on me-1"></i> Activate
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="bulkDeactivate()">
+                                <i class="fas fa-toggle-off me-1"></i> Deactivate
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="bulkResetPassword()">
+                                <i class="fas fa-key me-1"></i> Reset Password
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="clearSelection()">
+                                <i class="fas fa-times me-1"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card View (Hidden by Default) -->
+        <div id="cardView" style="display: none;">
+            <div class="row g-3">
+                {% for data in teacher_data %}
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card teacher-card h-100" 
+                         data-status="{% if data.teacher.is_active %}active{% else %}inactive{% endif %}"
+                         data-password="{% if data.teacher.must_change_password %}reset{% else %}updated{% endif %}"
+                         data-assigned="{% if data.assigned_classes %}assigned{% else %}unassigned{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                    {{ data.teacher.full_name[0]|upper }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1">{{ data.teacher.full_name }}</h5>
+                                    <p class="text-muted small mb-2">{{ data.teacher.email }}</p>
+                                    <div>
+                                        {% if data.teacher.is_active %}
+                                        <span class="badge bg-success me-1">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary me-1">Inactive</span>
+                                        {% endif %}
+                                        {% if data.teacher.must_change_password %}
+                                        <span class="badge bg-warning">Password Reset</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="small text-muted mb-1">Phone</div>
+                                <div>{{ data.teacher.phone or 'Not provided' }}</div>
+                            </div>
+                            
+                            {% if data.assigned_classes %}
+                            <div class="mb-3">
+                                <div class="small text-muted mb-1">Assigned Classes</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for class in data.assigned_classes %}
+                                    <span class="badge bg-primary">
+                                        {{ class.name }}
+                                        {% if class.is_class_teacher %}
+                                        <i class="fas fa-crown ms-1"></i>
+                                        {% endif %}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if data.subjects %}
+                            <div class="mb-3">
+                                <div class="small text-muted mb-1">Subjects</div>
+                                <div class="small">{{ data.subjects }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="border-top pt-3 mt-3">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="{{ url_for('view_teacher_details', teacher_id=data.teacher.id) }}" 
+                                       class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('edit_teacher', teacher_id=data.teacher.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('reset_teacher_password', teacher_id=data.teacher.id) }}" 
+                                       class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-key"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="text-center py-5">
+            <div class="avatar-lg bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                <i class="fas fa-chalkboard-teacher fa-2x"></i>
+            </div>
+            <h4 class="mt-3">No Teachers Found</h4>
+            <p class="text-muted">Get started by adding your first teacher to the system.</p>
+            <a href="{{ url_for('create_teacher') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Add Teacher
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if teacher_data %}
+    <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="small text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Click on teacher name to view details, or use action buttons for management.
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="exportTeachers()">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Stats Modal -->
+<div class="modal fade" id="statsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Teacher Statistics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Distribution by Status</h6>
+                        <canvas id="statusChart" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Password Status</h6>
+                        <canvas id="passwordChart" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h6>Recent Activity</h6>
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span>New Teachers (Last 30 days)</span>
+                                <strong>0</strong>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span>Password Resets (Last 30 days)</span>
+                                <strong>0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // DOM Elements
+    let tableView = document.getElementById('tableView');
+    let cardView = document.getElementById('cardView');
+    let isCardView = false;
+    
+    // Toggle between table and card view
+    function toggleView() {
+        isCardView = !isCardView;
+        if (isCardView) {
+            tableView.style.display = 'none';
+            cardView.style.display = 'block';
+            document.querySelector('button[onclick="toggleView()"]').innerHTML = '<i class="fas fa-list me-1"></i> Table View';
+        } else {
+            tableView.style.display = 'block';
+            cardView.style.display = 'none';
+            document.querySelector('button[onclick="toggleView()"]').innerHTML = '<i class="fas fa-th-large me-1"></i> Card View';
+        }
+    }
+    
+    // Search functionality
+    document.getElementById('teacherSearch').addEventListener('input', function(e) {
+        let searchTerm = e.target.value.toLowerCase();
+        let rows = document.querySelectorAll('#teachersTable tbody tr');
+        let cards = document.querySelectorAll('.teacher-card');
+        
+        rows.forEach(row => {
+            let text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        
+        cards.forEach(card => {
+            let text = card.textContent.toLowerCase();
+            card.closest('.col-xl-4').style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+    
+    // Filter functionality
+    document.getElementById('statusFilter').addEventListener('change', filterTeachers);
+    document.getElementById('assignmentFilter').addEventListener('change', filterTeachers);
+    
+    function filterTeachers() {
+        let statusFilter = document.getElementById('statusFilter').value;
+        let assignmentFilter = document.getElementById('assignmentFilter').value;
+        let rows = document.querySelectorAll('#teachersTable tbody tr');
+        let cards = document.querySelectorAll('.teacher-card');
+        
+        rows.forEach(row => {
+            let status = row.getAttribute('data-status');
+            let password = row.getAttribute('data-password');
+            let assigned = row.getAttribute('data-assigned');
+            let show = true;
+            
+            if (statusFilter === 'active' && status !== 'active') show = false;
+            if (statusFilter === 'inactive' && status !== 'inactive') show = false;
+            if (statusFilter === 'password-reset' && password !== 'reset') show = false;
+            
+            if (assignmentFilter === 'assigned' && assigned !== 'assigned') show = false;
+            if (assignmentFilter === 'unassigned' && assigned !== 'unassigned') show = false;
+            if (assignmentFilter === 'class-teacher') {
+                let classTeacher = row.querySelector('.fa-crown');
+                if (!classTeacher) show = false;
+            }
+            
+            row.style.display = show ? '' : 'none';
+        });
+        
+        cards.forEach(card => {
+            let status = card.getAttribute('data-status');
+            let password = card.getAttribute('data-password');
+            let assigned = card.getAttribute('data-assigned');
+            let show = true;
+            
+            if (statusFilter === 'active' && status !== 'active') show = false;
+            if (statusFilter === 'inactive' && status !== 'inactive') show = false;
+            if (statusFilter === 'password-reset' && password !== 'reset') show = false;
+            
+            if (assignmentFilter === 'assigned' && assigned !== 'assigned') show = false;
+            if (assignmentFilter === 'unassigned' && assigned !== 'unassigned') show = false;
+            if (assignmentFilter === 'class-teacher') {
+                let classTeacher = card.querySelector('.fa-crown');
+                if (!classTeacher) show = false;
+            }
+            
+            card.closest('.col-xl-4').style.display = show ? '' : 'none';
+        });
+    }
+    
+    function resetFilters() {
+        document.getElementById('teacherSearch').value = '';
+        document.getElementById('statusFilter').value = 'all';
+        document.getElementById('assignmentFilter').value = 'all';
+        
+        let rows = document.querySelectorAll('#teachersTable tbody tr');
+        let cards = document.querySelectorAll('.teacher-card');
+        
+        rows.forEach(row => row.style.display = '');
+        cards.forEach(card => card.closest('.col-xl-4').style.display = '');
+    }
+    
+    // Bulk selection functionality
+    document.getElementById('selectAll').addEventListener('change', function(e) {
+        let checkboxes = document.querySelectorAll('.teacher-checkbox');
+        checkboxes.forEach(cb => cb.checked = e.target.checked);
+        updateBulkActions();
+    });
+    
+    document.querySelectorAll('.teacher-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkActions);
+    });
+    
+    function updateBulkActions() {
+        let selected = document.querySelectorAll('.teacher-checkbox:checked');
+        let bulkActions = document.getElementById('bulkActions');
+        let selectedCount = document.getElementById('selectedCount');
+        
+        if (selected.length > 0) {
+            bulkActions.style.display = 'block';
+            selectedCount.textContent = `${selected.length} teachers selected`;
+        } else {
+            bulkActions.style.display = 'none';
+        }
+    }
+    
+    function clearSelection() {
+        document.querySelectorAll('.teacher-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked = false;
+        updateBulkActions();
+    }
+    
+    // Bulk action functions (stubs - implement as needed)
+    function bulkActivate() {
+        alert('Bulk activate functionality would be implemented here');
+    }
+    
+    function bulkDeactivate() {
+        alert('Bulk deactivate functionality would be implemented here');
+    }
+    
+    function bulkResetPassword() {
+        alert('Bulk password reset functionality would be implemented here');
+    }
+    
+    function exportTeachers() {
+        alert('Export functionality would be implemented here');
+    }
+    
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+
+<style>
+    .avatar-sm {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+    
+    .avatar-md {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.25rem;
+    }
+    
+    .avatar-lg {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+    
+    .bg-primary-light {
+        background-color: rgba(67, 97, 238, 0.1) !important;
+    }
+    
+    .bg-success-light {
+        background-color: rgba(40, 167, 69, 0.1) !important;
+    }
+    
+    .bg-warning-light {
+        background-color: rgba(255, 193, 7, 0.1) !important;
+    }
+    
+    .bg-info-light {
+        background-color: rgba(23, 162, 184, 0.1) !important;
+    }
+    
+    .teacher-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .teacher-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1) !important;
+    }
+    
+    .border-start {
+        border-left-width: 4px !important;
+    }
+</style>
+{% endblock %}

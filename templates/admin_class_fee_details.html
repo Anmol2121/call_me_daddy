@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% block title %}Class Fee Details{% endblock %}
+{% block header %}Class Fee Details - {{ class_obj.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_fees') }}">Fee Management</a></li>
+<li class="breadcrumb-item active">{{ class_obj.name }}</li>
+{% endblock %}
+
+{% block actions %}
+<button onclick="printClassReport()" class="btn btn-outline-primary btn-sm me-2">
+    <i class="fas fa-print me-1"></i> Print Report
+</button>
+<a href="{{ url_for('assign_fee_to_students_bulk') }}?class_id={{ class_obj.id }}" 
+   class="btn btn-primary btn-sm">
+    <i class="fas fa-user-plus me-1"></i> Assign Fees
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Class Summary -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-primary">
+                <i class="fas fa-users"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">{{ student_data|length }}</h2>
+                <div class="stat-label">Total Students</div>
+                <small class="text-muted">{{ class_obj.name }}</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ class_total_paid|round|int }}</h2>
+                <div class="stat-label">Total Collected</div>
+                <small class="text-muted">{{ class_collection_rate|round(1) }}% Collection Rate</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <h2 class="stat-number">₹{{ class_balance_due|round|int }}</h2>
+                <div class="stat-label">Total Due</div>
+                <small class="text-muted">{{ class_obj.name }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Class Information -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Class Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Class Name:</strong> {{ class_obj.name }}
+            </div>
+            <div class="col-md-3">
+                <strong>Class Code:</strong> {{ class_obj.code }}
+            </div>
+            <div class="col-md-3">
+                <strong>Room:</strong> {{ class_obj.room_number or 'Not assigned' }}
+            </div>
+            <div class="col-md-3">
+                <strong>Capacity:</strong> {{ class_obj.capacity }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fee Structures for this Class -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Applicable Fee Structures</h5>
+    </div>
+    <div class="card-body">
+        {% if fee_structures %}
+        <div class="row">
+            {% for fee in fee_structures %}
+            <div class="col-md-6 mb-3">
+                <div class="border rounded p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ fee.name }}</h6>
+                            <p class="text-muted mb-1">{{ fee.description }}</p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-2">₹{{ fee.amount }}</span>
+                                <span class="badge bg-info">{{ fee.frequency|title }}</span>
+                            </div>
+                        </div>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No fee structures applicable to this class.</p>
+            <a href="{{ url_for('create_fee_structure') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> Create Fee Structure
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Student Fee Details -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Student Fee Details</h5>
+    </div>
+    <div class="card-body">
+        {% if student_data %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="studentFeesTable">
+                <thead>
+                    <tr>
+                        <th>Roll No.</th>
+                        <th>Student</th>
+                        <th>Total Fees</th>
+                        <th>Discount</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in student_data %}
+                    <tr>
+                        <td>{{ data.enrollment.roll_number }}</td>
+                        <td>
+                            <strong>{{ data.student.first_name }} {{ data.student.last_name }}</strong>
+                            <div class="small text-muted">{{ data.student.student_id }}</div>
+                        </td>
+                        <td>₹{{ data.total_fees|round|int }}</td>
+                        <td>
+                            <span class="text-danger">-₹{{ (data.total_fees - (data.fees|sum(attribute='fee_amount') if data.fees else 0))|round|int }}</span>
+                        </td>
+                        <td>
+                            <span class="text-success">₹{{ data.total_paid|round|int }}</span>
+                        </td>
+                        <td>
+                            <strong class="{% if data.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ₹{{ data.balance_due|round|int }}
+                            </strong>
+                        </td>
+                        <td>
+                            {% if data.status == 'paid' %}
+                            <span class="badge bg-success">Paid</span>
+                            {% elif data.status == 'partial' %}
+                            <span class="badge bg-warning">Partial</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if data.balance_due > 0 %}
+                                <a href="{{ url_for('record_fee_payment', student_fee_id=data.fees[0].id) if data.fees else '#' }}" 
+                                   class="btn btn-primary" {% if not data.fees %}disabled{% endif %}>
+                                    <i class="fas fa-credit-card"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('view_student_details', student_id=data.student.id) }}" 
+                                   class="btn btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-dark">
+                        <td colspan="2"><strong>Class Totals:</strong></td>
+                        <td><strong>₹{{ class_total_fees|round|int }}</strong></td>
+                        <td class="text-danger"><strong>-₹{{ (class_total_fees - (student_data|sum(attribute='total_fees') if student_data else 0))|round|int }}</strong></td>
+                        <td class="text-success"><strong>₹{{ class_total_paid|round|int }}</strong></td>
+                        <td class="{% if class_balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                            <strong>₹{{ class_balance_due|round|int }}</strong>
+                        </td>
+                        <td colspan="2">
+                            <strong>Collection Rate: {{ class_collection_rate|round(1) }}%</strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+            <h4>No Students in this Class</h4>
+            <p class="text-muted">No students are enrolled in this class.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collection Progress -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Collection Progress</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Fee Collection Progress</span>
+                        <span>{{ class_collection_rate|round(1) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar {% if class_collection_rate >= 80 %}bg-success{% elif class_collection_rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             style="width: {{ class_collection_rate }}%">
+                            {{ class_collection_rate|round(1) }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Paid Students:</span>
+                        <strong>{{ student_data|selectattr('status', 'equalto', 'paid')|list|length }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Partial Payments:</span>
+                        <strong>{{ student_data|selectattr('status', 'equalto', 'partial')|list|length }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Pending Students:</span>
+                        <strong>{{ student_data|selectattr('status', 'equalto', 'pending')|list|length }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-icon-primary {
+    background-color: rgba(67, 97, 238, 0.1);
+    color: #4361ee;
+}
+
+.stat-icon-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.stat-icon-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+@media print {
+    .actions, .btn, .breadcrumb {
+        display: none !important;
+    }
+}
+</style>
+
+<script>
+function printClassReport() {
+    const printContent = document.querySelector('.card').outerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Fee Report - {{ class_obj.name }}</title>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .table { width: 100%; border-collapse: collapse; }
+                .table th, .table td { border: 1px solid #ddd; padding: 8px; }
+                .table th { background-color: #f8f9fa; }
+                .text-success { color: #28a745; }
+                .text-danger { color: #dc3545; }
+                .text-center { text-align: center; }
+                .mb-3 { margin-bottom: 1rem; }
+            </style>
+        </head>
+        <body>
+            <h1>Fee Report - {{ class_obj.name }}</h1>
+            <p><strong>School:</strong> {{ context.school.name }}</p>
+            <p><strong>Session:</strong> {{ context.view_session.name }}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleDateString()}</p>
+            ${printContent}
+        </body>
+        </html>
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTables
+    if (typeof $ !== 'undefined' && $.fn.DataTable) {
+        $('#studentFeesTable').DataTable({
+            pageLength: 25,
+            order: [[1, 'asc']]
+        });
+    }
+});
+</script>
+{% endblock %}

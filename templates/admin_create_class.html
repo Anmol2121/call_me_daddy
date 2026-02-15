@@ -1,0 +1,63 @@
+<!-- templates/admin_create_class.html -->
+{% extends "base.html" %}
+{% block title %}Create Class{% endblock %}
+{% block header %}Create New Class{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('create_class') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Class Name *</label>
+                        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="e.g., Class 10A") }}
+                        {% for error in form.name.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Class Code *</label>
+                        {{ form.code(class="form-control" + (" is-invalid" if form.code.errors else ""), placeholder="e.g., CLS-10A") }}
+                        <small class="text-muted">Unique identifier for the class</small>
+                        {% for error in form.code.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Capacity *</label>
+                            {{ form.capacity(class="form-control" + (" is-invalid" if form.capacity.errors else ""), type="number", min="1", max="100") }}
+                            {% for error in form.capacity.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Room Number</label>
+                            {{ form.room_number(class="form-control" + (" is-invalid" if form.room_number.errors else ""), placeholder="e.g., Room 101") }}
+                            {% for error in form.room_number.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        This class will be created for the current session: <strong>{{ context.current_session.name }}</strong>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manage_classes') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

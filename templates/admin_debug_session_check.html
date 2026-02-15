@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Debug - Check Data{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Comprehensive Data Check</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Current Context -->
+                    <div class="alert alert-info mb-4">
+                        <h6>Current Context</h6>
+                        <p>School: {{ context.school.name }}</p>
+                        <p>Current Session: {{ context.current_session.name if context.current_session else 'None' }}</p>
+                        <p>View Session: {{ context.view_session.name if context.view_session else 'None' }}</p>
+                        <p>View Session ID in Cookie: {{ view_session_id or 'Not set' }}</p>
+                        <p>School ID: {{ school_id }}</p>
+                    </div>
+
+                    <!-- Data for Each Session -->
+                    {% for data in session_data %}
+                    <div class="card mb-4 {% if data.session.id == context.view_session.id %}border-primary{% endif %}">
+                        <div class="card-header {% if data.session.is_current %}bg-success text-white{% endif %}">
+                            <h6 class="mb-0">
+                                Session: {{ data.session.name }}
+                                {% if data.session.is_current %}
+                                <span class="badge bg-light text-dark">Current</span>
+                                {% endif %}
+                                {% if data.session.id == context.view_session.id %}
+                                <span class="badge bg-primary">Viewing</span>
+                                {% endif %}
+                                (ID: {{ data.session.id }})
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>Classes</h6>
+                                            <p class="display-6">{{ data.classes|length }}</p>
+                                            {% if data.classes %}
+                                            <ul class="list-unstyled">
+                                                {% for class in data.classes %}
+                                                <li>{{ class.name }} ({{ class.code }}) - Capacity: {{ class.capacity }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>Fee Structures</h6>
+                                            <p class="display-6">{{ data.fee_structures|length }}</p>
+                                            {% if data.fee_structures %}
+                                            <ul class="list-unstyled">
+                                                {% for fs in data.fee_structures %}
+                                                <li>{{ fs.name }} - ₹{{ fs.amount }} - {{ fs.frequency }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>Student Fees</h6>
+                                            <p class="display-6">{{ data.student_fees|length }}</p>
+                                            {% if data.student_fees %}
+                                            <p>Assigned to {{ data.student_fees|map(attribute='student_id')|unique|list|length }} students</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>Enrollments</h6>
+                                            <p class="display-6">{{ data.enrollments|length }}</p>
+                                            {% if data.enrollments %}
+                                            <p>{{ data.enrollments|map(attribute='class_id')|unique|list|length }} classes</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Quick Actions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="btn-group">
+                                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+                                    Back to Dashboard
+                                </a>
+                                <a href="{{ url_for('manage_fee_structures') }}" class="btn btn-info">
+                                    Manage Fee Structures
+                                </a>
+                                <a href="{{ url_for('manage_student_fees') }}" class="btn btn-info">
+                                    Manage Student Fees
+                                </a>
+                                <a href="{{ url_for('manage_classes') }}" class="btn btn-info">
+                                    Manage Classes
+                                </a>
+                                <a href="{{ url_for('switch_to_current_session') }}" class="btn btn-warning" onclick="return confirm('Switch to current session?')">
+                                    Switch to Current Session
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

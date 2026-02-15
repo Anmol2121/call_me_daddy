@@ -1,0 +1,521 @@
+<!-- templates/teacher_dashboard.html -->
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block header %}Teacher Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block actions %}
+<div class="d-flex gap-2">
+    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-primary btn-sm px-4">
+        <i class="fas fa-clipboard-check me-2"></i>Attendance
+    </a>
+    <a href="{{ url_for('teacher_profile') }}" class="btn btn-outline-dark btn-sm px-4">
+        <i class="fas fa-user-circle me-2"></i>Profile
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Compute stats from assigned_classes -->
+{% set total_classes = assigned_classes|length %}
+{% set total_students = total_students %}
+{% set classes_taken = assigned_classes|selectattr('attendance_taken')|list|length %}
+{% set avg_attendance = (assigned_classes|sum(attribute='stats.attendance_rate') / total_classes) if total_classes > 0 else 0 %}
+
+<!-- Welcome Banner -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body text-white p-5">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-6 fw-bold mb-3">Welcome back, {{ current_user.full_name.split(' ')[0] }}!</h1>
+                        <p class="lead mb-4 opacity-75">
+                            {{ context.school.name }} · {{ context.current_session.name }}
+                        </p>
+                        <div class="d-flex gap-4">
+                            <div class="text-center">
+                                <div class="display-5 fw-bold">{{ total_classes }}</div>
+                                <div class="small opacity-75">Classes</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="display-5 fw-bold">{{ total_students }}</div>
+                                <div class="small opacity-75">Students</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="display-5 fw-bold">{{ classes_taken }}/{{ total_classes }}</div>
+                                <div class="small opacity-75">Today's Attendance</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="rounded-circle bg-white bg-opacity-10 d-inline-flex align-items-center justify-content-center p-4">
+                            <i class="fas fa-chalkboard-teacher fa-4x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metric Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card card-hover">
+            <div class="metric-icon bg-primary-light">
+                <i class="fas fa-chalkboard text-primary"></i>
+            </div>
+            <div class="metric-content">
+                <h3>{{ total_classes }}</h3>
+                <p>Total Classes</p>
+                <div class="metric-trend">
+                    <i class="fas fa-check-circle text-success"></i>
+                    <span class="text-success">{{ classes_taken }} taken today</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card card-hover">
+            <div class="metric-icon bg-success-light">
+                <i class="fas fa-users text-success"></i>
+            </div>
+            <div class="metric-content">
+                <h3>{{ total_students }}</h3>
+                <p>Total Students</p>
+                <div class="metric-trend">
+                    <i class="fas fa-user-graduate text-info"></i>
+                    <span class="text-info">across all classes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card card-hover">
+            <div class="metric-icon bg-warning-light">
+                <i class="fas fa-clock text-warning"></i>
+            </div>
+            <div class="metric-content">
+                <h3>{{ avg_attendance|round|int }}%</h3>
+                <p>Avg Attendance</p>
+                <div class="metric-trend">
+                    <span class="{{ 'text-success' if avg_attendance >= 80 else 'text-warning' if avg_attendance >= 60 else 'text-danger' }}">
+                        {{ avg_attendance|round(1) }}% this month
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="metric-card card-hover">
+            <div class="metric-icon bg-info-light">
+                <i class="fas fa-calendar-check text-info"></i>
+            </div>
+            <div class="metric-content">
+                <h3>{{ classes_taken }}</h3>
+                <p>Classes Marked</p>
+                <div class="metric-trend">
+                    <span class="text-success">{{ ((classes_taken/total_classes)*100)|round|int if total_classes>0 else 0 }}% complete</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Row: Classes + Chart + Activity -->
+<div class="row">
+    <!-- Left Column: My Classes -->
+    <div class="col-lg-8 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
+                        My Classes
+                    </h5>
+                    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-clipboard-check me-1"></i>Attendance Dashboard
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if assigned_classes %}
+                <div class="row g-4">
+                    {% for class in assigned_classes %}
+                    <div class="col-md-6">
+                        <div class="card border-light h-100 hover-lift">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5 class="card-title fw-bold text-dark mb-2">{{ class.class.name }}</h5>
+                                        <h6 class="card-subtitle mb-3 text-muted">{{ class.subject }}</h6>
+                                    </div>
+                                    {% if class.is_class_teacher %}
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-crown me-1"></i>Class Teacher
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="small text-muted">Students</span>
+                                        <span class="small fw-bold">{{ class.student_count }}/{{ class.class.capacity }}</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar" 
+                                             style="width: {{ (class.student_count / class.class.capacity * 100)|round|int }}%">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row text-center mb-4">
+                                    <div class="col-4">
+                                        <div class="text-muted small">Room</div>
+                                        <div class="fw-bold text-dark">{{ class.class.room_number or 'N/A' }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-muted small">Code</div>
+                                        <div class="fw-bold text-dark">{{ class.class.code }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-muted small">Roll Nos</div>
+                                        <div class="fw-bold text-dark">1-{{ class.student_count }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Attendance progress for this class -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="small text-muted">Attendance Rate</span>
+                                        <span class="small fw-bold {% if class.stats.attendance_rate >= 80 %}text-success{% elif class.stats.attendance_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ class.stats.attendance_rate|round|int }}%
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar {% if class.stats.attendance_rate >= 80 %}bg-success{% elif class.stats.attendance_rate >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             style="width: {{ class.stats.attendance_rate }}%">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('take_attendance', class_id=class.class.id) }}" 
+                                       class="btn {% if class.attendance_taken %}btn-outline-warning{% else %}btn-primary{% endif %}">
+                                        <i class="fas fa-{% if class.attendance_taken %}edit{% else %}clipboard-check{% endif %} me-2"></i>
+                                        {% if class.attendance_taken %}Update{% else %}Take{% endif %} Attendance
+                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('view_class', class_id=class.class.id) }}" 
+                                           class="btn btn-outline-dark">
+                                            <i class="fas fa-eye me-2"></i>View Class
+                                        </a>
+                                        <a href="{{ url_for('view_class_attendance', class_id=class.class.id) }}" 
+                                           class="btn btn-outline-dark">
+                                            <i class="fas fa-chart-bar me-2"></i>Reports
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chalkboard-teacher fa-4x text-muted mb-4"></i>
+                    <h4 class="mb-3 fw-bold text-dark">No Classes Assigned</h4>
+                    <p class="text-muted mb-4">You haven't been assigned to any classes for the current session.</p>
+                    <p class="text-muted small">Please contact the school administrator for class assignments.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Attendance Trend Chart -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-chart-line text-primary me-2"></i>
+                    Attendance Trend (Last 7 Days)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 250px;">
+                    <canvas id="attendanceTrendChart"></canvas>
+                </div>
+                <p class="text-muted small text-center mt-3">
+                    * Data will be populated from real attendance records.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Schedule & Quick Links -->
+    <div class="col-lg-4">
+        <!-- Today's Schedule -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-calendar-day text-primary me-2"></i>
+                    Today's Schedule
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for class in assigned_classes %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <div class="fw-bold text-dark">{{ class.class.name }}</div>
+                            <div class="small text-muted">{{ class.subject }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-dark fw-bold">{{ class.student_count }} students</div>
+                            <div class="small">
+                                <span class="badge bg-{% if class.attendance_taken %}success{% else %}warning{% endif %}">
+                                    {% if class.attendance_taken %}
+                                    <i class="fas fa-check-circle"></i> Marked
+                                    {% else %}
+                                    <i class="fas fa-clock"></i> Pending
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if not assigned_classes %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-2x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">No schedule for today</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-bolt text-warning me-2"></i>
+                    Quick Links
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-outline-primary text-start">
+                        <i class="fas fa-clipboard-check me-3"></i>Attendance Dashboard
+                    </a>
+                    <a href="{{ url_for('teacher_profile') }}" class="btn btn-outline-dark text-start">
+                        <i class="fas fa-user-circle me-3"></i>My Profile
+                    </a>
+                    <button class="btn btn-outline-dark text-start" onclick="alert('Timetable feature coming soon.')">
+                        <i class="fas fa-calendar-alt me-3"></i>View Timetable
+                    </button>
+                    <button class="btn btn-outline-dark text-start" onclick="alert('Report generation coming soon.')">
+                        <i class="fas fa-chart-bar me-3"></i>Generate Reports
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- School Information (condensed) -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-4">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-school text-primary me-2"></i>
+                    School Info
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                        <i class="fas fa-school fa-2x"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">{{ context.school.name }}</h6>
+                    <p class="text-muted small">{{ context.school.code }}</p>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex align-items-center px-0">
+                        <i class="fas fa-calendar-alt text-muted me-3"></i>
+                        <div>
+                            <div class="small text-muted">Current Session</div>
+                            <div class="fw-bold text-dark">{{ context.current_session.name }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('change_password', force=true) }}" class="btn btn-outline-warning w-100">
+                        <i class="fas fa-key me-2"></i> Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Timeline -->
+{% if recent_activities %}
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white border-0 py-4">
+        <h5 class="mb-0 fw-bold text-dark">
+            <i class="fas fa-history text-primary me-2"></i>
+            Recent Activity
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="timeline-steps">
+            {% for activity in recent_activities|slice(0, 5) %}
+            <div class="timeline-step mb-4">
+                <div class="timeline-step-number bg-{{ activity.color }} text-white">
+                    <i class="fas fa-{{ activity.icon }}"></i>
+                </div>
+                <div class="timeline-step-content">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="fw-bold text-dark mb-1">{{ activity.title }}</h6>
+                            <p class="text-muted small mb-0">{{ activity.description }}</p>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-muted small">{{ activity.time }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+/* Metric Cards */
+.metric-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+.metric-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: rgba(67,97,238,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #4361ee;
+    margin-bottom: 1rem;
+}
+.metric-icon.bg-primary-light { background: rgba(67,97,238,0.1); color: #4361ee; }
+.metric-icon.bg-success-light { background: rgba(16,185,129,0.1); color: #10b981; }
+.metric-icon.bg-warning-light { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.metric-icon.bg-info-light    { background: rgba(14,165,233,0.1); color: #0ea5e9; }
+.metric-content h3 { font-size: 2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.25rem; }
+.metric-content p  { color: #64748b; font-weight: 500; margin-bottom: 0.5rem; }
+.metric-trend      { font-size: 0.875rem; color: #64748b; }
+
+/* Timeline */
+.timeline-steps {
+    position: relative;
+    padding-left: 40px;
+}
+.timeline-steps::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e2e8f0;
+}
+.timeline-step { position: relative; }
+.timeline-step-number {
+    position: absolute;
+    left: -48px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    z-index: 2;
+}
+.timeline-step-content { padding-left: 20px; }
+
+/* Hover lift */
+.hover-lift {
+    transition: all 0.3s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+}
+
+/* Chart container */
+.chart-container { width: 100%; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Attendance trend chart (sample data – replace with real data from backend)
+    const ctx = document.getElementById('attendanceTrendChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Attendance %',
+                data: [85, 88, 82, 90, 87, 0, 0], // weekend zeros or actual
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67,97,238,0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#4361ee',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: true }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { callback: (v) => v + '%' }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
