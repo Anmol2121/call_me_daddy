@@ -504,7 +504,6 @@
                         </span>
                         {% endif %}
                     </button>
-                    <!-- Dropdown content (same as before) -->
                     <div class="dropdown-menu dropdown-menu-end" style="width: 320px;">
                         <div class="p-3 border-bottom">
                             <h6 class="mb-0 fw-bold">Notifications</h6>
@@ -529,7 +528,57 @@
                                     </div>
                                 </a>
                                 {% endif %}
-                                <!-- ... other notifications ... -->
+                                
+                                {% if current_user.role == 'admin' and stats and stats.students_without_fees > 0 %}
+                                <a href="{{ url_for('check_fee_data') }}" class="dropdown-item py-3 border-bottom">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="rounded-circle bg-warning-light text-warning d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="fw-bold">Fee Assignment Required</div>
+                                            <div class="small text-muted">{{ stats.students_without_fees }} students need fee assignment</div>
+                                            <div class="x-small text-warning mt-1">
+                                                <i class="fas fa-users me-1"></i> Review required
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                                
+                                {% if current_user.role == 'teacher' %}
+                                <!-- Teacher-specific notifications -->
+                                {% set attendance_taken = 0 %}
+                                {% if assigned_classes %}
+                                    {% for class in assigned_classes %}
+                                        {% if get_today_attendance(class.class.id) %}
+                                            {% set attendance_taken = attendance_taken + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                {% if assigned_classes and attendance_taken < assigned_classes|length %}
+                                <a href="{{ url_for('teacher_attendance_dashboard') }}" class="dropdown-item py-3 border-bottom">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="rounded-circle bg-info-light text-info d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                <i class="fas fa-clipboard-check"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="fw-bold">Attendance Pending</div>
+                                            <div class="small text-muted">{{ assigned_classes|length - attendance_taken }} classes need attendance</div>
+                                            <div class="x-small text-info mt-1">
+                                                <i class="fas fa-clock me-1"></i> Complete today
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                                
                                 {% if not stats or stats.overdue_count|default(0) == 0 %}
                                 <div class="text-center py-4">
                                     <i class="fas fa-bell-slash fa-2x text-muted mb-3"></i>
@@ -791,7 +840,7 @@
                     {% endif %}
                 </ul>
                 
-                <!-- Quick Stats Section (same as before) -->
+                <!-- Quick Stats Section -->
                 {% if current_user.role == 'admin' %}
                 <div class="px-3 mt-4">
                     <div class="card border-0 bg-light">
@@ -889,12 +938,15 @@
                     </div>
                 {% endif %}
             {% endwith %}
-            
-            <!-- Page Header (optional, can be overridden) -->
+
+            <!-- Invisible block placeholder for header content -->
+            {% block header %}{% endblock %}
+
+            <!-- Desktop Page Header -->
             <div class="page-header d-none d-md-block">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="page-title">{% block header %}{% endblock %}</h1>
+                        <h1 class="page-title">{{ self.header() }}</h1>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
                                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-decoration-none"><i class="fas fa-home"></i></a></li>
@@ -907,12 +959,12 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Mobile page title (shown only on small screens) -->
+
+            <!-- Mobile page title -->
             <div class="d-block d-md-none mb-3">
-                <h2 class="h5 fw-bold text-dark mb-0">{% block mobile_title %}{% block header %}{% endblock %}{% endblock %}</h2>
+                <h2 class="h5 fw-bold text-dark mb-0">{{ self.header() }}</h2>
             </div>
-            
+
             <!-- Main Content -->
             {% block content %}{% endblock %}
         </main>
