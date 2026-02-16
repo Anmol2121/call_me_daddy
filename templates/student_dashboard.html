@@ -12,9 +12,6 @@
     <button class="btn btn-outline-dark btn-sm px-3" onclick="window.print()">
         <i class="fas fa-print me-2"></i>Print
     </button>
-    <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#paymentModal">
-        <i class="fas fa-wallet me-2"></i>Pay Now
-    </button>
 </div>
 {% endblock %}
 
@@ -200,6 +197,12 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Offline Payment Notice -->
+<div class="alert alert-info border-0 shadow-sm mb-4">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Payments:</strong> All fee payments must be made at the school accounts office. Please bring your fee statement when paying.
+</div>
 
 <!-- Fee Details Table -->
 <div class="row mb-4" id="fee-details">
@@ -459,28 +462,6 @@
     </div>
 </div>
 
-<!-- Payment Modal (simplified) -->
-<div class="modal fade" id="paymentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0">
-            <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white"><i class="fas fa-wallet me-2"></i>Make Payment</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted">Please visit the school accounts office to complete your payment. For online options, stay tuned.</p>
-                <div class="alert alert-info border-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Cash and bank transfers are currently accepted at the office.
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
 /* Premium Dashboard Styles */
 .metric-card {
@@ -633,7 +614,7 @@
 </style>
 
 <script>
-// Chart initialization – ensure charts are created only once
+// Chart initialization
 document.addEventListener('DOMContentLoaded', function() {
     // Doughnut chart for payment distribution
     const paidCount = {{ fees|selectattr('status', 'equalto', 'paid')|list|length }};
@@ -642,7 +623,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const doughnutCtx = document.getElementById('paymentDoughnutChart')?.getContext('2d');
     if (doughnutCtx) {
-        // Destroy any existing chart instance (if any) – useful if this script runs multiple times
         let existingChart = Chart.getChart(doughnutCtx.canvas);
         if (existingChart) existingChart.destroy();
         
@@ -668,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Bar chart for monthly trend (if data exists)
+    // Bar chart for monthly trend
     {% if trend_labels and trend_data %}
     const trendLabels = {{ trend_labels|tojson }};
     const trendData = {{ trend_data|tojson }};
@@ -727,7 +707,6 @@ function filterFees(status) {
         if (status === 'all') {
             row.style.display = '';
         } else if (status === 'overdue') {
-            // Overdue rows have status 'pending'/'partial' but due date < today
             const dueDate = new Date(row.dataset.due);
             const today = new Date();
             if ((rowStatus === 'pending' || rowStatus === 'partial') && dueDate < today) {
@@ -748,7 +727,6 @@ function filterOverdue() {
 }
 
 function viewFeeDetails(feeId) {
-    // You can implement a modal or redirect
     alert('Fee details for ID ' + feeId + ' – full details coming soon.');
 }
 
