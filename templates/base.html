@@ -447,7 +447,40 @@
             background: #f8fafc;
         }
         
-        /* ========== UTILITY ========== */
+        /* ========== AVATAR STYLES ========== */
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .avatar-sm {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+        .avatar-primary { background: #eef2ff; color: #4f46e5; }
+        .avatar-success { background: #d1fae5; color: #10b981; }
+        .avatar-info    { background: #e0f2fe; color: #0ea5e9; }
+        .avatar-warning { background: #ffedd5; color: #f59e0b; }
+        .avatar-danger  { background: #fee2e2; color: #ef4444; }
+        .avatar-secondary { background: #f1f5f9; color: #64748b; }
+        
+        /* Activity timeline enhancements */
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            border-color: #f1f5f9;
+            transition: background-color 0.2s;
+        }
+        .list-group-item:hover {
+            background-color: #f8fafc;
+        }
+        
         .status-indicator {
             width: 8px;
             height: 8px;
@@ -596,7 +629,7 @@
                 <!-- User Profile -->
                 <div class="dropdown">
                     <button class="btn btn-sm btn-light d-flex align-items-center gap-2 px-3" type="button" data-bs-toggle="dropdown" style="border-radius: 20px; border: 1px solid #e2e8f0;">
-                        <div class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px;">
+                        <div class="avatar-circle avatar-primary" style="width: 32px; height: 32px;">
                             {{ current_user.full_name[0]|upper if current_user.full_name else 'U' }}
                         </div>
                         <div class="d-none d-md-block text-start">
@@ -980,7 +1013,6 @@
                 <i class="fas fa-school"></i>
                 <span>Schools</span>
             </a>
-            <!-- Add more as needed -->
             <a class="bottom-nav-item" href="{{ url_for('change_password', force=true) }}">
                 <i class="fas fa-key"></i>
                 <span>Password</span>
