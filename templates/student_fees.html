@@ -1,468 +1,461 @@
 {% extends "base.html" %}
 
-{% block title %}Fee Management · Premium Student Portal{% endblock %}
-{% block header %}Fee Management{% endblock %}
+{% block title %}Fee Management · EduManage Pro{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
-<li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Fees</li>
-{% endblock %}
-
-{% block actions %}
-<div class="d-flex gap-2">
-    <button onclick="window.print()" class="btn btn-outline-primary btn-sm px-3">
-        <i class="fas fa-print me-2"></i>Print
-    </button>
-</div>
+{% block header %}
+<!-- Hide default header on mobile – we use our own -->
 {% endblock %}
 
 {% block content %}
-<!-- Summary Section -->
-<div class="row mb-4" data-aos="fade-up">
-    <div class="col-md-12">
-        <div class="glass-card p-4">
-            <div class="row align-items-center">
-                <div class="col-md-4 text-center border-end">
-                    <div class="position-relative d-inline-block mb-3">
-                        <div class="progress-circle" style="--progress: {% if total_due > 0 %}{{ (total_paid / total_due * 100) }}%{% else %}100%{% endif %}"></div>
-                        <div class="progress-circle-inner">
-                            <h2 class="mb-0 fw-bold display-5">
-                                {% if total_due > 0 %}
-                                    {{ ((total_paid / total_due) * 100)|round|int }}%
-                                {% else %}
-                                    100%
-                                {% endif %}
-                            </h2>
-                            <small class="text-muted">Paid</small>
-                        </div>
-                    </div>
-                    <h5 class="mb-1">Payment Progress</h5>
-                    <small class="text-muted">Session: {{ current_session.name if current_session else 'N/A' }}</small>
-                </div>
-                
-                <div class="col-md-8">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="text-center p-3">
-                                <div class="display-6 fw-bold text-primary mb-2">₹{{ total_due|round|int if total_due else 0 }}</div>
-                                <div class="text-muted mb-1">Total Due</div>
-                                <div class="small text-primary">
-                                    <i class="fas fa-file-invoice-dollar me-1"></i>
-                                    {{ fees|length if fees else 0 }} fees
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="text-center p-3">
-                                <div class="display-6 fw-bold text-success mb-2">₹{{ total_paid|round|int if total_paid else 0 }}</div>
-                                <div class="text-muted mb-1">Total Paid</div>
-                                <div class="small text-success">
-                                    <i class="fas fa-check-circle me-1"></i>
-                                    {{ fees|selectattr('status', 'equalto', 'paid')|list|length }} paid
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="text-center p-3">
-                                <div class="display-6 fw-bold {% if remaining_due > 0 %}text-warning{% else %}text-success{% endif %} mb-2">
-                                    ₹{{ remaining_due|round|int if remaining_due else 0 }}
-                                </div>
-                                <div class="text-muted mb-1">Balance Due</div>
-                                <div class="small {% if overdue_fees|length > 0 %}text-danger{% else %}text-warning{% endif %}">
-                                    <i class="fas fa-clock me-1"></i>
-                                    {{ overdue_fees|length if overdue_fees else 0 }} overdue
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {% if overdue_fees %}
-                    <div class="alert alert-danger mt-3 border-0" style="background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(239,68,68,0.05) 100%);">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-exclamation-triangle fa-2x text-danger me-3"></i>
-                            <div>
-                                <h6 class="mb-1 text-danger">Overdue Fees Alert!</h6>
-                                <p class="mb-0 text-danger">
-                                    You have {{ overdue_fees|length }} overdue fee(s). Total overdue amount: 
-                                    <strong>₹{{ overdue_fees|sum(attribute='balance') }}</strong>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+<!-- ==================== MOBILE APP BAR ==================== -->
+<div class="mobile-app-bar d-lg-none">
+    <div class="d-flex align-items-center justify-content-between p-3">
+        <button class="btn btn-link text-dark p-0" id="menuToggle" onclick="history.back()">
+            <i class="fas fa-arrow-left fa-2x"></i>
+        </button>
+        <h1 class="h4 mb-0 fw-bold">Fee Management</h1>
+        <button class="btn btn-link text-dark p-0" onclick="window.print()">
+            <i class="fas fa-print fa-2x"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Desktop Header (hidden on mobile) -->
+<div class="d-none d-lg-block mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold"><i class="fas fa-file-invoice-dollar text-primary me-3"></i>Fee Management</h2>
+        <button class="btn btn-outline-dark btn-sm px-4" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Print
+        </button>
+    </div>
+    <p class="text-muted">Session: {{ current_session.name if current_session else 'N/A' }}</p>
+</div>
+
+<!-- ==================== SUMMARY CARDS ==================== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-primary-light">
+                <i class="fas fa-file-invoice-dollar text-primary"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number">₹{{ total_due|round|int if total_due else 0 }}</h3>
+                <p class="metric-label">Total Due</p>
+                <small class="text-muted">{{ fees|length }} fee items</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-success-light">
+                <i class="fas fa-check-circle text-success"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number">₹{{ total_paid|round|int if total_paid else 0 }}</h3>
+                <p class="metric-label">Total Paid</p>
+                <small class="text-muted">{{ fees|selectattr('status', 'equalto', 'paid')|list|length }} paid</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-warning-light">
+                <i class="fas fa-clock text-warning"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number {% if remaining_due > 0 %}text-warning{% else %}text-success{% endif %}">
+                    ₹{{ remaining_due|round|int if remaining_due else 0 }}
+                </h3>
+                <p class="metric-label">Balance Due</p>
+                <small class="text-muted">{{ overdue_fees|length }} overdue</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-info-light">
+                <i class="fas fa-chart-pie text-info"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-number">
+                    {% if total_due > 0 %}
+                        {{ ((total_paid / total_due) * 100)|round|int }}%
+                    {% else %}
+                        100%
                     {% endif %}
+                </h3>
+                <p class="metric-label">Progress</p>
+                <div class="progress mt-2" style="height: 4px;">
+                    <div class="progress-bar bg-success" 
+                         style="width: {% if total_due > 0 %}{{ (total_paid / total_due * 100) }}%{% else %}100%{% endif %}">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Offline Payment Notice -->
-<div class="alert alert-info border-0 shadow-sm mb-4" data-aos="fade-up">
-    <i class="fas fa-info-circle me-2"></i>
-    <strong>Payment Method:</strong> All fee payments must be made in person at the school accounts office. Please bring this fee statement when paying.
+<!-- ==================== OFFLINE PAYMENT NOTICE ==================== -->
+<div class="alert alert-info border-0 shadow-sm mb-4 d-flex align-items-center">
+    <i class="fas fa-info-circle fa-2x me-3"></i>
+    <div>
+        <strong>Payment Method:</strong> All fee payments must be made in person at the school accounts office. 
+        Please bring this statement when paying.
+    </div>
 </div>
 
-<!-- Fee Details Section -->
-<div class="glass-card mb-4" data-aos="fade-up">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="mb-0">
-                <i class="fas fa-list-alt me-2 text-primary"></i>
-                Fee Details
-            </h4>
-            <small class="text-muted">All fees for {{ current_session.name if current_session else 'current session' }}</small>
-        </div>
-        
-        <div class="d-flex gap-2">
-            <div class="dropdown">
-                <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-filter me-2"></i>Filter
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#" onclick="filterFees('all')">All Fees</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="filterFees('pending')">Pending</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="filterFees('paid')">Paid</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="filterFees('overdue')">Overdue</a></li>
-                </ul>
-            </div>
-            
-            <div class="dropdown">
-                <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-sort me-2"></i>Sort
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#" onclick="sortFees('due_date')">Due Date</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="sortFees('amount')">Amount</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="sortFees('status')">Status</a></li>
-                </ul>
-            </div>
+<!-- ==================== FEE LIST ==================== -->
+<div class="mb-4">
+    <!-- Filter Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0"><i class="fas fa-list-alt text-primary me-2"></i>Fee Details</h4>
+        <div class="btn-group" role="group">
+            <button class="btn btn-outline-dark btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#" onclick="filterFees('all')">All Fees</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterFees('pending')">Pending</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterFees('paid')">Paid</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterFees('overdue')">Overdue</a></li>
+            </ul>
         </div>
     </div>
-    
-    {% if fees %}
-    <div class="table-responsive">
-        <table class="premium-table" id="feeTable">
-            <thead>
-                <tr>
-                    <th>Fee Details</th>
-                    <th>Due Date</th>
-                    <th>Amount Breakdown</th>
-                    <th>Payment Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for fee in fees %}
-                <tr data-status="{{ fee.status }}" data-due-date="{{ fee.due_date.strftime('%Y-%m-%d') }}" data-amount="{{ fee.fee_amount }}">
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                <i class="fas {% if 'tuition' in fee.fee_structure.name.lower() %}fa-graduation-cap{% elif 'exam' in fee.fee_structure.name.lower() %}fa-file-alt{% else %}fa-money-bill-wave{% endif %} text-primary"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ fee.fee_structure.name }}</div>
-                                <small class="text-muted">{{ fee.fee_structure.description|truncate(50) }}</small>
-                                <div class="mt-1">
-                                    <span class="badge bg-light text-dark border">
-                                        <i class="fas fa-sync-alt me-1"></i>{{ fee.fee_structure.frequency|title }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="fw-bold {% if fee.due_date < date.today() and fee.status in ['pending', 'partial'] %}text-danger{% endif %}">
+
+    <!-- Mobile Cards -->
+    <div class="d-block d-lg-none" id="mobileFeeList">
+        {% for fee in fees %}
+        <div class="fee-card mb-3" data-status="{{ fee.status }}" data-due="{{ fee.due_date }}">
+            <div class="fee-card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-bold">{{ fee.fee_structure.name }}</span>
+                    <span class="badge bg-light text-dark border ms-2">{{ fee.fee_structure.frequency|title }}</span>
+                </div>
+                <span class="status-badge status-{{ fee.status }}">{{ fee.status|title }}</span>
+            </div>
+            <div class="fee-card-body">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <small class="text-muted">Due Date</small>
+                        <div class="fw-bold {% if fee.due_date < date.today() and fee.status not in ['paid','overdue'] %}text-danger{% endif %}">
                             {{ fee.due_date.strftime('%d %b %Y') }}
                         </div>
-                        <small class="text-muted">
-                            {% set days_diff = (fee.due_date - date.today()).days %}
-                            {% if days_diff > 0 %}Due in {{ days_diff }} days
-                            {% elif days_diff == 0 %}Due today
-                            {% else %}{{ -days_diff }} days overdue
-                            {% endif %}
-                        </small>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-column">
-                            <div class="d-flex justify-content-between">
-                                <span>Base:</span>
-                                <span class="fw-bold">₹{{ fee.fee_amount }}</span>
-                            </div>
-                            {% if fee.discount_amount > 0 %}
-                            <div class="d-flex justify-content-between text-success">
-                                <span>Discount:</span>
-                                <span>-₹{{ fee.discount_amount }}</span>
-                            </div>
-                            {% endif %}
-                            {% if fee.fine_amount > 0 %}
-                            <div class="d-flex justify-content-between text-danger">
-                                <span>Fine:</span>
-                                <span>+₹{{ fee.fine_amount }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="d-flex justify-content-between fw-bold text-primary mt-1">
-                                <span>Net:</span>
-                                <span>₹{{ fee.net_amount }}</span>
-                            </div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Total</small>
+                        <div class="fw-bold">₹{{ fee.fee_amount|round(2) }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Paid</small>
+                        <div class="fw-bold text-success">₹{{ fee.paid_amount|round(2) }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Balance</small>
+                        <div class="fw-bold {% if fee.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                            ₹{{ fee.balance|round(2) }}
                         </div>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-column align-items-start">
-                            {% if fee.status == 'paid' %}
-                            <span class="status-badge status-paid mb-2">
-                                <i class="fas fa-check-circle"></i> Paid
-                            </span>
-                            <small class="text-muted">Paid: ₹{{ fee.paid_amount }} on {{ fee.payment_date.strftime('%d %b') if fee.payment_date else 'N/A' }}</small>
-                            {% elif fee.status == 'partial' %}
-                            <span class="status-badge status-pending mb-2">
-                                <i class="fas fa-clock"></i> Partial
-                            </span>
-                            <div class="progress w-100" style="height: 4px;">
-                                <div class="progress-bar bg-warning" style="width: {{ (fee.paid_amount / fee.net_amount * 100)|round|int }}%"></div>
+                    </div>
+                </div>
+                {% if fee.discount_amount > 0 %}
+                <div class="small text-success mb-1"><i class="fas fa-tag me-1"></i>Discount ₹{{ fee.discount_amount }}</div>
+                {% endif %}
+                {% if fee.fine_amount > 0 %}
+                <div class="small text-danger mb-1"><i class="fas fa-exclamation-circle me-1"></i>Fine ₹{{ fee.fine_amount }}</div>
+                {% endif %}
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-primary w-100" data-bs-toggle="collapse" data-bs-target="#mobile-breakdown-{{ fee.id }}">
+                        <i class="fas fa-chevron-down me-1"></i>View Transactions
+                    </button>
+                </div>
+                <!-- Collapsible transaction history (mobile) -->
+                <div class="collapse mt-2" id="mobile-breakdown-{{ fee.id }}">
+                    <div class="bg-light p-2 rounded small">
+                        {% if fee.transactions %}
+                            {% for txn in fee.transactions %}
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>{{ txn.transaction_date.strftime('%d %b') }}</span>
+                                <span class="fw-bold">₹{{ txn.amount }}</span>
+                                <span class="text-muted">{{ txn.payment_method|title }}</span>
                             </div>
-                            <small class="text-muted mt-1">Paid ₹{{ fee.paid_amount }} of ₹{{ fee.net_amount }}</small>
-                            {% elif fee.due_date < date.today() %}
-                            <span class="status-badge status-overdue mb-2">
-                                <i class="fas fa-exclamation-circle"></i> Overdue
-                            </span>
-                            <small class="text-danger">{{ (date.today() - fee.due_date).days }} days late</small>
-                            {% else %}
-                            <span class="status-badge status-pending mb-2">
-                                <i class="fas fa-clock"></i> Pending
-                            </span>
-                            <small class="text-muted">Balance: ₹{{ fee.balance }}</small>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewReceipt({{ fee.id }})">
-                                <i class="fas fa-receipt me-1"></i>Receipt
-                            </button>
-                            <button class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#breakdown-{{ fee.id }}" aria-expanded="false">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                <!-- Collapsible Transaction History -->
-                <tr class="collapse" id="breakdown-{{ fee.id }}">
-                    <td colspan="5" class="p-0">
-                        <div class="p-3 bg-light border-top">
-                            <h6 class="mb-3">Transaction History</h6>
-                            {% if fee.transactions %}
-                            <table class="table table-sm table-borderless">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Amount</th>
-                                        <th>Method</th>
-                                        <th>Receipt</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for txn in fee.transactions %}
-                                    <tr>
-                                        <td>{{ txn.transaction_date.strftime('%d %b %Y') }}</td>
-                                        <td>₹{{ txn.amount }}</td>
-                                        <td>{{ txn.payment_method|title }}</td>
-                                        <td>{{ txn.receipt_number }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% else %}
-                            <p class="text-muted small mb-0">No transactions recorded.</p>
-                            {% endif %}
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-        <div class="text-muted">
-            Showing {{ fees|length }} fees · Total Net Amount: ₹{{ total_due|round|int }}
-        </div>
-    </div>
-    
-    {% else %}
-    <div class="text-center py-5">
-        <div class="mb-4">
-            <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
-                <i class="fas fa-money-bill-wave fa-3x text-muted"></i>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted mb-0">No transactions yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
-        <h4 class="mb-3">No Fee Records Found</h4>
-        <p class="text-muted mb-4">
-            {% if current_session %}
-            No fees have been assigned to you for this session yet.
-            {% else %}
-            No active academic session found.
-            {% endif %}
-        </p>
-        <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary px-4">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-        </a>
+        {% endfor %}
     </div>
-    {% endif %}
+
+    <!-- Desktop Table -->
+    <div class="d-none d-lg-block">
+        <div class="premium-card p-0">
+            <div class="table-responsive">
+                <table class="premium-table mb-0" id="feeTable">
+                    <thead>
+                        <tr>
+                            <th>Fee</th>
+                            <th>Due Date</th>
+                            <th>Total</th>
+                            <th>Discount</th>
+                            <th>Fine</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fee in fees %}
+                        <tr data-status="{{ fee.status }}" data-due="{{ fee.due_date }}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-light p-2 me-3">
+                                        <i class="fas {% if 'tuition' in fee.fee_structure.name.lower() %}fa-graduation-cap{% elif 'exam' in fee.fee_structure.name.lower() %}fa-file-alt{% else %}fa-money-bill-wave{% endif %} text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="fw-bold">{{ fee.fee_structure.name }}</span>
+                                        <small class="d-block text-muted">{{ fee.fee_structure.frequency|title }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ fee.due_date.strftime('%d %b %Y') }}</td>
+                            <td>₹{{ fee.fee_amount|round(2) }}</td>
+                            <td class="text-success">{% if fee.discount_amount > 0 %}−₹{{ fee.discount_amount }}{% else %}—{% endif %}</td>
+                            <td class="text-danger">{% if fee.fine_amount > 0 %}+₹{{ fee.fine_amount }}{% else %}—{% endif %}</td>
+                            <td class="text-success">₹{{ fee.paid_amount|round(2) }}</td>
+                            <td class="fw-bold {% if fee.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ₹{{ fee.balance|round(2) }}
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ fee.status }}">
+                                    {{ fee.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#desktop-breakdown-{{ fee.id }}">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="desktop-breakdown-{{ fee.id }}">
+                            <td colspan="9" class="p-3 bg-light">
+                                <h6 class="mb-2">Transaction History</h6>
+                                {% if fee.transactions %}
+                                <table class="table table-sm table-borderless">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Method</th>
+                                            <th>Receipt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for txn in fee.transactions %}
+                                        <tr>
+                                            <td>{{ txn.transaction_date.strftime('%d %b %Y') }}</td>
+                                            <td>₹{{ txn.amount }}</td>
+                                            <td>{{ txn.payment_method|title }}</td>
+                                            <td>{{ txn.receipt_number }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted small">No transactions yet.</p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-muted small mt-3 text-center">
+        Showing {{ fees|length }} fees · Total Net Payable: ₹{{ total_due|round|int }}
+    </div>
 </div>
 
-<!-- Recent Transactions Section -->
-<div class="glass-card mb-4" data-aos="fade-up">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="mb-0">
-                <i class="fas fa-history me-2 text-primary"></i>
-                Recent Payments
-            </h4>
-            <small class="text-muted">Last 6 transactions</small>
-        </div>
-        <a href="#" class="text-primary small">View All</a>
-    </div>
-    
+<!-- ==================== RECENT TRANSACTIONS (summary) ==================== -->
+<div class="mb-4">
+    <h4 class="fw-bold mb-3"><i class="fas fa-history text-primary me-2"></i>Recent Payments</h4>
     {% if recent_transactions %}
-    <div class="row">
-        {% for txn in recent_transactions[:6] %}
-        <div class="col-md-4 col-lg-2 mb-3">
-            <div class="p-3 border rounded-3 text-center h-100">
-                <div class="rounded-circle {% if txn.status == 'success' %}bg-success-light text-success{% else %}bg-warning-light text-warning{% endif %} d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
-                    <i class="fas fa-{% if txn.payment_method == 'cash' %}money-bill{% elif txn.payment_method == 'online' %}credit-card{% else %}university{% endif %} fa-lg"></i>
-                </div>
-                <div class="fw-bold mb-1">₹{{ txn.amount }}</div>
-                <div class="small text-muted">{{ txn.transaction_date.strftime('%d %b') }}</div>
-                <div class="mt-2">
+    <div class="row g-3">
+        {% for txn in recent_transactions[:4] %}
+        <div class="col-6 col-md-3">
+            <div class="transaction-card p-3 border rounded-3">
+                <div class="d-flex justify-content-between mb-2">
                     <span class="badge {% if txn.status == 'success' %}bg-success{% else %}bg-warning{% endif %}">
                         {{ txn.status|title }}
                     </span>
+                    <i class="fas fa-receipt text-muted"></i>
+                </div>
+                <div class="fw-bold fs-5">₹{{ txn.amount|round(2) }}</div>
+                <div class="small text-muted">{{ txn.payment_method|title }}</div>
+                <div class="small text-muted">{{ txn.transaction_date.strftime('%d %b %Y') }}</div>
+                <div class="mt-2 text-truncate">
+                    <small class="text-muted">{{ txn.receipt_number }}</small>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-5">
-        <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
-        <p class="text-muted mb-0">No transactions yet</p>
+    <div class="text-center py-4 text-muted">
+        <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+        <p>No recent transactions</p>
     </div>
     {% endif %}
 </div>
 
-<!-- Payment Instructions -->
-<div class="glass-card" data-aos="fade-up">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="p-4">
-                <h4 class="mb-4">
-                    <i class="fas fa-info-circle me-2 text-primary"></i>
-                    Payment Instructions
-                </h4>
-                <div class="mb-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                            <i class="fas fa-university"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold">Bank Transfer</div>
-                            <small class="text-muted">Account: 1234567890 · IFSC: ABCD0123456</small>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-success-light text-success d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold">Cash Payment</div>
-                            <small class="text-muted">At school office (9:00 AM – 4:00 PM)</small>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-info-light text-info d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                            <i class="fas fa-credit-card"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold">Online Gateway</div>
-                            <small class="text-muted">Coming soon</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- ==================== PAYMENT INSTRUCTIONS (desktop side-by-side) ==================== -->
+<div class="row g-3 mb-5">
+    <div class="col-md-6">
+        <div class="premium-card p-3 h-100">
+            <h5 class="mb-3"><i class="fas fa-university text-primary me-2"></i>Bank Transfer</h5>
+            <p class="mb-2"><strong>Account:</strong> 1234567890</p>
+            <p class="mb-2"><strong>IFSC:</strong> ABCD0123456</p>
+            <p class="mb-0"><strong>Bank:</strong> State Bank of India</p>
         </div>
-        <div class="col-md-6">
-            <div class="p-4 border-start">
-                <h4 class="mb-4">
-                    <i class="fas fa-headset me-2 text-primary"></i>
-                    Need Help?
-                </h4>
-                <div class="alert alert-light border">
-                    <div class="d-flex align-items-start">
-                        <i class="fas fa-phone text-primary mt-1 me-3"></i>
-                        <div>
-                            <div class="fw-bold">Contact Accounts Office</div>
-                            <p class="mb-2 text-muted">For any fee-related queries, please contact us.</p>
-                            <div class="mb-2">
-                                <i class="fas fa-envelope text-muted me-2"></i>
-                                <span class="text-primary">accounts@{{ student.school.email.split('@')[1] if student.school.email else 'school.com' }}</span>
-                            </div>
-                            <div>
-                                <i class="fas fa-phone text-muted me-2"></i>
-                                <span class="text-primary">{{ student.school.phone or 'Contact school office' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <h6 class="mt-4 mb-3">Office Hours</h6>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Mon – Fri</span>
-                    <span class="fw-bold">9:00 AM – 4:00 PM</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="text-muted">Saturday</span>
-                    <span class="fw-bold">9:00 AM – 1:00 PM</span>
-                </div>
-            </div>
+    </div>
+    <div class="col-md-6">
+        <div class="premium-card p-3 h-100">
+            <h5 class="mb-3"><i class="fas fa-money-bill-wave text-success me-2"></i>Cash / Cheque</h5>
+            <p class="mb-2"><strong>Location:</strong> School Accounts Office</p>
+            <p class="mb-2"><strong>Timing:</strong> Mon–Fri 9:00 AM – 4:00 PM</p>
+            <p class="mb-0"><strong>Note:</strong> Please collect a receipt after payment.</p>
         </div>
     </div>
 </div>
 
-<style>
-.glass-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
+<!-- ==================== BOTTOM NAVIGATION (mobile only) ==================== -->
+<nav class="bottom-nav d-lg-none">
+    <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('student_fees') }}" class="bottom-nav-item active">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <span>Fees</span>
+    </a>
+    <a href="{{ url_for('student_attendance') }}" class="bottom-nav-item">
+        <i class="fas fa-calendar-check"></i>
+        <span>Attendance</span>
+    </a>
+    <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</nav>
 
-.progress-circle {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: conic-gradient(#667eea var(--progress), #e2e8f0 0deg);
+<!-- ==================== STYLES (consistent with dashboard) ==================== -->
+<style>
+/* Reuse dashboard styles – added here for completeness */
+:root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+body { background-color: #f8fafc; padding-bottom: 80px; }
+
+.metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border: 1px solid rgba(226,232,240,0.6);
+    transition: transform 0.2s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+.metric-card:active { transform: scale(0.98); }
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+.metric-number { font-size: 1.4rem; font-weight: 700; line-height: 1.2; margin-bottom: 0; }
+.metric-label { font-size: 0.75rem; color: #64748b; margin-bottom: 0; }
+
+.premium-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid rgba(226,232,240,0.6);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 
-.progress-circle-inner {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
+.fee-card {
     background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+.fee-card-header {
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+.fee-card-body { padding: 1rem; }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+.status-paid { background: rgba(16,185,129,0.1); color: #10b981; }
+.status-pending { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.status-overdue { background: rgba(239,68,68,0.1); color: #ef4444; }
+.status-partial { background: rgba(245,158,11,0.1); color: #f59e0b; }
+
+.transaction-card {
+    background: white;
+    transition: transform 0.2s;
+}
+.transaction-card:active { transform: scale(0.98); }
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 1rem calc(0.5rem + var(--safe-bottom));
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    z-index: 1000;
+    border-top: 1px solid #e2e8f0;
+}
+.bottom-nav-item {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 10px;
-    left: 10px;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    text-decoration: none;
+    padding: 0.25rem 0;
+}
+.bottom-nav-item i { font-size: 1.4rem; margin-bottom: 0.1rem; }
+.bottom-nav-item.active { color: #4361ee; }
+
+.mobile-app-bar {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 900;
 }
 
 .premium-table {
@@ -470,7 +463,6 @@
     border-collapse: separate;
     border-spacing: 0;
 }
-
 .premium-table th {
     background: #f8fafc;
     padding: 1rem;
@@ -478,96 +470,37 @@
     color: #1e293b;
     border-bottom: 2px solid #e2e8f0;
 }
-
 .premium-table td {
     padding: 1rem;
     border-bottom: 1px solid #e2e8f0;
     vertical-align: middle;
 }
+.premium-table tbody tr:hover { background: #f8fafc; }
 
-.premium-table tbody tr:hover {
-    background: #f8fafc;
-}
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.3rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.status-paid {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-}
-
-.status-pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-}
-
-.status-overdue {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-}
-
-.bg-primary-light {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-}
-
-.bg-success-light {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-}
-
-.bg-info-light {
-    background: rgba(14, 165, 233, 0.1);
-    color: #0ea5e9;
+@media (min-width: 992px) {
+    body { padding-bottom: 0; }
+    .bottom-nav { display: none; }
 }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- ==================== SCRIPTS ==================== -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Filter checkboxes are removed, so nothing needed here
-});
-
-// Filter functions
 function filterFees(status) {
-    const rows = document.querySelectorAll('#feeTable tbody tr:not(.collapse)');
-    rows.forEach(row => {
+    // Filter mobile cards
+    document.querySelectorAll('.fee-card').forEach(card => {
+        const cardStatus = card.dataset.status;
+        card.style.display = (status === 'all' || cardStatus === status) ? '' : 'none';
+    });
+    // Filter desktop table rows
+    document.querySelectorAll('#feeTable tbody tr:not(.collapse)').forEach(row => {
         const rowStatus = row.dataset.status;
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        row.style.display = (status === 'all' || rowStatus === status) ? '' : 'none';
     });
 }
 
-function sortFees(criteria) {
-    const tbody = document.querySelector('#feeTable tbody');
-    const rows = Array.from(document.querySelectorAll('#feeTable tbody tr:not(.collapse)'));
-    const sorted = rows.sort((a, b) => {
-        if (criteria === 'due_date') {
-            return new Date(a.dataset.dueDate) - new Date(b.dataset.dueDate);
-        } else if (criteria === 'amount') {
-            return parseFloat(b.dataset.amount) - parseFloat(a.dataset.amount);
-        } else if (criteria === 'status') {
-            return a.dataset.status.localeCompare(b.dataset.status);
-        }
-    });
-    tbody.innerHTML = '';
-    sorted.forEach(row => tbody.appendChild(row));
-}
-
-function viewReceipt(feeId) {
-    // In a real system, this might open a modal or navigate to a receipt page.
-    alert('Receipt for fee ID ' + feeId + ' can be viewed at the school office.');
-}
+// Simple menu toggle (placeholder)
+document.getElementById('menuToggle')?.addEventListener('click', function() {
+    history.back();
+});
 </script>
 {% endblock %}
