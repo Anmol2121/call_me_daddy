@@ -13,11 +13,11 @@
     <div class="card-body">
         {% if schools %}
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover align-middle">
                 <thead>
                     <tr>
                         <th>Code</th>
-                        <th>School Name</th>
+                        <th>School</th>
                         <th>Admin</th>
                         <th>Contact</th>
                         <th>Created</th>
@@ -30,21 +30,35 @@
                     <tr>
                         <td><strong>{{ school.code }}</strong></td>
                         <td>
-                            <strong><a href="{{ url_for('school_details', school_id=school.id) }}" class="text-decoration-none">{{ school.name }}</a></strong><br>
-                            <small class="text-muted">{{ school.address[:50] }}{% if school.address|length > 50 %}...{% endif %}</small>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle avatar-primary me-2">
+                                    <i class="bi bi-building"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">{{ school.name }}</div>
+                                    <small class="text-muted">{{ school.address[:40] }}{% if school.address|length > 40 %}…{% endif %}</small>
+                                </div>
+                            </div>
                         </td>
                         <td>
                             {% set admin = school.users|selectattr('role', 'equalto', 'admin')|first %}
                             {% if admin %}
-                            {{ admin.full_name }}<br>
-                            <small class="text-muted">{{ admin.email }}</small>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle avatar-success me-2" style="width: 32px; height: 32px;">
+                                    {{ admin.full_name[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="small fw-semibold">{{ admin.full_name }}</div>
+                                    <div class="x-small text-muted">{{ admin.email }}</div>
+                                </div>
+                            </div>
                             {% else %}
                             <span class="text-muted">No admin</span>
                             {% endif %}
                         </td>
                         <td>
-                            <div>{{ school.email or 'No email' }}</div>
-                            <small class="text-muted">{{ school.phone or 'No phone' }}</small>
+                            <div>{{ school.email or '—' }}</div>
+                            <small class="text-muted">{{ school.phone or '—' }}</small>
                         </td>
                         <td>{{ school.created_at.strftime('%Y-%m-%d') }}</td>
                         <td>
@@ -56,30 +70,28 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ url_for('school_details', school_id=school.id) }}" class="btn btn-outline-info" title="View Details">
+                                <a href="{{ url_for('school_details', school_id=school.id) }}" class="btn btn-outline-info" title="Details">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                
                                 {% if school.is_active %}
                                 <form method="POST" action="{{ url_for('suspend_school', school_id=school.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn btn-outline-warning" title="Suspend Services" onclick="return confirm('Are you sure you want to suspend this school? Admin and teachers will not be able to login.')">
+                                    <button type="submit" class="btn btn-outline-warning" title="Suspend" onclick="return confirm('Suspend this school?')">
                                         <i class="bi bi-pause-circle"></i>
                                     </button>
                                 </form>
                                 {% else %}
                                 <form method="POST" action="{{ url_for('reactivate_school', school_id=school.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn btn-outline-success" title="Reactivate School" onclick="return confirm('Are you sure you want to reactivate this school?')">
+                                    <button type="submit" class="btn btn-outline-success" title="Reactivate" onclick="return confirm('Reactivate this school?')">
                                         <i class="bi bi-play-circle"></i>
                                     </button>
                                 </form>
                                 {% endif %}
-                                
-                                <button type="button" class="btn btn-outline-danger" title="Delete School" data-bs-toggle="modal" data-bs-target="#deleteModal{{ school.id }}">
+                                <button type="button" class="btn btn-outline-danger" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ school.id }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
-                            
-                            <!-- Delete Confirmation Modal -->
+
+                            <!-- Delete Modal -->
                             <div class="modal fade" id="deleteModal{{ school.id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
@@ -89,21 +101,9 @@
                                         </div>
                                         <div class="modal-body">
                                             <div class="alert alert-danger">
-                                                <i class="bi bi-exclamation-triangle-fill"></i>
-                                                <strong>Warning:</strong> This action cannot be undone!
+                                                <i class="bi bi-exclamation-triangle-fill"></i> This action cannot be undone!
                                             </div>
-                                            <p>Are you sure you want to permanently delete <strong>{{ school.name }}</strong>?</p>
-                                            <p class="text-danger">
-                                                This will delete:
-                                                <ul>
-                                                    <li>All administrators and teachers</li>
-                                                    <li>All students and their records</li>
-                                                    <li>All classes and sessions</li>
-                                                    <li>All enrollment data</li>
-                                                    <li>All teacher assignments</li>
-                                                </ul>
-                                            </p>
-                                            <p><strong>Total data to be deleted:</strong></p>
+                                            <p>Delete <strong>{{ school.name }}</strong> and all associated data?</p>
                                             <ul>
                                                 <li>Admins: {{ school.users|selectattr('role', 'equalto', 'admin')|list|length }}</li>
                                                 <li>Teachers: {{ school.users|selectattr('role', 'equalto', 'teacher')|list|length }}</li>
@@ -128,11 +128,11 @@
             </table>
         </div>
         {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-building display-1 text-muted"></i>
-            <h4 class="mt-3">No Schools Found</h4>
+        <div class="empty-state">
+            <i class="bi bi-building"></i>
+            <h5>No Schools Found</h5>
             <p class="text-muted">Create your first school to get started.</p>
-            <a href="{{ url_for('create_school') }}" class="btn btn-primary">
+            <a href="{{ url_for('create_school') }}" class="btn btn-primary mt-3">
                 <i class="bi bi-plus-circle me-1"></i> Create School
             </a>
         </div>
