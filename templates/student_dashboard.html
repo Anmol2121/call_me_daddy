@@ -2,12 +2,11 @@
 {% block title %}Student Dashboard · EduManage Pro{% endblock %}
 
 {% block header %}
-<!-- Hide the default header on mobile – we'll use our own -->
+<!-- Hide default header on mobile – we'll use our own -->
 {% endblock %}
 
 {% block content %}
-<!-- ==================== MOBILE APP LAYOUT ==================== -->
-<!-- Top App Bar (mobile) -->
+<!-- ==================== MOBILE APP BAR ==================== -->
 <div class="mobile-app-bar d-lg-none">
     <div class="d-flex align-items-center justify-content-between p-3">
         <button class="btn btn-link text-dark p-0" id="menuToggle">
@@ -20,7 +19,7 @@
     </div>
 </div>
 
-<!-- Desktop Header (hidden on mobile) -->
+<!-- Desktop Header -->
 <div class="d-none d-lg-block mb-4">
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="fw-bold">Student Dashboard</h2>
@@ -159,7 +158,7 @@
         </div>
     </div>
 
-    <!-- Mobile Fee Cards (visible on small screens) -->
+    <!-- Mobile Fee Cards -->
     <div class="d-block d-lg-none" id="mobileFeeList">
         {% for fee in fees %}
         <div class="fee-card mb-3" data-status="{{ fee.status }}" data-due="{{ fee.due_date }}">
@@ -209,7 +208,7 @@
         {% endfor %}
     </div>
 
-    <!-- Desktop Table (hidden on mobile) -->
+    <!-- Desktop Table -->
     <div class="d-none d-lg-block">
         <div class="premium-card p-0">
             <div class="table-responsive">
@@ -270,7 +269,7 @@
     </div>
 </div>
 
-<!-- ==================== RECENT TRANSACTIONS (cards) ==================== -->
+<!-- ==================== RECENT TRANSACTIONS ==================== -->
 <div class="mb-4">
     <h4 class="fw-bold mb-3"><i class="fas fa-history text-primary me-2"></i>Recent Payments</h4>
     {% if recent_transactions %}
@@ -302,44 +301,6 @@
     {% endif %}
 </div>
 
-<!-- ==================== PROFILE & CONTACT (stacked on mobile) ==================== -->
-<div class="row g-3 mb-5">
-    <div class="col-md-6">
-        <div class="premium-card p-3 h-100">
-            <h5 class="mb-3"><i class="fas fa-user-graduate text-primary me-2"></i>My Profile</h5>
-            <div class="d-flex align-items-center mb-3">
-                <div class="avatar-circle bg-primary text-white me-3">
-                    {{ student.first_name[0]|upper }}{{ student.last_name[0]|upper }}
-                </div>
-                <div>
-                    <h6 class="mb-1">{{ student.first_name }} {{ student.last_name }}</h6>
-                    <p class="text-muted small mb-0">{{ student.student_id }}</p>
-                </div>
-            </div>
-            <div class="row small">
-                <div class="col-6 mb-2"><span class="text-muted">Class:</span> {{ enrollment.class_.name if enrollment else 'Not enrolled' }}</div>
-                <div class="col-6 mb-2"><span class="text-muted">Roll:</span> {{ enrollment.roll_number if enrollment else 'N/A' }}</div>
-                <div class="col-6 mb-2"><span class="text-muted">Parent:</span> {{ student.father_name or student.mother_name or 'N/A' }}</div>
-                <div class="col-6 mb-2"><span class="text-muted">Phone:</span> {{ student.phone or 'N/A' }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="premium-card p-3 h-100">
-            <h5 class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Payment Info</h5>
-            <div class="alert alert-light border-0 bg-light p-3 small">
-                <div class="d-flex mb-2"><i class="fas fa-university text-primary me-3"></i> Bank: 1234567890 · IFSC: ABCD0123456</div>
-                <div class="d-flex mb-2"><i class="fas fa-money-bill-wave text-success me-3"></i> Cash at school office</div>
-                <div class="d-flex"><i class="fas fa-credit-card text-info me-3"></i> Online gateway (coming soon)</div>
-            </div>
-            <div class="d-flex align-items-center mt-2">
-                <i class="fas fa-phone-alt text-primary me-3"></i>
-                <div><span class="fw-bold">Need help?</span><br><small class="text-muted">Contact accounts: {{ student.school.phone or 'school office' }}</small></div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- ==================== BOTTOM NAVIGATION (mobile only) ==================== -->
 <nav class="bottom-nav d-lg-none">
     <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item active">
@@ -354,26 +315,18 @@
         <i class="fas fa-calendar-check"></i>
         <span>Attendance</span>
     </a>
-    <!-- Fixed: previously pointed to non‑existent 'student_profile' – now goes to dashboard (or you can create a profile page later) -->
+    <!-- Profile icon – currently links to dashboard. Replace with 'student_profile' when that page exists. -->
     <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
         <i class="fas fa-user"></i>
         <span>Profile</span>
     </a>
 </nav>
 
-<!-- ==================== STYLES (embedded for completeness) ==================== -->
+<!-- ==================== STYLES ==================== -->
 <style>
-/* General mobile improvements */
-:root {
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
+:root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+body { background-color: #f8fafc; padding-bottom: 80px; }
 
-body {
-    background-color: #f8fafc;
-    padding-bottom: 80px; /* space for bottom nav on mobile */
-}
-
-/* Metric Cards (touch-friendly) */
 .metric-card {
     background: white;
     border-radius: 16px;
@@ -385,9 +338,7 @@ body {
     display: flex;
     align-items: center;
 }
-.metric-card:active {
-    transform: scale(0.98);
-}
+.metric-card:active { transform: scale(0.98); }
 .metric-icon {
     width: 48px;
     height: 48px;
@@ -399,23 +350,10 @@ body {
     font-size: 1.25rem;
     flex-shrink: 0;
 }
-.metric-number {
-    font-size: 1.4rem;
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 0;
-}
-.metric-label {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-bottom: 0;
-}
-.metric-trend {
-    font-size: 0.7rem;
-    color: #64748b;
-}
+.metric-number { font-size: 1.4rem; font-weight: 700; line-height: 1.2; margin-bottom: 0; }
+.metric-label { font-size: 0.75rem; color: #64748b; margin-bottom: 0; }
+.metric-trend { font-size: 0.7rem; color: #64748b; }
 
-/* Premium Cards */
 .premium-card {
     background: white;
     border-radius: 20px;
@@ -423,7 +361,6 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 
-/* Fee Cards (mobile) */
 .fee-card {
     background: white;
     border-radius: 16px;
@@ -435,11 +372,8 @@ body {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #e2e8f0;
 }
-.fee-card-body {
-    padding: 1rem;
-}
+.fee-card-body { padding: 1rem; }
 
-/* Status Badges */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -453,30 +387,12 @@ body {
 .status-overdue { background: rgba(239,68,68,0.1); color: #ef4444; }
 .status-partial { background: rgba(245,158,11,0.1); color: #f59e0b; }
 
-/* Transaction Cards */
 .transaction-card {
     background: white;
     transition: transform 0.2s;
 }
-.transaction-card:active {
-    transform: scale(0.98);
-}
+.transaction-card:active { transform: scale(0.98); }
 
-/* Avatar */
-.avatar-circle {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    font-weight: 600;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    flex-shrink: 0;
-}
-
-/* Bottom Navigation */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -499,20 +415,10 @@ body {
     font-size: 0.7rem;
     text-decoration: none;
     padding: 0.25rem 0;
-    transition: color 0.2s;
 }
-.bottom-nav-item i {
-    font-size: 1.4rem;
-    margin-bottom: 0.1rem;
-}
-.bottom-nav-item.active {
-    color: #4361ee;
-}
-.bottom-nav-item:active {
-    color: #4361ee;
-}
+.bottom-nav-item i { font-size: 1.4rem; margin-bottom: 0.1rem; }
+.bottom-nav-item.active { color: #4361ee; }
 
-/* Mobile App Bar */
 .mobile-app-bar {
     background: white;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -522,7 +428,6 @@ body {
     z-index: 900;
 }
 
-/* Desktop Table */
 .premium-table {
     width: 100%;
     border-collapse: separate;
@@ -540,22 +445,15 @@ body {
     border-bottom: 1px solid #e2e8f0;
     vertical-align: middle;
 }
-.premium-table tbody tr:hover {
-    background: #f8fafc;
-}
+.premium-table tbody tr:hover { background: #f8fafc; }
 
-/* Hide bottom nav on larger screens */
 @media (min-width: 992px) {
-    body {
-        padding-bottom: 0;
-    }
-    .bottom-nav {
-        display: none;
-    }
+    body { padding-bottom: 0; }
+    .bottom-nav { display: none; }
 }
 </style>
 
-<!-- ==================== CHARTS & SCRIPTS ==================== -->
+<!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -610,26 +508,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Filter functions
 function filterFees(status) {
     const cards = document.querySelectorAll('.fee-card');
     cards.forEach(card => {
         const rowStatus = card.dataset.status;
-        if (status === 'all' || rowStatus === status) {
-            card.style.display = '';
-        } else {
-            card.style.display = 'none';
-        }
+        card.style.display = (status === 'all' || rowStatus === status) ? '' : 'none';
     });
-    // Also filter desktop table rows if visible
     const rows = document.querySelectorAll('#feeTable tbody tr');
     rows.forEach(row => {
         const rowStatus = row.dataset.status;
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        row.style.display = (status === 'all' || rowStatus === status) ? '' : 'none';
     });
 }
 
