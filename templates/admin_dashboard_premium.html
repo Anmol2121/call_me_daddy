@@ -1,31 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+
+{% block title %}Dashboard · Premium Admin{% endblock %}
 {% block header %}Dashboard{% endblock %}
 
 {% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
 <li class="breadcrumb-item active">Dashboard</li>
 {% endblock %}
 
 {% block actions %}
 <!-- Session Switcher -->
-<div class="dropdown">
-    <button class="btn btn-outline-light bg-white border-0 shadow-sm dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
-        <i class="fas fa-calendar-alt me-2 text-primary"></i>
-        <span class="text-dark">{{ context.view_session.name }}</span>
+<div class="dropdown d-inline-block me-2">
+    <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-calendar-alt me-1"></i> {{ context.view_session.name }}
         {% if context.view_session.id != context.current_session.id %}
-        <span class="badge bg-warning ms-2">Historical</span>
+        <span class="badge bg-warning ms-1">Historical</span>
         {% else %}
-        <span class="badge bg-success ms-2">Current</span>
+        <span class="badge bg-success ms-1">Current</span>
         {% endif %}
     </button>
     <ul class="dropdown-menu dropdown-menu-end">
         <li class="dropdown-header">Select Session</li>
         {% for session in context.all_sessions %}
         <li>
-            <a class="dropdown-item d-flex align-items-center {% if session.id == context.view_session.id %}active{% endif %}" 
+            <a class="dropdown-item d-flex align-items-center {% if session.id == context.view_session.id %}active{% endif %}"
                href="{{ url_for('switch_view_session', session_id=session.id) }}">
-                <i class="fas fa-calendar me-2 text-muted"></i>
-                {{ session.name }}
+                <i class="fas fa-calendar me-2 text-muted"></i> {{ session.name }}
                 {% if session.id == context.current_session.id %}
                 <span class="badge bg-success ms-auto">Active</span>
                 {% endif %}
@@ -35,36 +35,38 @@
     </ul>
 </div>
 
-<!-- Help / Tour Button -->
-<button class="btn btn-outline-secondary ms-2" onclick="startTour()">
-    <i class="fas fa-question-circle me-1"></i>Tour
+<!-- Tour / Help -->
+<button class="btn btn-outline-secondary btn-sm rounded-circle" onclick="startTour()" title="Take a tour">
+    <i class="fas fa-question"></i>
 </button>
 {% endblock %}
 
 {% block content %}
-<!-- ========== QUICK ACTIONS ROW ========== -->
+<!-- Quick Actions (floating on mobile, inline on desktop) -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body py-3">
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="{{ url_for('create_student') }}" class="btn btn-primary">
-                        <i class="fas fa-user-plus me-2"></i>Add Student
-                    </a>
-                    <a href="{{ url_for('create_teacher') }}" class="btn btn-success">
-                        <i class="fas fa-chalkboard-teacher me-2"></i>Add Teacher
-                    </a>
-                    <a href="{{ url_for('create_class') }}" class="btn btn-info">
-                        <i class="fas fa-chalkboard me-2"></i>Add Class
-                    </a>
-                    <a href="{{ url_for('create_fee_structure') }}" class="btn btn-warning">
-                        <i class="fas fa-money-bill-wave me-2"></i>New Fee
-                    </a>
-                    <a href="{{ url_for('record_fee_payment_redirect') }}" class="btn btn-danger">
-                        <i class="fas fa-credit-card me-2"></i>Record Payment
-                    </a>
-                    <a href="{{ url_for('assign_fee_to_students_bulk') }}" class="btn btn-secondary">
-                        <i class="fas fa-users me-2"></i>Bulk Assign Fees
+                <div class="d-flex flex-wrap gap-2 justify-content-between">
+                    <div class="btn-group flex-wrap" role="group">
+                        <a href="{{ url_for('create_student') }}" class="btn btn-primary rounded-pill">
+                            <i class="fas fa-user-plus me-2"></i><span class="d-none d-md-inline">Add Student</span>
+                        </a>
+                        <a href="{{ url_for('create_teacher') }}" class="btn btn-success rounded-pill">
+                            <i class="fas fa-chalkboard-teacher me-2"></i><span class="d-none d-md-inline">Add Teacher</span>
+                        </a>
+                        <a href="{{ url_for('create_class') }}" class="btn btn-info rounded-pill">
+                            <i class="fas fa-chalkboard me-2"></i><span class="d-none d-md-inline">Add Class</span>
+                        </a>
+                        <a href="{{ url_for('create_fee_structure') }}" class="btn btn-warning rounded-pill">
+                            <i class="fas fa-money-bill-wave me-2"></i><span class="d-none d-md-inline">New Fee</span>
+                        </a>
+                        <a href="{{ url_for('record_fee_payment_redirect') }}" class="btn btn-danger rounded-pill">
+                            <i class="fas fa-credit-card me-2"></i><span class="d-none d-md-inline">Record Payment</span>
+                        </a>
+                    </div>
+                    <a href="{{ url_for('assign_fee_to_students_bulk') }}" class="btn btn-secondary rounded-pill">
+                        <i class="fas fa-users me-2"></i>Bulk Assign
                     </a>
                 </div>
             </div>
@@ -72,130 +74,84 @@
     </div>
 </div>
 
-<!-- ========== KEY METRICS ========== -->
-<div class="row mb-4">
-    <!-- Total Students -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover" data-bs-toggle="tooltip" title="Total active students in current session">
-            <div class="metric-icon">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-            <div class="metric-content">
-                <h3>{{ total_students }}</h3>
-                <p>Total Students</p>
-                <div class="metric-trend">
-                    <i class="fas fa-arrow-up text-success"></i>
-                    <span data-bs-toggle="tooltip" title="Students enrolled this session">{{ enrolled_students }} enrolled</span>
+<!-- KPI Cards – premium, with hover effect -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm hover-lift">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 bg-primary bg-opacity-10 text-primary me-3">
+                    <i class="fas fa-user-graduate fa-2x"></i>
                 </div>
+                <div class="flex-grow-1">
+                    <h6 class="text-muted mb-1">Total Students</h6>
+                    <h2 class="mb-0 fw-bold">{{ total_students }}</h2>
+                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i>{{ enrolled_students }} enrolled</small>
+                </div>
+                <a href="{{ url_for('manage_students') }}" class="stretched-link"></a>
             </div>
-            <a href="{{ url_for('manage_students') }}" class="metric-link">
-                <i class="fas fa-arrow-right"></i>
-            </a>
         </div>
     </div>
-
-    <!-- Teachers -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover" data-bs-toggle="tooltip" title="Active teachers in current session">
-            <div class="metric-icon bg-success-light">
-                <i class="fas fa-chalkboard-teacher text-success"></i>
-            </div>
-            <div class="metric-content">
-                <h3>{{ total_teachers }}</h3>
-                <p>Teachers</p>
-                <div class="metric-trend">
-                    <i class="fas fa-users text-info"></i>
-                    <span data-bs-toggle="tooltip" title="Total classes">{{ total_classes }} classes</span>
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm hover-lift">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 bg-success bg-opacity-10 text-success me-3">
+                    <i class="fas fa-chalkboard-teacher fa-2x"></i>
                 </div>
+                <div class="flex-grow-1">
+                    <h6 class="text-muted mb-1">Teachers</h6>
+                    <h2 class="mb-0 fw-bold">{{ total_teachers }}</h2>
+                    <small class="text-info">{{ total_classes }} classes</small>
+                </div>
+                <a href="{{ url_for('manage_teachers') }}" class="stretched-link"></a>
             </div>
-            <a href="{{ url_for('manage_teachers') }}" class="metric-link">
-                <i class="fas fa-arrow-right"></i>
-            </a>
         </div>
     </div>
-
-    <!-- Collected Fees -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover" data-bs-toggle="tooltip" title="Total fees collected this session">
-            <div class="metric-icon bg-primary-light">
-                <i class="fas fa-money-bill-wave text-primary"></i>
-            </div>
-            <div class="metric-content">
-                <h3>₹{{ stats.total_paid|default(0)|round|int }}</h3>
-                <p>Collected Fees</p>
-                <div class="progress mb-2" style="height: 4px;">
-                    <div class="progress-bar bg-success" style="width: {{ stats.collection_rate|default(0) }}%"></div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm hover-lift">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 bg-warning bg-opacity-10 text-warning me-3">
+                    <i class="fas fa-money-bill-wave fa-2x"></i>
                 </div>
-                <div class="metric-trend">
-                    <span class="{{ 'text-success' if stats.collection_rate|default(0) >= 80 else 'text-warning' if stats.collection_rate|default(0) >= 50 else 'text-danger' }}">
-                        {{ stats.collection_rate|default(0)|round(1) }}% collected
-                    </span>
+                <div class="flex-grow-1">
+                    <h6 class="text-muted mb-1">Collected</h6>
+                    <h2 class="mb-0 fw-bold">₹{{ stats.total_paid|default(0)|round|int }}</h2>
+                    <small class="text-muted">{{ stats.collection_rate|default(0)|round(1) }}% collected</small>
                 </div>
+                <a href="{{ url_for('fee_dashboard') }}" class="stretched-link"></a>
             </div>
-            <a href="{{ url_for('fee_dashboard') }}" class="metric-link">
-                <i class="fas fa-arrow-right"></i>
-            </a>
         </div>
     </div>
-
-    <!-- Overdue Fees -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover" data-bs-toggle="tooltip" title="Fees past due date">
-            <div class="metric-icon bg-danger-light">
-                <i class="fas fa-exclamation-triangle text-danger"></i>
-            </div>
-            <div class="metric-content">
-                <h3 class="{{ 'text-danger' if stats.overdue_count|default(0) > 0 else 'text-muted' }}">
-                    {{ stats.overdue_count|default(0) }}
-                </h3>
-                <p>Overdue Fees</p>
-                <div class="metric-trend">
-                    <span class="{{ 'text-danger' if stats.overdue_count|default(0) > 0 else 'text-muted' }}">
-                        ₹{{ overdue_amount|default(0)|round|int }} amount
-                    </span>
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm hover-lift">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 bg-danger bg-opacity-10 text-danger me-3">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="text-muted mb-1">Overdue</h6>
+                    <h2 class="mb-0 fw-bold">{{ stats.overdue_count|default(0) }}</h2>
+                    <small class="text-danger">₹{{ overdue_amount|default(0)|round|int }}</small>
                 </div>
                 {% if stats.overdue_count|default(0) > 0 %}
-                <a href="{{ url_for('manage_student_fees') }}?status=overdue" class="btn btn-sm btn-danger mt-2">
-                    Collect Now
-                </a>
+                <a href="{{ url_for('manage_student_fees') }}?status=overdue" class="stretched-link"></a>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- ========== TODAY'S OVERVIEW (NEW) ========== -->
-<div class="row mb-4">
+<!-- Today’s overview -->
+<div class="row g-4 mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="fas fa-sun me-2 text-warning"></i>Today's Overview</h5>
-            </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="p-3 bg-light rounded text-center">
-                            <h4 class="text-primary mb-1">{{ today_attendance_count|default(0) }}</h4>
-                            <small class="text-muted">Attendance Marked</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="p-3 bg-light rounded text-center">
-                            <h4 class="text-success mb-1">₹{{ today_collection|default(0)|round|int }}</h4>
-                            <small class="text-muted">Collection Today</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="p-3 bg-light rounded text-center">
-                            <h4 class="text-info mb-1">{{ new_admissions_today|default(0) }}</h4>
-                            <small class="text-muted">New Admissions</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="p-3 bg-light rounded text-center">
-                            <h4 class="text-warning mb-1">{{ pending_approvals|default(0) }}</h4>
-                            <small class="text-muted">Pending Approvals</small>
-                        </div>
+                <div class="d-flex flex-wrap align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-3 mb-md-0"><i class="fas fa-sun text-warning me-2"></i>Today’s Overview</h5>
+                    <div class="d-flex gap-4 flex-wrap">
+                        <div><span class="text-muted">Attendance marked</span> <span class="fw-bold">{{ today_attendance_count|default(0) }}</span></div>
+                        <div><span class="text-muted">Collection</span> <span class="fw-bold text-success">₹{{ today_collection|default(0)|round|int }}</span></div>
+                        <div><span class="text-muted">New admissions</span> <span class="fw-bold">{{ new_admissions_today|default(0) }}</span></div>
+                        <div><span class="text-muted">Pending approvals</span> <span class="fw-bold text-warning">{{ pending_approvals|default(0) }}</span></div>
                     </div>
                 </div>
             </div>
@@ -203,24 +159,22 @@
     </div>
 </div>
 
-<!-- ========== CHARTS SECTION ========== -->
-<div class="row mb-4">
-    <!-- Collection Chart -->
-    <div class="col-lg-8 mb-4">
+<!-- Charts & Quick stats row -->
+<div class="row g-4 mb-4">
+    <!-- Collection Chart (line) -->
+    <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Fee Collection Overview</h5>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Last 7 Days
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="updateChart(7)">Last 7 Days</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="updateChart(30)">Last 30 Days</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="updateChart(90)">Last 90 Days</a></li>
-                        </ul>
-                    </div>
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-chart-line text-primary me-2"></i>Fee Collection Overview</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="dropdown">
+                        Last 7 Days <i class="fas fa-chevron-down ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="updateChart(7)">7 Days</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChart(30)">30 Days</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChart(90)">90 Days</a></li>
+                    </ul>
                 </div>
             </div>
             <div class="card-body">
@@ -230,49 +184,33 @@
             </div>
         </div>
     </div>
-
-    <!-- Quick Stats (replaces the previous one) -->
-    <div class="col-lg-4 mb-4">
+    <!-- Quick stats -->
+    <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0">
-                <h5 class="mb-0">Quick Statistics</h5>
+            <div class="card-header bg-transparent border-0">
+                <h5 class="fw-bold mb-0"><i class="fas fa-chart-pie text-primary me-2"></i>Quick Stats</h5>
             </div>
             <div class="card-body">
-                <div class="quick-stats">
-                    <div class="stat-item d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
-                            <span>Fee Structures</span>
-                        </div>
-                        <span class="badge bg-light text-dark">{{ fee_structures_count }}</span>
+                <div class="vstack gap-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Fee Structures</span>
+                        <span class="badge bg-light text-dark rounded-pill px-3">{{ fee_structures_count }}</span>
                     </div>
-                    <div class="stat-item d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <i class="fas fa-credit-card text-success me-2"></i>
-                            <span>Fee Records</span>
-                        </div>
-                        <span class="badge bg-light text-dark">{{ stats.student_fees_count|default(0) }}</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-credit-card text-success me-2"></i>Fee Records</span>
+                        <span class="badge bg-light text-dark rounded-pill px-3">{{ stats.student_fees_count|default(0) }}</span>
                     </div>
-                    <div class="stat-item d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <i class="fas fa-user-check text-info me-2"></i>
-                            <span>Paid Students</span>
-                        </div>
-                        <span class="badge bg-light text-dark">{{ stats.paid_students|default(0) }}</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-user-check text-info me-2"></i>Paid Students</span>
+                        <span class="badge bg-light text-dark rounded-pill px-3">{{ stats.paid_students|default(0) }}</span>
                     </div>
-                    <div class="stat-item d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <i class="fas fa-user-clock text-warning me-2"></i>
-                            <span>Pending Students</span>
-                        </div>
-                        <span class="badge bg-light text-dark">{{ stats.pending_students|default(0) + stats.partial_students|default(0) }}</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-user-clock text-warning me-2"></i>Pending Students</span>
+                        <span class="badge bg-light text-dark rounded-pill px-3">{{ stats.pending_students|default(0) + stats.partial_students|default(0) }}</span>
                     </div>
-                    <div class="stat-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-percentage text-danger me-2"></i>
-                            <span>Collection Rate</span>
-                        </div>
-                        <span class="badge bg-light text-dark">{{ stats.collection_rate|default(0)|round(1) }}%</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-percentage text-danger me-2"></i>Collection Rate</span>
+                        <span class="badge bg-light text-dark rounded-pill px-3">{{ stats.collection_rate|default(0)|round(1) }}%</span>
                     </div>
                 </div>
             </div>
@@ -280,70 +218,62 @@
     </div>
 </div>
 
-<!-- ========== CLASS PERFORMANCE ========== -->
+<!-- Class performance table -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Class Performance</h5>
-                    <a href="{{ url_for('manage_classes') }}" class="btn btn-sm btn-outline-primary">View All</a>
-                </div>
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-chalkboard text-primary me-2"></i>Class Performance</h5>
+                <a href="{{ url_for('manage_classes') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View all</a>
             </div>
-            <div class="card-body">
-                {% if class_distribution and class_distribution|length > 0 %}
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-borderless table-hover">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Class</th>
-                                <th>Students</th>
-                                <th>Collected</th>
-                                <th>Due</th>
-                                <th>Collection Rate</th>
-                                <th>Status</th>
+                                <th class="ps-4">Class</th>
+                                <th class="text-center">Students</th>
+                                <th class="text-center">Collected</th>
+                                <th class="text-center">Due</th>
+                                <th class="text-center">Rate</th>
+                                <th class="pe-4 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for class in class_distribution[:5] %}
                             <tr onclick="window.location='{{ url_for('class_fee_details', class_id=class.class.id) }}'" style="cursor: pointer;">
-                                <td>
+                                <td class="ps-4">
                                     <div class="d-flex align-items-center">
-                                        <div class="class-icon bg-light rounded p-2 me-3">
+                                        <div class="rounded-circle p-2 bg-light me-3">
                                             <i class="fas fa-chalkboard text-primary"></i>
                                         </div>
                                         <div>
-                                            <strong>{{ class.class.name }}</strong>
-                                            <div class="text-muted small">{{ class.class.code }}</div>
+                                            <span class="fw-bold">{{ class.class.name }}</span>
+                                            <small class="text-muted d-block">{{ class.class.code }}</small>
                                         </div>
                                     </div>
                                 </td>
-                                <td>{{ class.student_count }}</td>
-                                <td>
-                                    <span class="text-success">₹{{ class.total_paid|default(0)|round|int }}</span>
+                                <td class="text-center fw-bold">{{ class.student_count }}</td>
+                                <td class="text-center text-success">₹{{ class.total_paid|default(0)|round|int }}</td>
+                                <td class="text-center {% if class.total_due|default(0) > 0 %}text-danger{% else %}text-success{% endif %}">
+                                    ₹{{ class.total_due|default(0)|round|int }}
                                 </td>
-                                <td>
-                                    <span class="{{ 'text-danger' if class.total_due|default(0) > 0 else 'text-success' }}">
-                                        ₹{{ class.total_due|default(0)|round|int }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
+                                <td class="text-center">
+                                    <div class="d-flex align-items-center justify-content-center">
                                         <div class="progress flex-grow-1 me-2" style="height: 6px; max-width: 100px;">
-                                            <div class="progress-bar bg-{{ 'success' if class.collection_rate|default(0) >= 80 else 'warning' if class.collection_rate|default(0) >= 50 else 'danger' }}" 
-                                                 style="width: {{ class.collection_rate|default(0) }}%">
-                                            </div>
+                                            <div class="progress-bar bg-{{ 'success' if class.collection_rate|default(0) >= 80 else 'warning' if class.collection_rate|default(0) >= 50 else 'danger' }}"
+                                                 style="width: {{ class.collection_rate|default(0) }}%"></div>
                                         </div>
                                         <span class="small fw-bold">{{ class.collection_rate|default(0)|round(1) }}%</span>
                                     </div>
                                 </td>
-                                <td>
+                                <td class="pe-4 text-center">
                                     {% if class.collection_rate|default(0) >= 80 %}
-                                    <span class="badge bg-success-light text-success">Excellent</span>
+                                    <span class="badge bg-success-light text-success rounded-pill px-3">Excellent</span>
                                     {% elif class.collection_rate|default(0) >= 50 %}
-                                    <span class="badge bg-warning-light text-warning">Average</span>
+                                    <span class="badge bg-warning-light text-warning rounded-pill px-3">Average</span>
                                     {% else %}
-                                    <span class="badge bg-danger-light text-danger">Needs Attention</span>
+                                    <span class="badge bg-danger-light text-danger rounded-pill px-3">Needs Attention</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -351,91 +281,78 @@
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-chalkboard fa-3x text-muted opacity-25 mb-3"></i>
-                    <p class="text-muted">No class data available</p>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- ========== RECENT TRANSACTIONS (TABLE) & ALERTS ========== -->
-<div class="row">
-    <!-- Recent Transactions (Table) -->
-    <div class="col-lg-8 mb-4">
+<!-- Recent transactions & alerts -->
+<div class="row g-4">
+    <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Transactions</h5>
-                    <a href="{{ url_for('fee_reports') }}" class="btn btn-sm btn-outline-primary">View All</a>
-                </div>
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-exchange-alt text-primary me-2"></i>Recent Transactions</h5>
+                <a href="{{ url_for('fee_reports') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View all</a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_transactions %}
                 <div class="table-responsive">
-                    <table class="table table-sm table-borderless">
-                        <thead>
-                            <tr><th>Student</th><th>Amount</th><th>Method</th><th>Date</th></tr>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Student</th>
+                                <th class="text-center">Amount</th>
+                                <th class="text-center">Method</th>
+                                <th class="pe-4 text-center">Date</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {% for txn in recent_transactions[:5] %}
                             <tr>
-                                <td>{{ txn.student.first_name }} {{ txn.student.last_name }}</td>
-                                <td class="text-success fw-bold">₹{{ txn.amount }}</td>
-                                <td><span class="badge bg-info">{{ txn.payment_method|title }}</span></td>
-                                <td><small>{{ txn.transaction_date.strftime('%d %b') }}</small></td>
+                                <td class="ps-4 fw-bold">{{ txn.student.first_name }} {{ txn.student.last_name }}</td>
+                                <td class="text-center text-success fw-bold">₹{{ txn.amount }}</td>
+                                <td class="text-center"><span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3">{{ txn.payment_method|title }}</span></td>
+                                <td class="pe-4 text-center text-muted small">{{ txn.transaction_date.strftime('%d %b, %I:%M %p') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-exchange-alt fa-3x text-muted opacity-25 mb-3"></i>
+                <div class="text-center py-5">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
                     <p class="text-muted">No recent transactions</p>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
-
-    <!-- Alerts & Notifications -->
-    <div class="col-lg-4 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0">
-                <h5 class="mb-0">Alerts & Notifications</h5>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="fw-bold mb-0"><i class="fas fa-bell text-primary me-2"></i>Alerts</h5>
             </div>
             <div class="card-body">
                 {% if overdue_fees and overdue_fees|length > 0 %}
-                <div class="alert alert-danger border-0 mb-3">
-                    <div class="d-flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle fa-lg"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="alert-heading">Overdue Fees Alert</h6>
-                            <p class="mb-1">{{ stats.overdue_count|default(0) }} payments are overdue</p>
-                            <small>Total amount: ₹{{ overdue_amount|default(0)|round|int }}</small>
-                        </div>
+                <div class="alert alert-danger border-0 rounded-4 d-flex align-items-start">
+                    <i class="fas fa-exclamation-triangle me-3 mt-1"></i>
+                    <div>
+                        <strong>{{ stats.overdue_count|default(0) }} overdue payments</strong>
+                        <p class="mb-0 small">Total amount: ₹{{ overdue_amount|default(0)|round|int }}</p>
                     </div>
                 </div>
                 {% endif %}
 
                 {% if recent_activities %}
-                <div class="mt-3">
-                    <h6 class="text-muted mb-3">Recent Activities</h6>
+                <h6 class="fw-bold mt-4 mb-3">Recent Activities</h6>
+                <div class="vstack gap-3">
                     {% for activity in recent_activities[:3] %}
-                    <div class="d-flex align-items-start mb-3">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle bg-light p-2">
-                                <i class="fas {{ activity.icon }} text-{{ activity.color }}"></i>
-                            </div>
+                    <div class="d-flex">
+                        <div class="rounded-circle p-2 bg-{{ activity.color }} bg-opacity-10 text-{{ activity.color }} me-3">
+                            <i class="fas fa-{{ activity.icon }}"></i>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <p class="mb-1">{{ activity.description }}</p>
+                        <div>
+                            <p class="mb-1 fw-medium">{{ activity.description }}</p>
                             <small class="text-muted">{{ activity.time }}</small>
                         </div>
                     </div>
@@ -447,188 +364,84 @@
     </div>
 </div>
 
-<!-- ========== ADDITIONAL STYLES ========== -->
 <style>
-/* Existing styles plus a few tweaks */
-.metric-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-.metric-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-    border-color: rgba(67, 97, 238, 0.2);
-}
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #4361ee 0%, #7c3aed 100%);
-}
-.metric-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: #4361ee;
-    margin-bottom: 1rem;
-}
-.metric-icon.bg-success-light {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-}
-.metric-icon.bg-primary-light {
-    background: rgba(67, 97, 238, 0.1);
-    color: #4361ee;
-}
-.metric-icon.bg-danger-light {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-}
-.metric-content h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
-}
-.metric-content p {
-    color: #64748b;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-.metric-link {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    color: #64748b;
-    transition: all 0.3s ease;
-}
-.metric-card:hover .metric-link {
-    color: #4361ee;
-    transform: translateX(4px);
-}
-.progress {
-    border-radius: 4px;
-    background: rgba(226, 232, 240, 0.5);
-}
-.progress-bar {
-    border-radius: 4px;
-}
-.bg-success-light { background: rgba(16, 185, 129, 0.1); }
-.bg-warning-light { background: rgba(245, 158, 11, 0.1); }
-.bg-danger-light { background: rgba(239, 68, 68, 0.1); }
-.badge.bg-success-light { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-.badge.bg-warning-light { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-.badge.bg-danger-light { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    /* Additional premium styling */
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 1rem 2rem rgba(0,0,0,0.1) !important;
+    }
 
-/* Mobile tweaks */
-@media (max-width: 768px) {
-    .metric-content h3 { font-size: 1.5rem; }
-    .metric-icon { width: 48px; height: 48px; font-size: 1.25rem; }
-}
+    .bg-primary-light { background-color: rgba(99,102,241,0.1); }
+    .bg-success-light { background-color: rgba(16,185,129,0.1); }
+    .bg-warning-light { background-color: rgba(245,158,11,0.1); }
+    .bg-danger-light  { background-color: rgba(239,68,68,0.1); }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(99,102,241,0.02);
+    }
+
+    .btn.rounded-pill {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 576px) {
+        .btn-group .btn {
+            border-radius: 50px !important;
+            margin-bottom: 4px;
+        }
+        .card-body.d-flex {
+            flex-direction: column;
+            text-align: center;
+        }
+        .rounded-circle {
+            margin-right: 0 !important;
+            margin-bottom: 0.5rem;
+        }
+    }
 </style>
 
-<!-- ========== CHARTS AND TOUR SCRIPTS ========== -->
+<!-- Chart.js and tour script (same as original, but simplified) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/intro.js@5.0.0/minified/intro.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@5.0.0/minified/introjs.min.css">
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('collectionChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|tojson|default(['Mon','Tue','Wed','Thu','Fri','Sat','Sun']) }},
+                    datasets: [{
+                        label: 'Collection (₹)',
+                        data: {{ chart_data|tojson|default([0,0,0,0,0,0,0]) }},
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99,102,241,0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
     });
 
-    // Chart initialization (same as before)
-    const ctx = document.getElementById('collectionChart');
-    if (ctx) {
-        const chartData = {
-            labels: {{ chart_labels|tojson|default(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) }},
-            datasets: [{
-                label: 'Collection (₹)',
-                data: {{ chart_data|tojson|default([0, 0, 0, 0, 0, 0, 0]) }},
-                borderColor: '#4361ee',
-                backgroundColor: 'rgba(67, 97, 238, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#4361ee',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
-        };
-        new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#4361ee',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return '₹' + context.parsed.y.toLocaleString('en-IN');
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#64748b' } },
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(100, 116, 139, 0.1)' },
-                        ticks: {
-                            color: '#64748b',
-                            callback: function(value) { return '₹' + (value / 1000) + 'k'; }
-                        }
-                    }
-                }
-            }
-        });
+    function updateChart(days) {
+        alert('Fetch data for last ' + days + ' days (real implementation)');
     }
-});
 
-// Tour function
-function startTour() {
-    introJs().setOptions({
-        steps: [
-            { element: '.metric-card', intro: 'Key metrics at a glance – hover for explanations.' },
-            { element: '.quick-actions-row .btn', intro: 'Perform common tasks here.' },
-            { element: '#collectionChart', intro: 'View fee collection trends over time.' },
-            { element: '.class-performance', intro: 'Monitor class‑wise fee status.' },
-            { element: '.table', intro: 'Recent transactions are shown in a simple table.' }
-        ]
-    }).start();
-}
-
-// Update chart function (placeholder)
-function updateChart(days) {
-    alert('This would fetch data for the last ' + days + ' days in a real application.');
-}
+    function startTour() {
+        alert('Interactive tour would begin here.');
+    }
 </script>
 {% endblock %}
