@@ -457,6 +457,7 @@
             justify-content: center;
             font-weight: 600;
             font-size: 1.1rem;
+            flex-shrink: 0;
         }
         .avatar-sm {
             width: 36px;
@@ -470,17 +471,35 @@
         .avatar-danger  { background: #fee2e2; color: #ef4444; }
         .avatar-secondary { background: #f1f5f9; color: #64748b; }
         
-        /* Activity timeline enhancements */
-        .list-group-item {
-            border-left: none;
-            border-right: none;
-            border-color: #f1f5f9;
-            transition: background-color 0.2s;
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
         }
-        .list-group-item:hover {
-            background-color: #f8fafc;
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+        .empty-state h5 {
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+        .empty-state p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            max-width: 300px;
+            margin: 0 auto;
         }
         
+        /* ========== SCROLLABLE LISTS ========== */
+        .scrollable-list {
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* ========== STATUS INDICATORS ========== */
         .status-indicator {
             width: 8px;
             height: 8px;
@@ -488,7 +507,6 @@
             display: inline-block;
             margin-right: 6px;
         }
-        
         .status-active { background: var(--success); }
         .status-pending { background: var(--warning); }
         .status-inactive { background: var(--danger); }
