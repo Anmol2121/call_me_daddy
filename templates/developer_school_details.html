@@ -104,10 +104,17 @@
                             {% for admin in recent_admins %}
                             <tr>
                                 <td>
-                                    <strong>{{ admin.full_name }}</strong>
-                                    {% if admin.must_change_password %}
-                                    <span class="badge bg-warning ms-2">Password Reset Required</span>
-                                    {% endif %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle avatar-primary me-2">
+                                            {{ admin.full_name[0]|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ admin.full_name }}</div>
+                                            {% if admin.must_change_password %}
+                                                <span class="badge bg-warning mt-1">Password Reset Required</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>{{ admin.email }}</td>
                                 <td>
@@ -129,7 +136,7 @@
                                         <a href="{{ url_for('developer_reset_password', user_id=admin.id) }}" 
                                            class="btn btn-outline-warning" 
                                            title="Reset Password">
-                                            <i class="bi bi-key"></i> Reset Password
+                                            <i class="bi bi-key"></i>
                                         </a>
                                         
                                         {% if admin.is_active %}
@@ -344,12 +351,17 @@
                 <div class="list-group">
                     {% for student in recent_students %}
                     <div class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ student.first_name }} {{ student.last_name }}</h6>
-                            <small>{{ student.created_at.strftime('%m/%d') }}</small>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-circle avatar-info me-2" style="width: 40px; height: 40px;">
+                                {{ student.first_name[0]|upper }}{{ student.last_name[0]|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">{{ student.first_name }} {{ student.last_name }}</div>
+                                <div class="small text-muted">ID: {{ student.student_id }}</div>
+                                <div class="x-small text-muted">Created: {{ student.created_at.strftime('%Y-%m-%d') }}</div>
+                            </div>
+                            <small class="text-muted">{{ student.created_at.strftime('%m/%d') }}</small>
                         </div>
-                        <p class="mb-1 small text-muted">ID: {{ student.student_id }}</p>
-                        <small>Created: {{ student.created_at.strftime('%Y-%m-%d') }}</small>
                     </div>
                     {% endfor %}
                 </div>
@@ -401,7 +413,6 @@
 </div>
 
 <script>
-    // Confirmation text validation for delete
     document.getElementById('confirmationInput').addEventListener('input', function() {
         var confirmationText = "DELETE {{ school.code }}";
         var deleteButton = document.getElementById('deleteButton');
