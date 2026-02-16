@@ -18,11 +18,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Floating Action Button -->
-<button class="floating-action-btn" data-bs-toggle="modal" data-bs-target="#paymentModal">
-    <i class="fas fa-plus fa-lg"></i>
-</button>
-
 <!-- Summary Section -->
 <div class="row mb-4" data-aos="fade-up">
     <div class="col-md-12">
@@ -104,6 +99,12 @@
     </div>
 </div>
 
+<!-- Offline Payment Notice -->
+<div class="alert alert-info border-0 shadow-sm mb-4" data-aos="fade-up">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Payment Method:</strong> All fee payments must be made in person at the school accounts office. Please bring this fee statement when paying.
+</div>
+
 <!-- Fee Details Section -->
 <div class="glass-card mb-4" data-aos="fade-up">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -146,11 +147,6 @@
         <table class="premium-table" id="feeTable">
             <thead>
                 <tr>
-                    <th style="width: 40px;">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAll">
-                        </div>
-                    </th>
                     <th>Fee Details</th>
                     <th>Due Date</th>
                     <th>Amount Breakdown</th>
@@ -161,11 +157,6 @@
             <tbody>
                 {% for fee in fees %}
                 <tr data-status="{{ fee.status }}" data-due-date="{{ fee.due_date.strftime('%Y-%m-%d') }}" data-amount="{{ fee.fee_amount }}">
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input fee-checkbox" type="checkbox" value="{{ fee.id }}">
-                        </div>
-                    </td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
@@ -248,15 +239,9 @@
                     </td>
                     <td>
                         <div class="d-flex gap-2">
-                            {% if fee.status != 'paid' %}
-                            <button class="btn btn-sm btn-primary px-3" onclick="initiatePayment({{ fee.id }})">
-                                <i class="fas fa-wallet me-1"></i>Pay
-                            </button>
-                            {% else %}
-                            <button class="btn btn-sm btn-outline-success px-3" onclick="viewReceipt({{ fee.id }})">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewReceipt({{ fee.id }})">
                                 <i class="fas fa-receipt me-1"></i>Receipt
                             </button>
-                            {% endif %}
                             <button class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#breakdown-{{ fee.id }}" aria-expanded="false">
                                 <i class="fas fa-chevron-down"></i>
                             </button>
@@ -265,7 +250,7 @@
                 </tr>
                 <!-- Collapsible Transaction History -->
                 <tr class="collapse" id="breakdown-{{ fee.id }}">
-                    <td colspan="6" class="p-0">
+                    <td colspan="5" class="p-0">
                         <div class="p-3 bg-light border-top">
                             <h6 class="mb-3">Transaction History</h6>
                             {% if fee.transactions %}
@@ -303,11 +288,6 @@
     <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
         <div class="text-muted">
             Showing {{ fees|length }} fees · Total Net Amount: ₹{{ total_due|round|int }}
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" id="paySelectedBtn" disabled onclick="paySelectedFees()">
-                <i class="fas fa-wallet me-2"></i>Pay Selected
-            </button>
         </div>
     </div>
     
@@ -450,117 +430,7 @@
     </div>
 </div>
 
-<!-- Payment Modal -->
-<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0">
-            <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-wallet me-2"></i>
-                    Make Payment
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Select Fees</label>
-                        <div class="border rounded-3 p-3" style="max-height: 200px; overflow-y: auto;">
-                            {% for fee in fees if fee.status != 'paid' %}
-                            <div class="form-check mb-2">
-                                <input class="form-check-input fee-modal-checkbox" type="checkbox" value="{{ fee.id }}" data-amount="{{ fee.balance }}">
-                                <label class="form-check-label">
-                                    <div class="fw-bold">{{ fee.fee_structure.name }}</div>
-                                    <div class="text-muted small">
-                                        Balance: ₹{{ fee.balance }} · Due: {{ fee.due_date.strftime('%d %b') }}
-                                    </div>
-                                </label>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Payment Amount (₹)</label>
-                            <input type="number" class="form-control" id="paymentAmount" placeholder="Enter amount" min="1">
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Payment Method</label>
-                            <select class="form-select" id="paymentMethod">
-                                <option value="cash">Cash</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="online">Online Payment</option>
-                                <option value="check">Check</option>
-                            </select>
-                        </div>
-                        <div class="d-grid">
-                            <button class="btn btn-primary btn-lg" onclick="processPayment()">
-                                <i class="fas fa-lock me-2"></i>
-                                Pay Now
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Receipt Modal -->
-<div class="modal fade" id="receiptModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0">
-            <div class="modal-header bg-success text-white border-0">
-                <h5 class="modal-title">
-                    <i class="fas fa-receipt me-2"></i>
-                    Payment Receipt
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center p-4">
-                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-                <h4 class="mb-3">Payment Successful!</h4>
-                <p>Your payment has been recorded.</p>
-                <p><strong>Receipt Number:</strong> <span id="receiptNumber"></span></p>
-                <p class="text-muted small">A copy has been sent to your email.</p>
-            </div>
-            <div class="modal-footer border-0">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button class="btn btn-primary" onclick="printReceipt()">
-                    <i class="fas fa-print me-2"></i>Print
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
-/* Custom Styles */
-.floating-action-btn {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: white;
-    font-size: 24px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.floating-action-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-}
-
 .glass-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -663,41 +533,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Select all checkboxes functionality
-    const selectAll = document.getElementById('selectAll');
-    const feeCheckboxes = document.querySelectorAll('.fee-checkbox');
-    const paySelectedBtn = document.getElementById('paySelectedBtn');
-
-    selectAll?.addEventListener('change', function() {
-        feeCheckboxes.forEach(cb => cb.checked = this.checked);
-        updatePaySelectedBtn();
-    });
-
-    feeCheckboxes.forEach(cb => {
-        cb.addEventListener('change', updatePaySelectedBtn);
-    });
-
-    function updatePaySelectedBtn() {
-        const checkedCount = document.querySelectorAll('.fee-checkbox:checked').length;
-        if (paySelectedBtn) {
-            paySelectedBtn.disabled = checkedCount === 0;
-            paySelectedBtn.innerHTML = `<i class="fas fa-wallet me-2"></i>Pay Selected (${checkedCount})`;
-        }
-    }
-
-    // Modal fee checkboxes total calculation
-    const modalCheckboxes = document.querySelectorAll('.fee-modal-checkbox');
-    modalCheckboxes.forEach(cb => {
-        cb.addEventListener('change', updateModalTotal);
-    });
-
-    function updateModalTotal() {
-        let total = 0;
-        modalCheckboxes.forEach(cb => {
-            if (cb.checked) total += parseFloat(cb.dataset.amount);
-        });
-        document.getElementById('paymentAmount').value = total.toFixed(2);
-    }
+    // Filter checkboxes are removed, so nothing needed here
 });
 
 // Filter functions
@@ -729,72 +565,9 @@ function sortFees(criteria) {
     sorted.forEach(row => tbody.appendChild(row));
 }
 
-function initiatePayment(feeId) {
-    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
-    modal.show();
-    // Uncheck all modal checkboxes first
-    document.querySelectorAll('.fee-modal-checkbox').forEach(cb => cb.checked = false);
-    // Check the specific fee
-    const checkbox = document.querySelector(`.fee-modal-checkbox[value="${feeId}"]`);
-    if (checkbox) {
-        checkbox.checked = true;
-        updateModalTotal();
-    }
-}
-
-function paySelectedFees() {
-    const selected = Array.from(document.querySelectorAll('.fee-checkbox:checked')).map(cb => cb.value);
-    if (selected.length > 0) {
-        initiatePayment(selected[0]); // For simplicity, just pay the first selected
-    }
-}
-
-async function processPayment() {
-    const feeIds = Array.from(document.querySelectorAll('.fee-modal-checkbox:checked')).map(cb => cb.value);
-    const amount = parseFloat(document.getElementById('paymentAmount').value);
-    const method = document.getElementById('paymentMethod').value;
-
-    if (!feeIds.length || amount <= 0) {
-        alert('Select at least one fee and enter a valid amount.');
-        return;
-    }
-
-    const btn = document.querySelector('#paymentModal .btn-primary');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    btn.disabled = true;
-
-    try {
-        const response = await fetch('/student/fees/pay', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fee_ids: feeIds, amount, method })
-        });
-        const data = await response.json();
-        if (data.success) {
-            const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
-            document.getElementById('receiptNumber').textContent = data.receipt;
-            receiptModal.show();
-            setTimeout(() => location.reload(), 3000);
-        } else {
-            alert('Payment failed: ' + data.error);
-        }
-    } catch (error) {
-        alert('Error processing payment.');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-    }
-}
-
 function viewReceipt(feeId) {
-    // Redirect to receipt page or show modal
-    alert('View receipt for fee ' + feeId);
-}
-
-function printReceipt() {
-    window.print();
+    // In a real system, this might open a modal or navigate to a receipt page.
+    alert('Receipt for fee ID ' + feeId + ' can be viewed at the school office.');
 }
 </script>
 {% endblock %}
