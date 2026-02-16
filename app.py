@@ -6382,11 +6382,9 @@ class ForgotPasswordForm(FlaskForm):
     submit = SubmitField('Reset Password')
 
 # ==================== MAIN APPLICATION ====================
-
+setup_logging()
+with app.app_context():
+    create_tables()
 if __name__ == '__main__':
-    with app.app_context():
-        create_tables()
-    setup_logging()
-    #create_tables()
-
     app.run(debug=True, port=5000)
+
