@@ -91,7 +91,7 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>School Name</th>
+                                <th>School</th>
                                 <th>Admin</th>
                                 <th>Status</th>
                                 <th>Created</th>
@@ -104,13 +104,11 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-2">
-                                            <div class="bg-light rounded-circle p-2">
-                                                <i class="bi bi-building text-primary"></i>
-                                            </div>
+                                        <div class="avatar-circle avatar-primary me-2">
+                                            <i class="bi bi-building"></i>
                                         </div>
-                                        <div class="flex-grow-1">
-                                            <div class="fw-medium">{{ school.name }}</div>
+                                        <div>
+                                            <div class="fw-semibold">{{ school.name }}</div>
                                             <small class="text-muted">{{ school.code }}</small>
                                         </div>
                                     </div>
@@ -118,8 +116,15 @@
                                 <td>
                                     {% set admin = school.users|selectattr('role', 'equalto', 'admin')|first %}
                                     {% if admin %}
-                                    <div class="small">{{ admin.full_name }}</div>
-                                    <small class="text-muted">{{ admin.email }}</small>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle avatar-success me-2" style="width: 32px; height: 32px;">
+                                            {{ admin.full_name[0]|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="small fw-semibold">{{ admin.full_name }}</div>
+                                            <div class="x-small text-muted">{{ admin.email }}</div>
+                                        </div>
+                                    </div>
                                     {% else %}
                                     <span class="text-muted">-</span>
                                     {% endif %}
@@ -176,35 +181,39 @@
                     <button class="btn btn-outline-secondary" onclick="filterActivity('enrollment')">Enrollments</button>
                 </div>
             </div>
-            <div class="card-body">
-                <div id="activityTimeline" class="timeline">
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="activityTimeline">
                     {% for activity in recent_activity %}
-                    <div class="timeline-item mb-3 activity-{{ activity.type }}">
-                        <div class="timeline-time">
-                            {% if activity.time %}
-                                {{ activity.time }}
-                            {% else %}
-                                {{ activity.created_at.strftime('%I:%M %p').lstrip('0') }}
-                            {% endif %}
-                        </div>
-                        <div class="timeline-content">
-                            <div class="d-flex">
-                                <div class="timeline-icon bg-light text-{{ activity.color }} rounded-circle p-2 me-3">
-                                    <i class="bi bi-{{ activity.icon }}"></i>
+                    <div class="list-group-item activity-{{ activity.type }} p-3">
+                        <div class="d-flex align-items-start">
+                            <!-- Avatar with dynamic color -->
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-circle avatar-{{ activity.color }} d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-{{ activity.icon }} fs-5"></i>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <div class="fw-medium">{{ activity.title }}</div>
-                                    <div class="text-muted small">{{ activity.description }}</div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1 fw-semibold">{{ activity.title }}</h6>
                                     <small class="text-muted">
+                                        {% if activity.time %}
+                                            {{ activity.time }}
+                                        {% else %}
+                                            {{ activity.created_at.strftime('%I:%M %p').lstrip('0') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <p class="mb-1 text-muted small">{{ activity.description }}</p>
+                                <div class="d-flex align-items-center">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i>
                                         {% if activity.date %}
                                             {{ activity.date }}
                                         {% else %}
                                             {{ activity.created_at.strftime('%B %d, %Y') }}
                                         {% endif %}
                                     </small>
-                                </div>
-                                <div>
-                                    <span class="badge bg-light text-dark">{{ activity.type|title }}</span>
+                                    <span class="badge bg-light text-dark ms-2">{{ activity.type|title }}</span>
                                 </div>
                             </div>
                         </div>
@@ -489,57 +498,9 @@
     </div>
 </div>
 
-<style>
-    .timeline {
-        position: relative;
-        padding-left: 1.5rem;
-    }
-    
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 0.75rem;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background-color: #e0e0e0;
-    }
-    
-    .timeline-item {
-        position: relative;
-    }
-    
-    .timeline-time {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-bottom: 0.25rem;
-        font-weight: 500;
-    }
-    
-    .timeline-icon {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .timeline-content {
-        margin-left: 3rem;
-    }
-    
-    .display-6 {
-        font-size: 2.5rem;
-    }
-    
-    .x-small {
-        font-size: 0.75rem;
-    }
-</style>
-
 <script>
     function filterActivity(type) {
-        const items = document.querySelectorAll('.timeline-item');
+        const items = document.querySelectorAll('.list-group-item');
         items.forEach(item => {
             if (type === 'all') {
                 item.style.display = 'block';
@@ -550,7 +511,6 @@
             }
         });
         
-        // Update button states
         document.querySelectorAll('[onclick^="filterActivity"]').forEach(btn => {
             btn.classList.remove('active');
         });
@@ -558,13 +518,11 @@
     }
     
     function exportReport() {
-        // Show loading indicator
         const exportBtn = document.querySelector('#systemReportModal .btn-primary');
         const originalText = exportBtn.innerHTML;
         exportBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...';
         exportBtn.disabled = true;
         
-        // Simulate export process
         setTimeout(() => {
             alert('System report exported successfully!');
             exportBtn.innerHTML = originalText;
@@ -572,81 +530,48 @@
         }, 1500);
     }
     
-    // Update period buttons
     document.querySelectorAll('[data-period]').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            // Here you would update the performance metrics based on selected period
         });
     });
     
     function runSystemCheck() {
         fetch('/api/system-check')
             .then(response => response.json())
-            .then(data => {
-                alert('System check completed: ' + data.status);
-            })
-            .catch(error => {
-                alert('Error running system check');
-            });
+            .then(data => alert('System check completed: ' + data.status))
+            .catch(() => alert('Error running system check'));
     }
     
     function clearCache() {
         if (confirm('Are you sure you want to clear the system cache?')) {
             fetch('/api/clear-cache', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => {
-                    alert('Cache cleared successfully!');
-                })
-                .catch(error => {
-                    alert('Error clearing cache');
-                });
+                .then(data => alert('Cache cleared successfully!'))
+                .catch(() => alert('Error clearing cache'));
         }
     }
     
     function showBackupDialog() {
-        const backupOptions = `
-            <div class="mb-3">
-                <label class="form-label">Backup Type</label>
-                <select class="form-select" id="backupType">
-                    <option value="full">Full Database Backup</option>
-                    <option value="schema">Schema Only</option>
-                    <option value="data">Data Only</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Compression</label>
-                <select class="form-select" id="compression">
-                    <option value="none">None</option>
-                    <option value="gzip" selected>GZIP</option>
-                    <option value="zip">ZIP</option>
-                </select>
-            </div>
-        `;
-        
         if (confirm('Start database backup?\n\nThis will create a backup of all system data.')) {
             alert('Database backup started in the background. You will be notified when complete.');
-            // In a real app, this would trigger an actual backup process
         }
     }
     
-    // Function to format time in 12-hour format (handles 24-hour format if needed)
     function formatTimeElements() {
-        document.querySelectorAll('.timeline-time').forEach(el => {
+        document.querySelectorAll('.list-group-item small:first-child').forEach(el => {
             let time = el.textContent.trim();
-            // If time is in 24-hour format (e.g., "15:57"), convert to 12-hour
             if (time.match(/^\d{2}:\d{2}$/)) {
                 let [hours, minutes] = time.split(':');
                 let ampm = hours >= 12 ? 'PM' : 'AM';
                 hours = hours % 12;
-                hours = hours ? hours : 12; // Convert 0 to 12
+                hours = hours ? hours : 12;
                 el.textContent = hours + ':' + minutes + ' ' + ampm;
             }
         });
     }
     
-    // Run on page load
     document.addEventListener('DOMContentLoaded', formatTimeElements);
 </script>
 {% endblock %}
