@@ -534,10 +534,11 @@ def take_attendance(class_id):
 def student_profile():
     if current_user.role != 'student':
         abort(403)
+
     student = current_user.student
     if not student:
-        flash('Student record not found', 'danger')
-        return redirect(url_for('logout'))
+        flash('Student record not found.', 'danger')
+        return redirect(url_for('dashboard'))
 
     # Get the current active session for the student's school
     current_session = get_current_session(student.school_id)
@@ -6417,6 +6418,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
