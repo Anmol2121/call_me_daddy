@@ -24,9 +24,6 @@
     <!-- AOS Animation -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
-    <!-- Simplebar for custom scrollbars -->
-    <link rel="stylesheet" href="https://unpkg.com/simplebar@latest/dist/simplebar.css" />
-    
     <style>
         :root {
             --primary: #4f46e5;
@@ -40,7 +37,8 @@
             --light: #ffffff;
             --dark: #1e293b;
             --sidebar-width: 280px;
-            --navbar-height: 70px;
+            --navbar-height: 60px;
+            --bottom-nav-height: 70px;
             --border-radius: 12px;
             --border-radius-sm: 8px;
             --border-radius-xs: 6px;
@@ -65,9 +63,10 @@
             line-height: 1.6;
             overflow-x: hidden;
             font-weight: 400;
+            padding-bottom: 0;
         }
         
-        /* Premium Navbar */
+        /* ========== TOP NAVBAR ========== */
         .navbar {
             background: #ffffff;
             height: var(--navbar-height);
@@ -84,10 +83,11 @@
         }
         
         .navbar-container {
-            padding: 0 2rem;
+            padding: 0 1rem;
             height: 100%;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             max-width: 100%;
             margin: 0 auto;
         }
@@ -97,9 +97,9 @@
             align-items: center;
             text-decoration: none;
             font-weight: 700;
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             color: var(--primary);
-            gap: 12px;
+            gap: 8px;
             font-family: 'Poppins', sans-serif;
         }
         
@@ -115,58 +115,14 @@
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         
-        /* Mobile toggle button - NEW */
-        .sidebar-toggle {
-            display: none;
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--primary);
-            margin-right: 0.5rem;
-            width: 44px;
-            height: 44px;
-            border-radius: 8px;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        .sidebar-toggle:hover {
-            background: #f1f5f9;
-        }
-        @media (max-width: 992px) {
-            .sidebar-toggle {
-                display: inline-flex;
-            }
-        }
-        
-        /* App Wrapper */
-        .app-wrapper {
+        .navbar-actions {
             display: flex;
-            min-height: 100vh;
-            padding-top: var(--navbar-height);
-            position: relative;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        /* Sidebar overlay - NEW */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1045;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .sidebar-overlay.show {
-            display: block;
-            opacity: 1;
-        }
-        
-        /* Enhanced Sidebar (original preserved) */
-        .sidebar {
+        /* ========== DESKTOP SIDEBAR ========== */
+        .sidebar-desktop {
             width: var(--sidebar-width);
             background: #ffffff;
             border-right: 1px solid #f1f5f9;
@@ -175,26 +131,90 @@
             top: var(--navbar-height);
             left: 0;
             z-index: 1040;
-            transition: var(--transition);
             overflow-y: auto;
             padding: 1.5rem 0;
             box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s ease;
         }
         
-        /* Responsive sidebar - NEW */
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                box-shadow: none;
-                z-index: 1060;
+        /* ========== MOBILE BOTTOM NAVIGATION ========== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--bottom-nav-height);
+            background: #ffffff;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 0.5rem;
+            z-index: 1050;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+        }
+        
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 0.7rem;
+            transition: var(--transition);
+            padding: 0.5rem 0;
+            border-radius: var(--border-radius-sm);
+            min-height: 56px;
+        }
+        
+        .bottom-nav-item i {
+            font-size: 1.4rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .bottom-nav-item.active {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        
+        .bottom-nav-item span {
+            font-weight: 500;
+        }
+        
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            flex: 1;
+            min-height: calc(100vh - var(--navbar-height));
+            transition: var(--transition);
+            background: #f8fafc;
+            padding: 1rem;
+        }
+        
+        /* Desktop: content offset by sidebar */
+        @media (min-width: 992px) {
+            .main-content {
+                margin-left: var(--sidebar-width);
             }
-            .sidebar.show {
-                transform: translateX(0);
-                box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            body {
+                padding-bottom: 0;
             }
         }
         
+        /* Mobile: content padded above and below to avoid navbar/bottom-nav */
+        @media (max-width: 991.98px) {
+            .main-content {
+                margin-left: 0;
+                padding-bottom: calc(var(--bottom-nav-height) + 1rem);
+                padding-top: 1rem;
+            }
+            body {
+                padding-bottom: 0;
+            }
+        }
+        
+        /* ========== SIDEBAR MENU STYLES (shared) ========== */
         .sidebar-header {
             padding: 0 1.5rem 1.5rem;
             margin-bottom: 0.5rem;
@@ -223,7 +243,6 @@
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         
-        /* Sidebar Menu */
         .menu-list {
             list-style: none;
             padding: 0;
@@ -243,7 +262,6 @@
             border-radius: var(--border-radius-sm);
             border: 1px solid transparent;
             font-weight: 500;
-            min-height: 44px; /* touch target - NEW */
         }
         
         .menu-link:hover {
@@ -283,36 +301,22 @@
             background: rgba(255, 255, 255, 0.2);
         }
         
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: 1.5rem;
-            min-height: calc(100vh - var(--navbar-height));
-            transition: var(--transition);
-            background: #f8fafc;
+        .menu-divider {
+            border-top: 1px solid #f1f5f9;
         }
         
-        /* Responsive main content - NEW */
-        @media (max-width: 992px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-        }
-        
-        /* Page Header */
+        /* ========== PAGE HEADER ========== */
         .page-header {
             background: #ffffff;
             border-radius: var(--border-radius);
-            padding: 1.5rem 2rem;
+            padding: 1.25rem 1.5rem;
             margin-bottom: 1.5rem;
             box-shadow: var(--shadow);
             border: 1px solid #f1f5f9;
         }
         
         .page-title {
-            font-size: 1.75rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #1e293b;
             margin-bottom: 0.25rem;
@@ -320,17 +324,16 @@
             font-family: 'Poppins', sans-serif;
         }
         
-        /* Responsive page header - NEW */
         @media (max-width: 576px) {
             .page-title {
-                font-size: 1.5rem;
+                font-size: 1.25rem;
             }
             .page-header {
-                padding: 1rem 1.25rem;
+                padding: 1rem;
             }
         }
         
-        /* Premium Card Styling */
+        /* ========== CARD STYLING ========== */
         .card {
             border: none;
             border-radius: var(--border-radius);
@@ -358,7 +361,16 @@
             padding: 1.5rem;
         }
         
-        /* Button Styling - touch friendly - MODIFIED */
+        @media (max-width: 576px) {
+            .card-header {
+                padding: 1rem;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+        }
+        
+        /* ========== BUTTONS ========== */
         .btn {
             border-radius: var(--border-radius-xs);
             padding: 0.625rem 1.25rem;
@@ -366,17 +378,6 @@
             transition: var(--transition);
             border: 1px solid transparent;
             font-family: 'Inter', sans-serif;
-            min-height: 44px; /* added for touch */
-            min-width: 44px;  /* added for touch */
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .btn-sm {
-            min-height: 38px;
-            min-width: 38px;
-            padding: 0.4rem 0.75rem;
         }
         
         .btn-primary {
@@ -402,19 +403,25 @@
             box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
         }
         
-        /* Premium Table Styling - responsive additions - NEW */
-        .table-responsive-custom {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        /* Touch targets */
+        .btn, .bottom-nav-item, .menu-link {
+            min-height: 44px;
+            min-width: 44px;
         }
         
-        .premium-table {
-            width: 100%;
+        /* ========== TABLES ========== */
+        .table-responsive {
+            border-radius: var(--border-radius);
+            margin-bottom: 0;
+        }
+        
+        .table {
+            margin-bottom: 0;
             border-collapse: separate;
             border-spacing: 0;
         }
         
-        .premium-table th {
+        .table th {
             font-weight: 600;
             color: #334155;
             border-bottom: 2px solid #f1f5f9;
@@ -425,81 +432,86 @@
             letter-spacing: 0.05em;
         }
         
-        .premium-table td {
+        .table td {
             padding: 1rem 1.25rem;
             vertical-align: middle;
             border-color: #f1f5f9;
             font-size: 0.875rem;
         }
         
-        .premium-table tbody tr {
+        .table tbody tr {
             transition: var(--transition);
         }
         
-        .premium-table tbody tr:hover {
+        .table tbody tr:hover {
             background: #f8fafc;
         }
         
-        /* Mobile card style for tables - NEW */
-        @media (max-width: 576px) {
-            .premium-table, .premium-table thead, .premium-table tbody, .premium-table tr, .premium-table td {
-                display: block;
-            }
-            .premium-table thead {
-                display: none;
-            }
-            .premium-table tr {
-                margin-bottom: 1rem;
-                border: 1px solid #e2e8f0;
-                border-radius: var(--border-radius);
-                padding: 1rem;
-                background: white;
-            }
-            .premium-table td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.5rem 0;
-                border: none;
-                border-bottom: 1px dashed #f1f5f9;
-            }
-            .premium-table td:last-child {
-                border-bottom: none;
-            }
-            .premium-table td::before {
-                content: attr(data-label);
-                font-weight: 600;
-                width: 40%;
-                color: #64748b;
-                font-size: 0.8rem;
-            }
+        /* ========== AVATAR STYLES ========== */
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .avatar-sm {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+        .avatar-primary { background: #eef2ff; color: #4f46e5; }
+        .avatar-success { background: #d1fae5; color: #10b981; }
+        .avatar-info    { background: #e0f2fe; color: #0ea5e9; }
+        .avatar-warning { background: #ffedd5; color: #f59e0b; }
+        .avatar-danger  { background: #fee2e2; color: #ef4444; }
+        .avatar-secondary { background: #f1f5f9; color: #64748b; }
+        
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+        .empty-state h5 {
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+        .empty-state p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            max-width: 300px;
+            margin: 0 auto;
         }
         
-        /* Custom Scrollbar */
-        .simplebar-scrollbar::before {
-            background: #cbd5e1 !important;
+        /* ========== SCROLLABLE LISTS ========== */
+        .scrollable-list {
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
-        .simplebar-track.simplebar-horizontal {
-            height: 8px !important;
+        /* ========== STATUS INDICATORS ========== */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
         }
+        .status-active { background: var(--success); }
+        .status-pending { background: var(--warning); }
+        .status-inactive { background: var(--danger); }
+        .status-processing { background: var(--info); }
         
-        .simplebar-track.simplebar-vertical {
-            width: 8px !important;
-        }
-        
-        /* Responsive Design - additional */
-        @media (max-width: 992px) {
-            .navbar-container {
-                padding: 0 1rem;
-            }
-            
-            .card-body {
-                padding: 1.25rem;
-            }
-        }
-        
-        /* Animation Classes */
         .fade-in {
             animation: fadeIn 0.3s ease-out;
         }
@@ -509,241 +521,21 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* Loading States */
-        .loading {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            animation: loading 1.5s infinite;
-        }
-        
-        @keyframes loading {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-        
-        /* Status Indicators */
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
-        }
-        
-        .status-active { background: var(--success); }
-        .status-pending { background: var(--warning); }
-        .status-inactive { background: var(--danger); }
-        .status-processing { background: var(--info); }
-        
-        /* Utility Classes */
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .hover-lift {
-            transition: var(--transition);
-        }
-        
-        .hover-lift:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .border-gradient {
-            border: double 1px transparent;
-            background-image: linear-gradient(white, white), linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-        }
-        
-        /* Timeline Steps */
-        .timeline-steps {
-            position: relative;
-            padding-left: 40px;
-        }
-        
-        .timeline-steps::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e2e8f0;
-        }
-        
-        .timeline-step {
-            position: relative;
-        }
-        
-        .timeline-step-number {
-            position: absolute;
-            left: -48px;
-            top: 0;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            z-index: 2;
-        }
-        
-        .timeline-step-content {
-            padding-left: 20px;
-        }
-
-        /* Form inputs touch-friendly - NEW */
-        .form-control, .form-select {
-            padding: 0.75rem 1rem;
-            font-size: 16px;
-            min-height: 44px;
-        }
-
-        /* Modal full-screen on mobile - NEW */
-        @media (max-width: 576px) {
-            .modal-dialog {
-                margin: 0;
-                max-width: 100%;
-                height: 100%;
+        /* Hide bottom nav on desktop */
+        @media (min-width: 992px) {
+            .bottom-nav {
+                display: none;
             }
-            .modal-content {
-                border-radius: 0;
-                height: 100%;
-                border: none;
-            }
-            .modal-header {
-                border-radius: 0;
-            }
-        }
-
-        /* Metric cards base styles (used in child templates) - NEW */
-        .metric-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            border: 1px solid #f1f5f9;
-            transition: var(--transition);
-            height: 100%;
-            display: flex;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .metric-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-        }
-        .metric-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            font-size: 1.8rem;
-            flex-shrink: 0;
-        }
-        .metric-content {
-            flex: 1;
-        }
-        .metric-number {
-            font-size: 2rem;
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 0.25rem;
-        }
-        .metric-label {
-            font-size: 0.875rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .metric-link {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            color: #64748b;
-            transition: var(--transition);
-        }
-        .metric-card:hover .metric-link {
-            color: var(--primary);
-            transform: translateX(4px);
-        }
-        
-        @media (max-width: 576px) {
-            .metric-card {
-                padding: 1rem;
-                flex-direction: column;
-                text-align: center;
-            }
-            .metric-icon {
-                margin-right: 0;
-                margin-bottom: 0.5rem;
-                width: 48px;
-                height: 48px;
-                font-size: 1.5rem;
-            }
-            .metric-number {
-                font-size: 1.5rem;
-            }
-            .metric-link {
-                position: static;
-                margin-top: 0.5rem;
-            }
-        }
-        
-        /* Chart containers - NEW */
-        .chart-container {
-            position: relative;
-            width: 100%;
-            height: auto;
-            min-height: 200px;
         }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar -->
+    <!-- Top Navbar -->
     <nav class="navbar">
         <div class="navbar-container">
-            <!-- Mobile toggle button - NEW -->
-            <button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
-            
-            <!-- Brand Logo -->
+            <!-- Brand -->
             <a class="navbar-brand" href="{{ url_for('dashboard') }}">
                 <div class="brand-logo">
                     <i class="fas fa-graduation-cap"></i>
@@ -751,17 +543,11 @@
                 <span>EduManage Pro</span>
             </a>
             
-            <!-- Right Side Menu -->
-            <div class="ms-auto d-flex align-items-center gap-2">
-                <!-- Quick Search -->
-                <div class="position-relative me-2 d-none d-lg-block">
-                    <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                    <input type="text" class="form-control ps-5" placeholder="Search..." style="width: 200px; border-radius: 20px; border: 1px solid #e2e8f0;">
-                </div>
-                
+            <!-- Right side actions (notifications, profile) -->
+            <div class="navbar-actions">
                 <!-- Notifications -->
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light rounded-circle p-2" type="button" data-bs-toggle="dropdown" style="border: 1px solid #e2e8f0; width: 44px; height: 44px;">
+                    <button class="btn btn-sm btn-light rounded-circle p-2" type="button" data-bs-toggle="dropdown" style="border: 1px solid #e2e8f0;">
                         <i class="fas fa-bell text-secondary"></i>
                         {% if stats and stats.overdue_count|default(0) > 0 %}
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem; padding: 0.2rem 0.35rem;">
@@ -773,7 +559,7 @@
                         <div class="p-3 border-bottom">
                             <h6 class="mb-0 fw-bold">Notifications</h6>
                         </div>
-                        <div class="simplebar" style="max-height: 300px;">
+                        <div style="max-height: 300px; overflow-y: auto;">
                             <div class="p-2">
                                 {% if stats and stats.overdue_count|default(0) > 0 %}
                                 <a href="{{ url_for('manage_student_fees') }}?status=overdue" class="dropdown-item py-3 border-bottom">
@@ -860,8 +646,8 @@
                 
                 <!-- User Profile -->
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light d-flex align-items-center gap-2 px-3" type="button" data-bs-toggle="dropdown" style="border-radius: 20px; border: 1px solid #e2e8f0; min-height: 44px;">
-                        <div class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px;">
+                    <button class="btn btn-sm btn-light d-flex align-items-center gap-2 px-3" type="button" data-bs-toggle="dropdown" style="border-radius: 20px; border: 1px solid #e2e8f0;">
+                        <div class="avatar-circle avatar-primary" style="width: 32px; height: 32px;">
                             {{ current_user.full_name[0]|upper if current_user.full_name else 'U' }}
                         </div>
                         <div class="d-none d-md-block text-start">
@@ -897,12 +683,8 @@
 
     <!-- App Wrapper -->
     <div class="app-wrapper">
-        <!-- Sidebar overlay (for mobile) - NEW -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar" data-simplebar>
-            <!-- School Info -->
+        <!-- Desktop Sidebar (hidden on mobile) -->
+        <div class="sidebar-desktop d-none d-lg-block">
             <div class="sidebar-header">
                 <div class="school-info">
                     <div class="school-icon">
@@ -947,7 +729,6 @@
                 </div>
             </div>
             
-            <!-- Menu -->
             <nav class="sidebar-menu">
                 <ul class="menu-list">
                     {% if current_user.role == 'developer' %}
@@ -1110,8 +891,7 @@
                     {% endif %}
                 </ul>
                 
-                <!-- ========== QUICK STATS SECTION ========== -->
-                <!-- Quick Stats (only for admin) -->
+                <!-- Quick Stats Section -->
                 {% if current_user.role == 'admin' %}
                 <div class="px-3 mt-4">
                     <div class="card border-0 bg-light">
@@ -1141,7 +921,6 @@
                 </div>
                 {% endif %}
 
-                <!-- Student Quick Stats -->
                 {% if current_user.role == 'student' %}
                 <div class="px-3 mt-4">
                     <div class="card border-0 bg-light">
@@ -1161,28 +940,10 @@
                 </div>
                 {% endif %}
             </nav>
-        </aside>
+        </div>
 
-        <!-- Main Content -->
-        <main class="main-content" id="main-content" data-simplebar>
-            <!-- Page Header -->
-            <div class="page-header">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                    <div>
-                        <h1 class="page-title">{% block header %}{% endblock %}</h1>
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-decoration-none"><i class="fas fa-home"></i></a></li>
-                                {% block breadcrumb %}{% endblock %}
-                            </ol>
-                        </nav>
-                    </div>
-                    <div class="page-actions mt-2 mt-md-0">
-                        {% block actions %}{% endblock %}
-                    </div>
-                </div>
-            </div>
-            
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -1228,10 +989,108 @@
                     </div>
                 {% endif %}
             {% endwith %}
-            
+
+            <!-- Invisible block placeholder for header content -->
+            {% block header %}{% endblock %}
+
+            <!-- Desktop Page Header -->
+            <div class="page-header d-none d-md-block">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">{{ self.header() }}</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-decoration-none"><i class="fas fa-home"></i></a></li>
+                                {% block breadcrumb %}{% endblock %}
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="page-actions">
+                        {% block actions %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile page title -->
+            <div class="d-block d-md-none mb-3">
+                <h2 class="h5 fw-bold text-dark mb-0">{{ self.header() }}</h2>
+            </div>
+
             <!-- Main Content -->
             {% block content %}{% endblock %}
         </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="bottom-nav d-lg-none">
+            {% if current_user.role == 'developer' %}
+            <a class="bottom-nav-item {% if request.endpoint == 'developer_dashboard' %}active{% endif %}" href="{{ url_for('developer_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint == 'manage_schools' %}active{% endif %}" href="{{ url_for('manage_schools') }}">
+                <i class="fas fa-school"></i>
+                <span>Schools</span>
+            </a>
+            <a class="bottom-nav-item" href="{{ url_for('change_password', force=true) }}">
+                <i class="fas fa-key"></i>
+                <span>Password</span>
+            </a>
+            
+            {% elif current_user.role == 'admin' %}
+            <a class="bottom-nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint in ['manage_students'] %}active{% endif %}" href="{{ url_for('manage_students') }}">
+                <i class="fas fa-user-graduate"></i>
+                <span>Students</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint in ['manage_teachers'] %}active{% endif %}" href="{{ url_for('manage_teachers') }}">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span>Teachers</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint in ['manage_fee_structures'] %}active{% endif %}" href="{{ url_for('manage_fee_structures') }}">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Fees</span>
+            </a>
+            <a class="bottom-nav-item" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+            
+            {% elif current_user.role == 'teacher' %}
+            <a class="bottom-nav-item {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint == 'teacher_attendance_dashboard' %}active{% endif %}" href="{{ url_for('teacher_attendance_dashboard') }}">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Attendance</span>
+            </a>
+            <a class="bottom-nav-item" href="{{ url_for('teacher_profile') }}">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            
+            {% elif current_user.role == 'student' %}
+            <a class="bottom-nav-item {% if request.endpoint == 'student_dashboard' %}active{% endif %}" href="{{ url_for('student_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint == 'student_fees' %}active{% endif %}" href="{{ url_for('student_fees') }}">
+                <i class="fas fa-credit-card"></i>
+                <span>Fees</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint == 'student_attendance' %}active{% endif %}" href="{{ url_for('student_attendance') }}">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Attendance</span>
+            </a>
+            <a class="bottom-nav-item" href="#">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            {% endif %}
+        </nav>
     </div>
 
     <!-- JavaScript -->
@@ -1239,162 +1098,29 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/simplebar@latest/dist/simplebar.min.js"></script>
     
     <script>
-        // Initialize AOS animations
-        AOS.init({
-            duration: 300,
-            once: true,
-            offset: 100
-        });
-        
-        // Initialize Simplebar for custom scrollbars
-        if (document.getElementById('main-content')) {
-            new SimpleBar(document.getElementById('main-content'));
-        }
-        if (document.getElementById('sidebar')) {
-            new SimpleBar(document.getElementById('sidebar'));
-        }
-        
-        // Sidebar toggle for mobile - NEW
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        const toggleBtn = document.getElementById('sidebarToggle');
-        
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-                document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
-            });
-        }
-        
-        if (overlay) {
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-                document.body.style.overflow = '';
-            });
-        }
+        AOS.init({ duration: 300, once: true, offset: 100 });
         
         // Auto-dismiss alerts after 5 seconds
         setTimeout(function() {
             $('.alert').alert('close');
         }, 5000);
         
-        // Add loading animation to buttons
-        document.querySelectorAll('.btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                if (this.getAttribute('href') || this.type === 'submit') {
-                    this.classList.add('loading');
-                    setTimeout(() => {
-                        this.classList.remove('loading');
-                    }, 2000);
-                }
-            });
-        });
-        
-        // Smooth scroll to elements
-        function smoothScroll(element) {
-            document.querySelector(element).scrollIntoView({
-                behavior: 'smooth'
-            });
-        }
-        
-        // Initialize tooltips
+        // Tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-        
-        // Real-time clock update
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            });
-            
-            // Update any clock elements
-            const clockElements = document.querySelectorAll('.current-time');
-            clockElements.forEach(el => {
-                el.textContent = timeString;
-            });
-        }
-        
-        // Update clock every minute
-        setInterval(updateClock, 60000);
-        updateClock();
-        
-        // Search functionality
-        document.addEventListener('keydown', function(e) {
-            // Ctrl + K for search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                document.querySelector('input[type="text"][placeholder="Search..."]')?.focus();
-            }
-        });
-        
-        // Add ripple effect to buttons
-        document.querySelectorAll('.btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                let ripple = document.createElement('span');
-                let rect = this.getBoundingClientRect();
-                let size = Math.max(rect.width, rect.height);
-                let x = e.clientX - rect.left - size / 2;
-                let y = e.clientY - rect.top - size / 2;
-                
-                ripple.style.cssText = `
-                    position: absolute;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.7);
-                    transform: scale(0);
-                    animation: ripple 0.6s linear;
-                    width: ${size}px;
-                    height: ${size}px;
-                    top: ${y}px;
-                    left: ${x}px;
-                    pointer-events: none;
-                `;
-                
-                this.appendChild(ripple);
-                
-                setTimeout(() => {
-                    ripple.remove();
-                }, 600);
-            });
-        });
-        
-        // Add CSS for ripple effect
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
-            }
-            .btn {
-                position: relative;
-                overflow: hidden;
-            }
-        `;
-        document.head.appendChild(style);
     </script>
     
-    <!-- Service Worker Registration for PWA -->
+    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
-                    .then(function(registration) {
-                        console.log('ServiceWorker registered with scope:', registration.scope);
-                    })
-                    .catch(function(err) {
-                        console.log('ServiceWorker registration failed:', err);
-                    });
+                    .then(reg => console.log('ServiceWorker registered'))
+                    .catch(err => console.log('ServiceWorker failed:', err));
             });
         }
     </script>
