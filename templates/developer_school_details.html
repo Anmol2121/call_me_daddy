@@ -10,8 +10,9 @@
 
 {% block content %}
 <div class="row">
-    <!-- School Information -->
-    <div class="col-md-8">
+    <!-- Left Column: School Info and Administrators -->
+    <div class="col-lg-8 mb-4">
+        <!-- School Information Card -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">School Information</h5>
@@ -81,16 +82,16 @@
             </div>
         </div>
 
-        <!-- School Administrators Section -->
+        <!-- Administrators Table -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">School Administrators</h5>
                 <span class="badge bg-primary">{{ stats.total_admins }} Admin(s)</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_admins %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
+                <div class="table-responsive scrollable-list" style="max-height: 400px;">
+                    <table class="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -111,7 +112,7 @@
                                         <div>
                                             <div class="fw-semibold">{{ admin.full_name }}</div>
                                             {% if admin.must_change_password %}
-                                                <span class="badge bg-warning mt-1">Password Reset Required</span>
+                                                <span class="badge bg-warning mt-1">Reset Required</span>
                                             {% endif %}
                                         </div>
                                     </div>
@@ -143,8 +144,8 @@
                                         <form method="POST" action="{{ url_for('deactivate_user', user_id=admin.id) }}" 
                                               style="display: inline;">
                                             <button type="submit" class="btn btn-outline-danger" 
-                                                    onclick="return confirm('Are you sure you want to deactivate this admin?')"
-                                                    title="Deactivate Admin">
+                                                    onclick="return confirm('Deactivate this admin?')"
+                                                    title="Deactivate">
                                                 <i class="bi bi-person-x"></i>
                                             </button>
                                         </form>
@@ -152,8 +153,8 @@
                                         <form method="POST" action="{{ url_for('activate_user', user_id=admin.id) }}" 
                                               style="display: inline;">
                                             <button type="submit" class="btn btn-outline-success" 
-                                                    onclick="return confirm('Are you sure you want to activate this admin?')"
-                                                    title="Activate Admin">
+                                                    onclick="return confirm('Activate this admin?')"
+                                                    title="Activate">
                                                 <i class="bi bi-person-check"></i>
                                             </button>
                                         </form>
@@ -166,71 +167,51 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-4">
-                    <i class="bi bi-person-x display-4 text-muted"></i>
-                    <h5 class="mt-3">No Administrators Found</h5>
-                    <p class="text-muted">This school doesn't have any active administrators.</p>
+                <div class="empty-state">
+                    <i class="bi bi-person-x"></i>
+                    <h5>No Administrators</h5>
+                    <p class="text-muted">This school doesn't have any administrators yet.</p>
                 </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- School Statistics -->
+        <!-- Statistics Cards -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Statistics</h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card bg-primary text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Admins</h6>
-                                        <h2 class="mb-0">{{ stats.total_admins }}</h2>
-                                    </div>
-                                    <i class="bi bi-person-gear display-6 opacity-50"></i>
-                                </div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card bg-primary text-white h-100">
+                            <div class="card-body d-flex flex-column justify-content-between">
+                                <h6 class="card-title">Admins</h6>
+                                <h2 class="mb-0">{{ stats.total_admins }}</h2>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card bg-success text-white">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card bg-success text-white h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Teachers</h6>
-                                        <h2 class="mb-0">{{ stats.total_teachers }}</h2>
-                                    </div>
-                                    <i class="bi bi-person-badge display-6 opacity-50"></i>
-                                </div>
+                                <h6 class="card-title">Teachers</h6>
+                                <h2 class="mb-0">{{ stats.total_teachers }}</h2>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card bg-info text-white">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card bg-info text-white h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Students</h6>
-                                        <h2 class="mb-0">{{ stats.total_students }}</h2>
-                                    </div>
-                                    <i class="bi bi-people display-6 opacity-50"></i>
-                                </div>
+                                <h6 class="card-title">Students</h6>
+                                <h2 class="mb-0">{{ stats.total_students }}</h2>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card bg-warning text-white">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card bg-warning text-white h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Classes</h6>
-                                        <h2 class="mb-0">{{ stats.total_classes }}</h2>
-                                    </div>
-                                    <i class="bi bi-people display-6 opacity-50"></i>
-                                </div>
+                                <h6 class="card-title">Classes</h6>
+                                <h2 class="mb-0">{{ stats.total_classes }}</h2>
                             </div>
                         </div>
                     </div>
@@ -239,8 +220,9 @@
         </div>
     </div>
 
-    <!-- Actions Sidebar -->
-    <div class="col-md-4">
+    <!-- Right Column: Actions and Recent Students -->
+    <div class="col-lg-4 mb-4">
+        <!-- School Actions Card -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">School Actions</h5>
@@ -249,36 +231,33 @@
                 {% if school.is_active %}
                 <div class="d-grid gap-2 mb-3">
                     <form method="POST" action="{{ url_for('suspend_school', school_id=school.id) }}">
-                        <button type="submit" class="btn btn-warning w-100" onclick="return confirm('Are you sure you want to suspend this school? Admin and teachers will not be able to login.')">
+                        <button type="submit" class="btn btn-warning w-100" onclick="return confirm('Suspend this school? Admins/teachers cannot login.')">
                             <i class="bi bi-pause-circle me-2"></i> Suspend Services
                         </button>
                     </form>
                 </div>
-                <div class="alert alert-warning">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Suspending will prevent all users from logging in, but data will be preserved.
+                <div class="alert alert-warning small">
+                    <i class="bi bi-info-circle me-2"></i> Suspending preserves data but prevents logins.
                 </div>
                 {% else %}
                 <div class="d-grid gap-2 mb-3">
                     <form method="POST" action="{{ url_for('reactivate_school', school_id=school.id) }}">
-                        <button type="submit" class="btn btn-success w-100" onclick="return confirm('Are you sure you want to reactivate this school?')">
+                        <button type="submit" class="btn btn-success w-100" onclick="return confirm('Reactivate this school?')">
                             <i class="bi bi-play-circle me-2"></i> Reactivate School
                         </button>
                     </form>
                 </div>
                 {% endif %}
                 
-                <!-- Quick Password Reset for Primary Admin -->
                 <div class="d-grid gap-2 mb-3">
                     <form method="POST" action="{{ url_for('reset_admin_password', school_id=school.id) }}">
-                        <button type="submit" class="btn btn-outline-warning w-100" onclick="return confirm('Are you sure you want to reset the admin password? A new temporary password will be generated.')">
+                        <button type="submit" class="btn btn-outline-warning w-100" onclick="return confirm('Reset admin password? A temporary password will be generated.')">
                             <i class="bi bi-key me-2"></i> Reset Admin Password
                         </button>
                     </form>
                 </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    This will generate a new temporary password for the primary administrator.
+                <div class="alert alert-info small">
+                    <i class="bi bi-info-circle me-2"></i> Generates a new temporary password for the primary admin.
                 </div>
                 
                 <hr>
@@ -288,9 +267,8 @@
                         <i class="bi bi-trash me-2"></i> Delete Permanently
                     </button>
                 </div>
-                <div class="alert alert-danger mt-3">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <strong>Warning:</strong> Deletion is permanent and cannot be undone!
+                <div class="alert alert-danger small mt-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> This action is irreversible.
                 </div>
             </div>
         </div>
@@ -303,52 +281,37 @@
             <div class="card-body">
                 <div class="list-group list-group-flush">
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-person-badge text-primary me-2"></i>
-                            Administrators
-                        </div>
+                        <span><i class="bi bi-person-badge text-primary me-2"></i>Admins</span>
                         <span class="badge bg-primary rounded-pill">{{ stats.total_admins }}</span>
                     </div>
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-person-badge text-success me-2"></i>
-                            Teachers
-                        </div>
+                        <span><i class="bi bi-person-badge text-success me-2"></i>Teachers</span>
                         <span class="badge bg-success rounded-pill">{{ stats.total_teachers }}</span>
                     </div>
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-people text-info me-2"></i>
-                            Students
-                        </div>
+                        <span><i class="bi bi-people text-info me-2"></i>Students</span>
                         <span class="badge bg-info rounded-pill">{{ stats.total_students }}</span>
                     </div>
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-people text-warning me-2"></i>
-                            Classes
-                        </div>
+                        <span><i class="bi bi-people text-warning me-2"></i>Classes</span>
                         <span class="badge bg-warning rounded-pill">{{ stats.total_classes }}</span>
                     </div>
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-calendar text-secondary me-2"></i>
-                            Sessions
-                        </div>
+                        <span><i class="bi bi-calendar text-secondary me-2"></i>Sessions</span>
                         <span class="badge bg-secondary rounded-pill">{{ stats.total_sessions }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Recent Students (scrollable list) -->
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0">Recent Students</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_students %}
-                <div class="list-group">
+                <div class="list-group list-group-flush scrollable-list" style="max-height: 300px;">
                     {% for student in recent_students %}
                     <div class="list-group-item list-group-item-action">
                         <div class="d-flex align-items-center">
@@ -358,7 +321,6 @@
                             <div class="flex-grow-1">
                                 <div class="fw-semibold">{{ student.first_name }} {{ student.last_name }}</div>
                                 <div class="small text-muted">ID: {{ student.student_id }}</div>
-                                <div class="x-small text-muted">Created: {{ student.created_at.strftime('%Y-%m-%d') }}</div>
                             </div>
                             <small class="text-muted">{{ student.created_at.strftime('%m/%d') }}</small>
                         </div>
@@ -366,7 +328,11 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted text-center">No students found</p>
+                <div class="empty-state p-4">
+                    <i class="bi bi-people"></i>
+                    <h5>No Students Yet</h5>
+                    <p class="text-muted">Students will appear here once enrolled.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -383,29 +349,17 @@
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>CRITICAL WARNING:</strong> This action cannot be undone!
+                    <i class="bi bi-exclamation-triangle-fill"></i> This action cannot be undone!
                 </div>
                 <p>You are about to permanently delete <strong>{{ school.name }}</strong> and all associated data.</p>
-                <p class="text-danger">
-                    This will delete:
-                    <ul>
-                        <li>All administrators ({{ stats.total_admins }}) and teachers ({{ stats.total_teachers }})</li>
-                        <li>All students ({{ stats.total_students }}) and their records</li>
-                        <li>All classes ({{ stats.total_classes }}) and sessions ({{ stats.total_sessions }})</li>
-                        <li>All enrollment and assignment data</li>
-                        <li><strong>All data will be lost forever!</strong></li>
-                    </ul>
-                </p>
+                <p class="text-danger">This will delete all administrators, teachers, students, classes, sessions, and all related records.</p>
                 <p>Type <strong>"DELETE {{ school.code }}"</strong> to confirm:</p>
                 <input type="text" class="form-control mb-3" id="confirmationInput" placeholder="Enter confirmation text">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form method="POST" action="{{ url_for('delete_school', school_id=school.id) }}" id="deleteForm">
-                    <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
-                        Permanently Delete School
-                    </button>
+                    <button type="submit" class="btn btn-danger" id="deleteButton" disabled>Permanently Delete</button>
                 </form>
             </div>
         </div>
