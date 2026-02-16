@@ -8,8 +8,8 @@
 {% block content %}
 <!-- Mobile App Bar -->
 <div class="mobile-app-bar d-lg-none">
-    <div class="p-3 text-center">
-        <h1 class="h4 mb-0 fw-bold">My Profile</h1>
+    <div class="d-flex align-items-center justify-content-center p-3">
+        <h1 class="h5 mb-0 fw-bold text-dark">My Profile</h1>
     </div>
 </div>
 
@@ -176,6 +176,11 @@ body { background-color: #f8fafc; padding-bottom: 80px; }
     position: sticky;
     top: 0;
     z-index: 900;
+    width: 100%;
+}
+.mobile-app-bar h1 {
+    font-size: 1.25rem;
+    letter-spacing: 0.3px;
 }
 
 @media (min-width: 992px) {
