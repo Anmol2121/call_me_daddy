@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}My Profile · EduManage Pro{% endblock %}
+
+{% block header %}
+<!-- Hide default header on mobile -->
+{% endblock %}
+
+{% block content %}
+<!-- Mobile App Bar -->
+<div class="mobile-app-bar d-lg-none">
+    <div class="d-flex align-items-center justify-content-between p-3">
+        <button class="btn btn-link text-dark p-0" onclick="history.back()">
+            <i class="fas fa-arrow-left fa-2x"></i>
+        </button>
+        <h1 class="h4 mb-0 fw-bold">My Profile</h1>
+        <button class="btn btn-link text-dark p-0" onclick="window.print()">
+            <i class="fas fa-print fa-2x"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Desktop Header -->
+<div class="d-none d-lg-block mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold"><i class="fas fa-user-circle text-primary me-3"></i>My Profile</h2>
+        <button class="btn btn-outline-dark btn-sm px-4" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Print
+        </button>
+    </div>
+</div>
+
+<!-- Profile Card -->
+<div class="premium-card p-4 mb-4 text-center">
+    <div class="avatar-circle bg-primary text-white mx-auto mb-3">
+        {{ student.first_name[0]|upper }}{{ student.last_name[0]|upper }}
+    </div>
+    <h3 class="fw-bold">{{ student.first_name }} {{ student.last_name }}</h3>
+    <p class="text-muted mb-2">{{ student.student_id }}</p>
+    <div class="d-flex justify-content-center gap-2">
+        <span class="badge bg-primary">Student</span>
+        {% if student.is_active %}
+        <span class="badge bg-success">Active</span>
+        {% else %}
+        <span class="badge bg-secondary">Inactive</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Personal Information -->
+<div class="premium-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Personal Information</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <div class="text-muted small">First Name</div>
+            <div class="fw-bold">{{ student.first_name }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Last Name</div>
+            <div class="fw-bold">{{ student.last_name }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Date of Birth</div>
+            <div class="fw-bold">{{ student.date_of_birth.strftime('%d %b %Y') }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Gender</div>
+            <div class="fw-bold">{{ student.gender|title }}</div>
+        </div>
+        <div class="col-12">
+            <div class="text-muted small">Address</div>
+            <div class="fw-bold">{{ student.address or 'Not provided' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Academic Information -->
+<div class="premium-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-graduation-cap text-primary me-2"></i>Academic Information</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <div class="text-muted small">Class</div>
+            <div class="fw-bold">{{ enrollment.class_.name if enrollment else 'Not enrolled' }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Roll Number</div>
+            <div class="fw-bold">{{ enrollment.roll_number if enrollment else 'N/A' }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Session</div>
+            <div class="fw-bold">{{ enrollment.session.name if enrollment else current_session.name }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Enrollment Date</div>
+            <div class="fw-bold">{{ enrollment.enrollment_date.strftime('%d %b %Y') if enrollment else 'N/A' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Parent / Guardian Information -->
+<div class="premium-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-users text-primary me-2"></i>Parent / Guardian</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <div class="text-muted small">Father's Name</div>
+            <div class="fw-bold">{{ student.father_name or 'Not provided' }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Mother's Name</div>
+            <div class="fw-bold">{{ student.mother_name or 'Not provided' }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Phone</div>
+            <div class="fw-bold">{{ student.phone or 'Not provided' }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Parent Email</div>
+            <div class="fw-bold">{{ student.parent_email or 'Not provided' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Information -->
+<div class="premium-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-shield-alt text-primary me-2"></i>Account Information</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <div class="text-muted small">Login Email</div>
+            <div class="fw-bold">{{ student.email }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Account Created</div>
+            <div class="fw-bold">{{ student.created_at.strftime('%d %b %Y') }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Last Login</div>
+            <div class="fw-bold">{{ student.user.last_login.strftime('%d %b %Y') if student.user.last_login else 'Never' }}</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Password</div>
+            <div class="fw-bold">
+                <span class="badge bg-warning">Changeable</span>
+            </div>
+        </div>
+    </div>
+    <div class="mt-3">
+        <a href="{{ url_for('change_password', force=true) }}" class="btn btn-outline-warning w-100">
+            <i class="fas fa-key me-2"></i>Change Password
+        </a>
+    </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav d-lg-none">
+    <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('student_fees') }}" class="bottom-nav-item">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <span>Fees</span>
+    </a>
+    <a href="{{ url_for('student_attendance') }}" class="bottom-nav-item">
+        <i class="fas fa-calendar-check"></i>
+        <span>Attendance</span>
+    </a>
+    <a href="{{ url_for('student_profile') }}" class="bottom-nav-item active">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</nav>
+
+<style>
+/* Reuse same styles as dashboard */
+:root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+body { background-color: #f8fafc; padding-bottom: 80px; }
+
+.premium-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid rgba(226,232,240,0.6);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.mobile-app-bar {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 1rem calc(0.5rem + var(--safe-bottom));
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    z-index: 1000;
+    border-top: 1px solid #e2e8f0;
+}
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    text-decoration: none;
+    padding: 0.25rem 0;
+}
+.bottom-nav-item i { font-size: 1.4rem; margin-bottom: 0.1rem; }
+.bottom-nav-item.active { color: #4361ee; }
+
+@media (min-width: 992px) {
+    body { padding-bottom: 0; }
+    .bottom-nav { display: none; }
+}
+</style>
+{% endblock %}
