@@ -529,6 +529,23 @@ def take_attendance(class_id):
                          existing_attendance=existing_attendance,
                          attendance_date=attendance_date)
 
+@app.route('/student/profile')
+@login_required
+def student_profile():
+    if current_user.role != 'student':
+        abort(403)
+    student = current_user.student
+    enrollment = StudentEnrollment.query.filter_by(
+        student_id=student.id,
+        session_id=g.get('view_session_id', current_session.id),
+        is_active=True
+    ).first()
+    return render_template('student_profile.html',
+                         student=student,
+                         enrollment=enrollment,
+                         current_session=current_session,
+                         context={'school': current_user.school, 'current_session': current_session})
+
 @app.route('/teacher/attendance/view/<int:class_id>')
 @role_required(['teacher'])
 @school_active_required
@@ -6387,4 +6404,5 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
