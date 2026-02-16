@@ -535,16 +535,29 @@ def student_profile():
     if current_user.role != 'student':
         abort(403)
     student = current_user.student
-    enrollment = StudentEnrollment.query.filter_by(
-        student_id=student.id,
-        session_id=g.get('view_session_id', current_session.id),
-        is_active=True
-    ).first()
-    return render_template('student_profile.html',
-                         student=student,
-                         enrollment=enrollment,
-                         current_session=current_session,
-                         context={'school': current_user.school, 'current_session': current_session})
+    if not student:
+        flash('Student record not found', 'danger')
+        return redirect(url_for('logout'))
+
+    # Get the current active session for the student's school
+    current_session = get_current_session(student.school_id)
+
+    # Get the student's enrollment in that session (if any)
+    enrollment = None
+    if current_session:
+        enrollment = StudentEnrollment.query.filter_by(
+            student_id=student.id,
+            session_id=current_session.id,
+            is_active=True
+        ).first()
+
+    return render_template(
+        'student_profile.html',
+        student=student,
+        enrollment=enrollment,
+        current_session=current_session,
+        context={'school': current_user.school, 'current_session': current_session}
+    )
 
 @app.route('/teacher/attendance/view/<int:class_id>')
 @role_required(['teacher'])
@@ -6404,6 +6417,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
