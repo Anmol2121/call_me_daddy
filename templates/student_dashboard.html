@@ -354,7 +354,8 @@
         <i class="fas fa-calendar-check"></i>
         <span>Attendance</span>
     </a>
-    <a href="{{ url_for('student_profile') }}" class="bottom-nav-item">
+    <!-- Fixed: previously pointed to non‑existent 'student_profile' – now goes to dashboard (or you can create a profile page later) -->
+    <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
         <i class="fas fa-user"></i>
         <span>Profile</span>
     </a>
