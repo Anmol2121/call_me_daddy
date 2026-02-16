@@ -309,6 +309,26 @@
     </div>
 </div>
 
+<!-- Bottom Navigation (mobile only) -->
+<nav class="bottom-nav d-lg-none">
+    <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('student_fees') }}" class="bottom-nav-item">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <span>Fees</span>
+    </a>
+    <a href="{{ url_for('student_attendance') }}" class="bottom-nav-item active">
+        <i class="fas fa-calendar-check"></i>
+        <span>Attendance</span>
+    </a>
+    <a href="{{ url_for('student_profile') }}" class="bottom-nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</nav>
+
 <style>
 .glass-card {
     background: rgba(255, 255, 255, 0.95);
@@ -366,6 +386,36 @@
 .status-overdue {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 1rem calc(0.5rem + var(--safe-bottom));
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    z-index: 1000;
+    border-top: 1px solid #e2e8f0;
+}
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    text-decoration: none;
+    padding: 0.25rem 0;
+}
+.bottom-nav-item i { font-size: 1.4rem; margin-bottom: 0.1rem; }
+.bottom-nav-item.active { color: #4361ee; }
+
+@media (min-width: 992px) {
+    .bottom-nav { display: none; }
 }
 </style>
 
