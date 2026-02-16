@@ -1085,7 +1085,8 @@
                 <i class="fas fa-clipboard-check"></i>
                 <span>Attendance</span>
             </a>
-            <a class="bottom-nav-item" href="#">
+            <!-- FIXED: Profile link now goes to student_profile -->
+            <a class="bottom-nav-item {% if request.endpoint == 'student_profile' %}active{% endif %}" href="{{ url_for('student_profile') }}">
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
             </a>
