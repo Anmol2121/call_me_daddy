@@ -8,14 +8,8 @@
 {% block content %}
 <!-- Mobile App Bar -->
 <div class="mobile-app-bar d-lg-none">
-    <div class="d-flex align-items-center justify-content-between p-3">
-        <button class="btn btn-link text-dark p-0" onclick="history.back()">
-            <i class="fas fa-arrow-left fa-2x"></i>
-        </button>
+    <div class="p-3 text-center">
         <h1 class="h4 mb-0 fw-bold">My Profile</h1>
-        <button class="btn btn-link text-dark p-0" onclick="window.print()">
-            <i class="fas fa-print fa-2x"></i>
-        </button>
     </div>
 </div>
 
@@ -23,9 +17,6 @@
 <div class="d-none d-lg-block mb-4">
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="fw-bold"><i class="fas fa-user-circle text-primary me-3"></i>My Profile</h2>
-        <button class="btn btn-outline-dark btn-sm px-4" onclick="window.print()">
-            <i class="fas fa-print me-2"></i>Print
-        </button>
     </div>
 </div>
 
@@ -155,28 +146,7 @@
     </div>
 </div>
 
-<!-- Bottom Navigation (mobile only) -->
-<nav class="bottom-nav d-lg-none">
-    <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ url_for('student_fees') }}" class="bottom-nav-item">
-        <i class="fas fa-file-invoice-dollar"></i>
-        <span>Fees</span>
-    </a>
-    <a href="{{ url_for('student_attendance') }}" class="bottom-nav-item">
-        <i class="fas fa-calendar-check"></i>
-        <span>Attendance</span>
-    </a>
-    <a href="{{ url_for('student_profile') }}" class="bottom-nav-item active">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-</nav>
-
 <style>
-/* Reuse same styles as dashboard */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 body { background-color: #f8fafc; padding-bottom: 80px; }
 
@@ -208,35 +178,8 @@ body { background-color: #f8fafc; padding-bottom: 80px; }
     z-index: 900;
 }
 
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    display: flex;
-    justify-content: space-around;
-    padding: 0.5rem 1rem calc(0.5rem + var(--safe-bottom));
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
-    z-index: 1000;
-    border-top: 1px solid #e2e8f0;
-}
-.bottom-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #94a3b8;
-    font-size: 0.7rem;
-    text-decoration: none;
-    padding: 0.25rem 0;
-}
-.bottom-nav-item i { font-size: 1.4rem; margin-bottom: 0.1rem; }
-.bottom-nav-item.active { color: #4361ee; }
-
 @media (min-width: 992px) {
     body { padding-bottom: 0; }
-    .bottom-nav { display: none; }
 }
 </style>
 {% endblock %}
