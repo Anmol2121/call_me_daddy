@@ -115,53 +115,11 @@
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         
-        /* Mobile toggle button */
-        .sidebar-toggle {
-            display: none;
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--primary);
-            margin-right: 0.5rem;
-            width: 44px;
-            height: 44px;
-            border-radius: 8px;
-            align-items: center;
-            justify-content: center;
-        }
-        .sidebar-toggle:hover {
-            background: #f1f5f9;
-        }
-        @media (max-width: 992px) {
-            .sidebar-toggle {
-                display: inline-flex;
-            }
-        }
-        
         /* App Wrapper */
         .app-wrapper {
             display: flex;
             min-height: 100vh;
             padding-top: var(--navbar-height);
-            position: relative;
-        }
-        
-        /* Sidebar overlay */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1045;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .sidebar-overlay.show {
-            display: block;
-            opacity: 1;
         }
         
         /* Enhanced Sidebar */
@@ -174,22 +132,10 @@
             top: var(--navbar-height);
             left: 0;
             z-index: 1040;
-            transition: transform 0.3s ease;
+            transition: var(--transition);
             overflow-y: auto;
             padding: 1.5rem 0;
             box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.03);
-        }
-        
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-                box-shadow: none;
-                z-index: 1060;
-            }
-            .sidebar.show {
-                transform: translateX(0);
-                box-shadow: 0 0 30px rgba(0,0,0,0.2);
-            }
         }
         
         .sidebar-header {
@@ -240,7 +186,6 @@
             border-radius: var(--border-radius-sm);
             border: 1px solid transparent;
             font-weight: 500;
-            min-height: 44px; /* touch target */
         }
         
         .menu-link:hover {
@@ -286,15 +231,8 @@
             margin-left: var(--sidebar-width);
             padding: 1.5rem;
             min-height: calc(100vh - var(--navbar-height));
-            transition: margin-left 0.3s ease;
+            transition: var(--transition);
             background: #f8fafc;
-        }
-        
-        @media (max-width: 992px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
         }
         
         /* Page Header */
@@ -314,15 +252,6 @@
             margin-bottom: 0.25rem;
             letter-spacing: -0.02em;
             font-family: 'Poppins', sans-serif;
-        }
-        
-        @media (max-width: 576px) {
-            .page-title {
-                font-size: 1.5rem;
-            }
-            .page-header {
-                padding: 1rem 1.25rem;
-            }
         }
         
         /* Premium Card Styling */
@@ -353,7 +282,7 @@
             padding: 1.5rem;
         }
         
-        /* Button Styling - touch friendly */
+        /* Button Styling */
         .btn {
             border-radius: var(--border-radius-xs);
             padding: 0.625rem 1.25rem;
@@ -361,17 +290,6 @@
             transition: var(--transition);
             border: 1px solid transparent;
             font-family: 'Inter', sans-serif;
-            min-height: 44px;
-            min-width: 44px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .btn-sm {
-            min-height: 38px;
-            min-width: 38px;
-            padding: 0.4rem 0.75rem;
         }
         
         .btn-primary {
@@ -397,19 +315,14 @@
             box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
         }
         
-        /* Premium Table Styling - responsive */
-        .table-responsive-custom {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .premium-table {
-            width: 100%;
+        /* Premium Table Styling */
+        .table {
+            margin-bottom: 0;
             border-collapse: separate;
             border-spacing: 0;
         }
         
-        .premium-table th {
+        .table th {
             font-weight: 600;
             color: #334155;
             border-bottom: 2px solid #f1f5f9;
@@ -420,54 +333,19 @@
             letter-spacing: 0.05em;
         }
         
-        .premium-table td {
+        .table td {
             padding: 1rem 1.25rem;
             vertical-align: middle;
             border-color: #f1f5f9;
             font-size: 0.875rem;
         }
         
-        .premium-table tbody tr {
+        .table tbody tr {
             transition: var(--transition);
         }
         
-        .premium-table tbody tr:hover {
+        .table tbody tr:hover {
             background: #f8fafc;
-        }
-        
-        /* Mobile card style for tables */
-        @media (max-width: 576px) {
-            .premium-table, .premium-table thead, .premium-table tbody, .premium-table tr, .premium-table td {
-                display: block;
-            }
-            .premium-table thead {
-                display: none;
-            }
-            .premium-table tr {
-                margin-bottom: 1rem;
-                border: 1px solid #e2e8f0;
-                border-radius: var(--border-radius);
-                padding: 1rem;
-                background: white;
-            }
-            .premium-table td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.5rem 0;
-                border: none;
-                border-bottom: 1px dashed #f1f5f9;
-            }
-            .premium-table td:last-child {
-                border-bottom: none;
-            }
-            .premium-table td::before {
-                content: attr(data-label);
-                font-weight: 600;
-                width: 40%;
-                color: #64748b;
-                font-size: 0.8rem;
-            }
         }
         
         /* Custom Scrollbar */
@@ -485,8 +363,25 @@
         
         /* Responsive Design */
         @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: var(--shadow-lg);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
             .navbar-container {
                 padding: 0 1rem;
+            }
+            
+            .page-header {
+                padding: 1.25rem 1.5rem;
             }
             
             .card-body {
@@ -511,6 +406,28 @@
         @keyframes slideIn {
             from { transform: translateX(-20px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Loading States */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
         
         /* Status Indicators */
@@ -550,113 +467,49 @@
             background-clip: text;
         }
         
-        /* Form inputs touch-friendly */
-        .form-control, .form-select {
-            padding: 0.75rem 1rem;
-            font-size: 16px;
-            min-height: 44px;
+        .border-gradient {
+            border: double 1px transparent;
+            background-image: linear-gradient(white, white), linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
         }
         
-        /* Modal full-screen on mobile */
-        @media (max-width: 576px) {
-            .modal-dialog {
-                margin: 0;
-                max-width: 100%;
-                height: 100%;
-            }
-            .modal-content {
-                border-radius: 0;
-                height: 100%;
-                border: none;
-            }
-            .modal-header {
-                border-radius: 0;
-            }
-        }
-        
-        /* Metric cards for mobile */
-        .metric-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            border: 1px solid #f1f5f9;
-            transition: var(--transition);
-            height: 100%;
-            display: flex;
-            align-items: center;
+        /* Timeline Steps */
+        .timeline-steps {
             position: relative;
-            overflow: hidden;
+            padding-left: 40px;
         }
-        .metric-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
+        
+        .timeline-steps::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
         }
-        .metric-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
+        
+        .timeline-step {
+            position: relative;
+        }
+        
+        .timeline-step-number {
+            position: absolute;
+            left: -48px;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 1rem;
-            font-size: 1.8rem;
-            flex-shrink: 0;
-        }
-        .metric-content {
-            flex: 1;
-        }
-        .metric-number {
-            font-size: 2rem;
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 0.25rem;
-        }
-        .metric-label {
-            font-size: 0.875rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .metric-link {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            color: #64748b;
-            transition: var(--transition);
-        }
-        .metric-card:hover .metric-link {
-            color: var(--primary);
-            transform: translateX(4px);
+            font-weight: bold;
+            z-index: 2;
         }
         
-        @media (max-width: 576px) {
-            .metric-card {
-                padding: 1rem;
-                flex-direction: column;
-                text-align: center;
-            }
-            .metric-icon {
-                margin-right: 0;
-                margin-bottom: 0.5rem;
-                width: 48px;
-                height: 48px;
-                font-size: 1.5rem;
-            }
-            .metric-number {
-                font-size: 1.5rem;
-            }
-            .metric-link {
-                position: static;
-                margin-top: 0.5rem;
-            }
-        }
-        
-        /* Chart containers */
-        .chart-container {
-            position: relative;
-            width: 100%;
-            height: auto;
-            min-height: 200px;
+        .timeline-step-content {
+            padding-left: 20px;
         }
     </style>
     
@@ -666,11 +519,6 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-container">
-            <!-- Mobile toggle button -->
-            <button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
-            
             <!-- Brand Logo -->
             <a class="navbar-brand" href="{{ url_for('dashboard') }}">
                 <div class="brand-logo">
@@ -681,7 +529,7 @@
             
             <!-- Right Side Menu -->
             <div class="ms-auto d-flex align-items-center gap-2">
-                <!-- Quick Search (hidden on small screens) -->
+                <!-- Quick Search -->
                 <div class="position-relative me-2 d-none d-lg-block">
                     <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
                     <input type="text" class="form-control ps-5" placeholder="Search..." style="width: 200px; border-radius: 20px; border: 1px solid #e2e8f0;">
@@ -689,7 +537,7 @@
                 
                 <!-- Notifications -->
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light rounded-circle p-2" type="button" data-bs-toggle="dropdown" style="border: 1px solid #e2e8f0; width: 44px; height: 44px;">
+                    <button class="btn btn-sm btn-light rounded-circle p-2" type="button" data-bs-toggle="dropdown" style="border: 1px solid #e2e8f0;">
                         <i class="fas fa-bell text-secondary"></i>
                         {% if stats and stats.overdue_count|default(0) > 0 %}
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem; padding: 0.2rem 0.35rem;">
@@ -703,15 +551,92 @@
                         </div>
                         <div class="simplebar" style="max-height: 300px;">
                             <div class="p-2">
-                                <!-- Notifications content (same as original) -->
+                                {% if stats and stats.overdue_count|default(0) > 0 %}
+                                <a href="{{ url_for('manage_student_fees') }}?status=overdue" class="dropdown-item py-3 border-bottom">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="rounded-circle bg-danger-light text-danger d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="fw-bold">Overdue Fees Alert</div>
+                                            <div class="small text-muted">{{ stats.overdue_count|default(0) }} payments are overdue</div>
+                                            <div class="x-small text-danger mt-1">
+                                                <i class="fas fa-clock me-1"></i> Requires immediate attention
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                                
+                                {% if current_user.role == 'admin' and stats and stats.students_without_fees > 0 %}
+                                <a href="{{ url_for('check_fee_data') }}" class="dropdown-item py-3 border-bottom">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="rounded-circle bg-warning-light text-warning d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="fw-bold">Fee Assignment Required</div>
+                                            <div class="small text-muted">{{ stats.students_without_fees }} students need fee assignment</div>
+                                            <div class="x-small text-warning mt-1">
+                                                <i class="fas fa-users me-1"></i> Review required
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                                
+                                {% if current_user.role == 'teacher' %}
+                                <!-- Teacher-specific notifications -->
+                                {% set attendance_taken = 0 %}
+                                {% if assigned_classes %}
+                                    {% for class in assigned_classes %}
+                                        {% if get_today_attendance(class.class.id) %}
+                                            {% set attendance_taken = attendance_taken + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                {% if assigned_classes and attendance_taken < assigned_classes|length %}
+                                <a href="{{ url_for('teacher_attendance_dashboard') }}" class="dropdown-item py-3 border-bottom">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="rounded-circle bg-info-light text-info d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                <i class="fas fa-clipboard-check"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="fw-bold">Attendance Pending</div>
+                                            <div class="small text-muted">{{ assigned_classes|length - attendance_taken }} classes need attendance</div>
+                                            <div class="x-small text-info mt-1">
+                                                <i class="fas fa-clock me-1"></i> Complete today
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                                
+                                {% if not stats or stats.overdue_count|default(0) == 0 %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-bell-slash fa-2x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">No new notifications</p>
+                                </div>
+                                {% endif %}
                             </div>
+                        </div>
+                        <div class="p-2 border-top">
+                            <a href="#" class="btn btn-outline-primary btn-sm w-100">View All Notifications</a>
                         </div>
                     </div>
                 </div>
                 
                 <!-- User Profile -->
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light d-flex align-items-center gap-2 px-3" type="button" data-bs-toggle="dropdown" style="border-radius: 20px; border: 1px solid #e2e8f0; min-height: 44px;">
+                    <button class="btn btn-sm btn-light d-flex align-items-center gap-2 px-3" type="button" data-bs-toggle="dropdown" style="border-radius: 20px; border: 1px solid #e2e8f0;">
                         <div class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px;">
                             {{ current_user.full_name[0]|upper if current_user.full_name else 'U' }}
                         </div>
@@ -722,7 +647,24 @@
                         <i class="fas fa-chevron-down small text-muted"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" style="min-width: 200px;">
-                        <!-- User menu items (same) -->
+                        <li class="dropdown-header p-3">
+                            <div class="fw-bold">{{ current_user.full_name }}</div>
+                            <div class="small text-muted">{{ current_user.email }}</div>
+                            <div class="mt-2">
+                                <span class="badge bg-primary">{{ current_user.role|title if current_user.role else 'User' }}</span>
+                                {% if current_user.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider m-0"></li>
+                        <li><a class="dropdown-item py-2" href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard</a></li>
+                        <li><a class="dropdown-item py-2" href="{{ url_for('change_password', force=true) }}"><i class="fas fa-key me-2 text-warning"></i>Change Password</a></li>
+                        <li><a class="dropdown-item py-2" href="#"><i class="fas fa-cog me-2 text-secondary"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider m-0"></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -731,19 +673,274 @@
 
     <!-- App Wrapper -->
     <div class="app-wrapper">
-        <!-- Sidebar overlay (for mobile) -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar" data-simplebar>
-            <!-- Sidebar content (same) -->
+            <!-- School Info -->
+            <div class="sidebar-header">
+                <div class="school-info">
+                    <div class="school-icon">
+                        <i class="fas fa-school"></i>
+                    </div>
+                    <div>
+                        {% if current_user.school %}
+                        <div class="fw-bold mb-1">{{ current_user.school.name }}</div>
+                        <div class="small text-muted">
+                            {% if context and context.current_session %}
+                                {{ context.current_session.name }}
+                            {% else %}
+                                No active session
+                            {% endif %}
+                        </div>
+                        <div class="mt-2">
+                            {% if current_user.school.is_active %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i> Active
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times-circle me-1"></i> Suspended
+                            </span>
+                            {% endif %}
+                            {% if total_students %}
+                            <span class="badge bg-primary ms-1">
+                                <i class="fas fa-users me-1"></i> {{ total_students }} Students
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="fw-bold mb-1">System Control</div>
+                        <div class="small text-muted">Developer Panel</div>
+                        <div class="mt-2">
+                            <span class="badge bg-dark">
+                                <i class="fas fa-code me-1"></i> Developer
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Menu -->
+            <nav class="sidebar-menu">
+                <ul class="menu-list">
+                    {% if current_user.role == 'developer' %}
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'developer_dashboard' %}active{% endif %}" href="{{ url_for('developer_dashboard') }}">
+                            <i class="fas fa-tachometer-alt menu-icon"></i>
+                            <span class="menu-text">Developer Dashboard</span>
+                            <span class="menu-badge">System</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'manage_schools' %}active{% endif %}" href="{{ url_for('manage_schools') }}">
+                            <i class="fas fa-school menu-icon"></i>
+                            <span class="menu-text">Manage Schools</span>
+                            <span class="menu-badge">Admin</span>
+                        </a>
+                    </li>
+                    
+                    {% elif current_user.role == 'admin' %}
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt menu-icon"></i>
+                            <span class="menu-text">Dashboard</span>
+                            <span class="menu-badge">Home</span>
+                        </a>
+                    </li>
+                    
+                    <div class="menu-divider mx-3 my-2"></div>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['manage_students', 'create_student', 'view_student_details', 'edit_student', 'reset_student_password'] %}active{% endif %}" href="{{ url_for('manage_students') }}">
+                            <i class="fas fa-user-graduate menu-icon"></i>
+                            <span class="menu-text">Students</span>
+                            <span class="menu-badge">{{ total_students|default(0) }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['manage_teachers', 'create_teacher', 'view_teacher_details', 'edit_teacher', 'reset_teacher_password'] %}active{% endif %}" href="{{ url_for('manage_teachers') }}">
+                            <i class="fas fa-chalkboard-teacher menu-icon"></i>
+                            <span class="menu-text">Teachers</span>
+                            <span class="menu-badge">{{ total_teachers|default(0) }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['manage_classes', 'create_class'] %}active{% endif %}" href="{{ url_for('manage_classes') }}">
+                            <i class="fas fa-chalkboard menu-icon"></i>
+                            <span class="menu-text">Classes</span>
+                            <span class="menu-badge">{{ total_classes|default(0) }}</span>
+                        </a>
+                    </li>
+                    
+                    <div class="menu-divider mx-3 my-2"></div>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['manage_fee_structures', 'create_fee_structure'] %}active{% endif %}" href="{{ url_for('manage_fee_structures') }}">
+                            <i class="fas fa-money-bill-wave menu-icon"></i>
+                            <span class="menu-text">Fee Structures</span>
+                            <span class="menu-badge">{{ fee_structures_count|default(0) }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['manage_student_fees', 'record_fee_payment', 'record_fee_payment_redirect'] %}active{% endif %}" href="{{ url_for('manage_student_fees') }}">
+                            <i class="fas fa-credit-card menu-icon"></i>
+                            <span class="menu-text">Fee Collection</span>
+                            {% if stats and stats.overdue_count|default(0) > 0 %}
+                            <span class="menu-badge bg-danger">{{ stats.overdue_count|default(0) }}</span>
+                            {% else %}
+                            <span class="menu-badge">Manage</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'fee_reports' %}active{% endif %}" href="{{ url_for('fee_reports') }}">
+                            <i class="fas fa-chart-bar menu-icon"></i>
+                            <span class="menu-text">Reports</span>
+                            <span class="menu-badge">Analytics</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'fee_dashboard' %}active{% endif %}" href="{{ url_for('fee_dashboard') }}">
+                            <i class="fas fa-chart-line menu-icon"></i>
+                            <span class="menu-text">Analytics</span>
+                            <span class="menu-badge">Premium</span>
+                        </a>
+                    </li>
+                    
+                    <div class="menu-divider mx-3 my-2"></div>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['manage_sessions', 'create_session'] %}active{% endif %}" href="{{ url_for('manage_sessions') }}">
+                            <i class="fas fa-calendar-alt menu-icon"></i>
+                            <span class="menu-text">Sessions</span>
+                            <span class="menu-badge">Academic</span>
+                        </a>
+                    </li>
+                    
+                    {% elif current_user.role == 'teacher' %}
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">
+                            <i class="fas fa-tachometer-alt menu-icon"></i>
+                            <span class="menu-text">Dashboard</span>
+                            <span class="menu-badge">Home</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['teacher_attendance_dashboard', 'take_attendance', 'view_class_attendance'] %}active{% endif %}" href="{{ url_for('teacher_attendance_dashboard') }}">
+                            <i class="fas fa-clipboard-check menu-icon"></i>
+                            <span class="menu-text">Attendance</span>
+                            <span class="menu-badge">Manage</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'teacher_profile' %}active{% endif %}" href="{{ url_for('teacher_profile') }}">
+                            <i class="fas fa-user-circle menu-icon"></i>
+                            <span class="menu-text">My Profile</span>
+                            <span class="menu-badge">Settings</span>
+                        </a>
+                    </li>
+                    
+                    {% elif current_user.role == 'student' %}
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'student_dashboard' %}active{% endif %}" href="{{ url_for('student_dashboard') }}">
+                            <i class="fas fa-tachometer-alt menu-icon"></i>
+                            <span class="menu-text">Dashboard</span>
+                            <span class="menu-badge">Home</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'student_fees' %}active{% endif %}" href="{{ url_for('student_fees') }}">
+                            <i class="fas fa-credit-card menu-icon"></i>
+                            <span class="menu-text">Fees</span>
+                            <span class="menu-badge">Manage</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'student_attendance' %}active{% endif %}" href="{{ url_for('student_attendance') }}">
+                            <i class="fas fa-clipboard-check menu-icon"></i>
+                            <span class="menu-text">Attendance</span>
+                            <span class="menu-badge">View</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a class="menu-link" href="#">
+                            <i class="fas fa-user-circle menu-icon"></i>
+                            <span class="menu-text">My Profile</span>
+                            <span class="menu-badge">Settings</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- ========== QUICK STATS SECTION ========== -->
+                <!-- Quick Stats (only for admin) -->
+                {% if current_user.role == 'admin' %}
+                <div class="px-3 mt-4">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body p-3">
+                            {% if stats %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small text-muted">Collection Rate</span>
+                                <span class="fw-bold {% if stats.collection_rate|default(0) >= 80 %}text-success{% elif stats.collection_rate|default(0) >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ stats.collection_rate|default(0)|round(1) }}%
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar {% if stats.collection_rate|default(0) >= 80 %}bg-success{% elif stats.collection_rate|default(0) >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     style="width: {{ stats.collection_rate|default(0) }}%">
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-2">
+                                <i class="fas fa-rupee-sign me-1"></i> {{ stats.total_paid|default(0)|round|int }} collected
+                            </div>
+                            {% else %}
+                            <div class="text-center">
+                                <span class="small text-muted">No stats available</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Student Quick Stats -->
+                {% if current_user.role == 'student' %}
+                <div class="px-3 mt-4">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small text-muted">Attendance</span>
+                                <span class="fw-bold text-success">95%</span>
+                            </div>
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar bg-success" style="width: 95%"></div>
+                            </div>
+                            <div class="small text-muted mt-2">
+                                <i class="fas fa-calendar-check me-1"></i> This month
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content" id="main-content" data-simplebar>
             <!-- Page Header -->
             <div class="page-header">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h1 class="page-title">{% block header %}{% endblock %}</h1>
                         <nav aria-label="breadcrumb">
@@ -753,7 +950,7 @@
                             </ol>
                         </nav>
                     </div>
-                    <div class="page-actions mt-2 mt-md-0">
+                    <div class="page-actions">
                         {% block actions %}{% endblock %}
                     </div>
                 </div>
@@ -767,7 +964,36 @@
                             {% for category, message in messages %}
                                 <div class="alert alert-{{ category }} alert-dismissible fade show border-0 shadow-sm" role="alert">
                                     <div class="d-flex align-items-center">
-                                        <!-- Alert icon and message (same) -->
+                                        {% if category == 'success' %}
+                                            <div class="flex-shrink-0">
+                                                <div class="rounded-circle bg-success-light text-success d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </div>
+                                            </div>
+                                        {% elif category == 'danger' %}
+                                            <div class="flex-shrink-0">
+                                                <div class="rounded-circle bg-danger-light text-danger d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-exclamation-circle"></i>
+                                                </div>
+                                            </div>
+                                        {% elif category == 'warning' %}
+                                            <div class="flex-shrink-0">
+                                                <div class="rounded-circle bg-warning-light text-warning d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                </div>
+                                            </div>
+                                        {% elif category == 'info' %}
+                                            <div class="flex-shrink-0">
+                                                <div class="rounded-circle bg-info-light text-info d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <strong class="d-block mb-1">{{ category|title }}!</strong>
+                                            <span class="d-block">{{ message }}</span>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -789,10 +1015,14 @@
     <script src="https://unpkg.com/simplebar@latest/dist/simplebar.min.js"></script>
     
     <script>
-        // Initialize AOS
-        AOS.init({ duration: 300, once: true, offset: 100 });
+        // Initialize AOS animations
+        AOS.init({
+            duration: 300,
+            once: true,
+            offset: 100
+        });
         
-        // Initialize Simplebar
+        // Initialize Simplebar for custom scrollbars
         if (document.getElementById('main-content')) {
             new SimpleBar(document.getElementById('main-content'));
         }
@@ -800,31 +1030,15 @@
             new SimpleBar(document.getElementById('sidebar'));
         }
         
-        // Sidebar toggle for mobile
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        const toggleBtn = document.getElementById('sidebarToggle');
-        
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-                document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
-            });
-        }
-        
-        if (overlay) {
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-                document.body.style.overflow = '';
-            });
-        }
-        
         // Auto-dismiss alerts after 5 seconds
         setTimeout(function() {
             $('.alert').alert('close');
         }, 5000);
+        
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
         
         // Add loading animation to buttons
         document.querySelectorAll('.btn').forEach(btn => {
@@ -838,42 +1052,106 @@
             });
         });
         
-        // Smooth scroll
+        // Smooth scroll to elements
         function smoothScroll(element) {
-            document.querySelector(element).scrollIntoView({ behavior: 'smooth' });
+            document.querySelector(element).scrollIntoView({
+                behavior: 'smooth'
+            });
         }
         
         // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
         
-        // Real-time clock
+        // Real-time clock update
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-            document.querySelectorAll('.current-time').forEach(el => el.textContent = timeString);
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            // Update any clock elements
+            const clockElements = document.querySelectorAll('.current-time');
+            clockElements.forEach(el => {
+                el.textContent = timeString;
+            });
         }
+        
+        // Update clock every minute
         setInterval(updateClock, 60000);
         updateClock();
         
-        // Keyboard shortcut for search (Ctrl+K)
+        // Search functionality
         document.addEventListener('keydown', function(e) {
+            // Ctrl + K for search
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                document.querySelector('input[type="text"][placeholder="Search..."]')?.focus();
+                document.querySelector('input[type="text"][placeholder="Search..."]').focus();
             }
         });
+        
+        // Add ripple effect to buttons
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                let ripple = document.createElement('span');
+                let rect = this.getBoundingClientRect();
+                let size = Math.max(rect.width, rect.height);
+                let x = e.clientX - rect.left - size / 2;
+                let y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.7);
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    top: ${y}px;
+                    left: ${x}px;
+                    pointer-events: none;
+                `;
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+        
+        // Add CSS for ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+            .btn {
+                position: relative;
+                overflow: hidden;
+            }
+        `;
+        document.head.appendChild(style);
     </script>
     
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration for PWA -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
-                    .then(reg => console.log('ServiceWorker registered:', reg.scope))
-                    .catch(err => console.log('ServiceWorker failed:', err));
+                    .then(function(registration) {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker registration failed:', err);
+                    });
             });
         }
     </script>
