@@ -77,22 +77,28 @@
 <div class="premium-card p-4 mb-4">
     <h5 class="mb-3"><i class="fas fa-graduation-cap text-primary me-2"></i>Academic Information</h5>
     <div class="row g-3">
+        {% if enrollment %}
         <div class="col-6">
             <div class="text-muted small">Class</div>
-            <div class="fw-bold">{{ enrollment.class_.name if enrollment else 'Not enrolled' }}</div>
+            <div class="fw-bold">{{ enrollment.class_.name }}</div>
         </div>
         <div class="col-6">
             <div class="text-muted small">Roll Number</div>
-            <div class="fw-bold">{{ enrollment.roll_number if enrollment else 'N/A' }}</div>
+            <div class="fw-bold">{{ enrollment.roll_number }}</div>
         </div>
         <div class="col-6">
             <div class="text-muted small">Session</div>
-            <div class="fw-bold">{{ enrollment.session.name if enrollment else current_session.name }}</div>
+            <div class="fw-bold">{{ enrollment.session.name }}</div>
         </div>
         <div class="col-6">
             <div class="text-muted small">Enrollment Date</div>
-            <div class="fw-bold">{{ enrollment.enrollment_date.strftime('%d %b %Y') if enrollment else 'N/A' }}</div>
+            <div class="fw-bold">{{ enrollment.enrollment_date.strftime('%d %b %Y') }}</div>
         </div>
+        {% else %}
+        <div class="col-12">
+            <p class="text-muted">Not enrolled in any class for the current session.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -133,7 +139,7 @@
         </div>
         <div class="col-6">
             <div class="text-muted small">Last Login</div>
-            <div class="fw-bold">{{ student.user.last_login.strftime('%d %b %Y') if student.user.last_login else 'Never' }}</div>
+            <div class="fw-bold">{{ student.user.last_login.strftime('%d %b %Y') if student.user and student.user.last_login else 'Never' }}</div>
         </div>
         <div class="col-6">
             <div class="text-muted small">Password</div>
@@ -149,7 +155,7 @@
     </div>
 </div>
 
-<!-- Bottom Navigation -->
+<!-- Bottom Navigation (mobile only) -->
 <nav class="bottom-nav d-lg-none">
     <a href="{{ url_for('student_dashboard') }}" class="bottom-nav-item">
         <i class="fas fa-home"></i>
