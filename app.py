@@ -619,6 +619,16 @@ def student_profile():
         context={'school': current_user.school, 'current_session': current_session}
     )
 
+@app.route('/debug-routes')
+def debug_routes():
+    import urllib
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(rule.methods)
+        line = urllib.parse.unquote(f"{rule.endpoint}: {rule.rule} [{methods}]")
+        output.append(line)
+    return '<br>'.join(sorted(output))
+
 @app.route('/teacher/attendance/view/<int:class_id>')
 @role_required(['teacher'])
 @school_active_required
@@ -6503,6 +6513,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
