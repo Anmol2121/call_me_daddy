@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Timetable Dashboard{% endblock %}
+{% block header %}Timetable Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Timetables</li>
+{% endblock %}
+
+{% block actions %}
+<div class="dropdown">
+    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-calendar-alt me-1"></i> {{ view_session.name }}
+    </button>
+    <ul class="dropdown-menu">
+        {% for session in context.all_sessions %}
+        <li><a class="dropdown-item" href="{{ url_for('switch_view_session', session_id=session.id) }}">{{ session.name }}</a></li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Classes and Timetable Status</h5>
+    </div>
+    <div class="card-body">
+        {% if class_data %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Code</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in class_data %}
+                    <tr>
+                        <td><strong>{{ item.class.name }}</strong></td>
+                        <td>{{ item.class.code }}</td>
+                        <td>
+                            {% if item.has_timetable %}
+                            <span class="badge bg-success">Timetable Set</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Not Set</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('view_timetable', class_id=item.class.id) }}" class="btn btn-outline-info">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                {% if item.has_timetable %}
+                                <a href="{{ url_for('edit_timetable', class_id=item.class.id) }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('create_timetable', class_id=item.class.id) }}" class="btn btn-outline-success">
+                                    <i class="fas fa-plus"></i> Create
+                                </a>
+                                {% endif %}
+                                {% if item.has_timetable %}
+                                <a href="{{ url_for('copy_timetable', class_id=item.class.id) }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-copy"></i> Copy
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No classes available in this session.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
