@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+{% block title %}Edit Timetable - {{ class_obj.name }}{% endblock %}
+{% block header %}
+<div class="d-flex align-items-center">
+    <div class="edit-avatar me-3">
+        <i class="fas fa-edit"></i>
+    </div>
+    <div>
+        <h1 class="display-6 fw-bold mb-0">Edit Timetable: {{ class_obj.name }}</h1>
+        <p class="text-muted mb-0">
+            <i class="fas fa-pencil-alt me-1"></i>Drag and drop to rearrange • {{ timetable.entries|length }} periods
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('timetable_dashboard') }}">Timetables</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('view_timetable', class_id=class_obj.id) }}">{{ class_obj.name }}</a></li>
+<li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block actions %}
+<div class="btn-group shadow-sm">
+    <button class="btn btn-success" onclick="saveChanges()">
+        <i class="fas fa-save me-2"></i>Save Changes
+    </button>
+    <button class="btn btn-primary" onclick="addPeriod()">
+        <i class="fas fa-plus-circle me-2"></i>Add Period
+    </button>
+    <button class="btn btn-outline-primary" onclick="openTemplateModal()">
+        <i class="fas fa-copy me-2"></i>Copy From
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .edit-avatar {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .edit-container {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 1.5rem;
+    }
+
+    .periods-editor {
+        background: white;
+        border-radius: 30px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .day-section {
+        margin-bottom: 2rem;
+    }
+
+    .day-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f1f5f9;
+    }
+
+    .day-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-right: 1rem;
+    }
+
+    .periods-list {
+        min-height: 100px;
+        background: #f8fafc;
+        border-radius: 20px;
+        padding: 1rem;
+    }
+
+    .period-item {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+        cursor: move;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .period-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: #667eea;
+    }
+
+    .period-item.dragging {
+        opacity: 0.5;
+        transform: scale(0.98);
+    }
+
+    .period-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .period-badge {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+
+    .period-details {
+        flex: 1;
+    }
+
+    .period-subject {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .period-meta {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .period-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .sidebar-panel {
+        background: white;
+        border-radius: 30px;
+        padding: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+
+    .quick-add-form {
+        margin-bottom: 2rem;
+    }
+
+    .teacher-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .teacher-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .teacher-item:hover {
+        background: #f8fafc;
+        border-color: #667eea;
+    }
+
+    .teacher-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        margin-right: 1rem;
+    }
+
+    .availability-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-left: auto;
+    }
+
+    .available {
+        background: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .busy {
+        background: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+</style>
+
+<div class="edit-container">
+    <!-- Main Editor -->
+    <div class="periods-editor">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0">
+                <i class="fas fa-grip-vertical me-2 text-muted"></i>Drag periods to rearrange
+            </h5>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary btn-sm" onclick="expandAll()">
+                    <i class="fas fa-expand-alt me-1"></i>Expand All
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="collapseAll()">
+                    <i class="fas fa-compress-alt me-1"></i>Collapse All
+                </button>
+            </div>
+        </div>
+
+        {% for day_idx in range(5) %}
+        <div class="day-section">
+            <div class="day-header">
+                <span class="day-title">{{ day_names[day_idx] }}</span>
+                <button class="btn btn-sm btn-outline-success" onclick="addPeriodToDay({{ day_idx }})">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div class="periods-list" id="day-{{ day_idx }}" data-day="{{ day_idx }}">
+                {% set periods = days[day_idx]|sort(attribute='period') %}
+                {% for entry in periods %}
+                <div class="period-item" data-id="{{ entry.id }}" data-period="{{ entry.period }}" draggable="true">
+                    <div class="period-info">
+                        <div class="period-badge">P{{ entry.period }}</div>
+                        <div class="period-details">
+                            <div class="period-subject">{{ entry.subject }}</div>
+                            <div class="period-meta">
+                                <i class="far fa-clock me-1"></i>{{ entry.start_time.strftime('%H:%M') }} - {{ entry.end_time.strftime('%H:%M') }}
+                                {% if entry.room %} • <i class="fas fa-door-open me-1"></i>{{ entry.room }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="period-actions">
+                        {% if entry.teacher %}
+                        <span class="badge bg-light text-dark" title="{{ entry.teacher.full_name }}">
+                            <i class="fas fa-user me-1"></i>{{ entry.teacher.full_name|truncate(15) }}
+                        </span>
+                        {% endif %}
+                        <a href="{{ url_for('edit_timetable_entry', entry_id=entry.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('delete_timetable_entry', entry_id=entry.id) }}" 
+                              style="display:inline;" 
+                              onsubmit="return confirm('Delete this period?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Sidebar Panel -->
+    <div class="sidebar-panel">
+        <h5 class="fw-bold mb-4">Quick Actions</h5>
+        
+        <!-- Quick Add Form -->
+        <div class="quick-add-form">
+            <label class="form-label fw-bold">Quick Add Period</label>
+            <select class="form-select mb-2" id="quickDay">
+                <option value="0">Monday</option>
+                <option value="1">Tuesday</option>
+                <option value="2">Wednesday</option>
+                <option value="3">Thursday</option>
+                <option value="4">Friday</option>
+            </select>
+            <input type="text" class="form-control mb-2" id="quickSubject" placeholder="Subject">
+            <div class="row g-2 mb-2">
+                <div class="col">
+                    <input type="time" class="form-control" id="quickStart" value="09:00">
+                </div>
+                <div class="col">
+                    <input type="time" class="form-control" id="quickEnd" value="10:00">
+                </div>
+            </div>
+            <button class="btn btn-primary w-100" onclick="quickAddPeriod()">
+                <i class="fas fa-plus-circle me-2"></i>Add Period
+            </button>
+        </div>
+
+        <!-- Teacher Availability -->
+        <h6 class="fw-bold mb-3">Teacher Availability</h6>
+        <div class="teacher-list">
+            {% for teacher in teachers %}
+            <div class="teacher-item" onclick="assignToTeacher('{{ teacher.id }}')">
+                <div class="teacher-avatar">{{ teacher.full_name[0] }}</div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">{{ teacher.full_name }}</div>
+                    <small class="text-muted">{{ teacher.assignments|length }} classes</small>
+                </div>
+                <div class="availability-indicator {% if teacher.is_available %}available{% else %}busy{% endif %}"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Templates -->
+        <h6 class="fw-bold mb-3 mt-4">Templates</h6>
+        <div class="list-group">
+            <a href="#" class="list-group-item list-group-item-action" onclick="loadTemplate('standard')">
+                <i class="fas fa-calendar me-2 text-primary"></i>Standard Week
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="loadTemplate('compact')">
+                <i class="fas fa-compress me-2 text-success"></i>Compact Schedule
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="loadTemplate('lab')">
+                <i class="fas fa-flask me-2 text-warning"></i>Lab Schedule
+            </a>
+        </div>
+
+        <!-- Statistics -->
+        <div class="mt-4 pt-3 border-top">
+            <div class="d-flex justify-content-between mb-2">
+                <span>Total Periods:</span>
+                <span class="fw-bold">{{ timetable.entries|length }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Teachers Assigned:</span>
+                <span class="fw-bold">{{ teachers|length }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Completion:</span>
+                <span class="fw-bold text-success">{{ (timetable.entries|length / 40 * 100)|round|int }}%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Copy Timetable Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Copy Timetable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('copy_timetable', class_id=class_obj.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label">Source Session</label>
+                        <select name="source_session_id" class="form-select">
+                            {% for session in context.all_sessions %}
+                            {% if session.id != context.view_session.id %}
+                            <option value="{{ session.id }}">{{ session.name }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Copy Options</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copyTeachers" name="copy_teachers" checked>
+                            <label class="form-check-label" for="copyTeachers">Copy teacher assignments</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copyRooms" name="copy_rooms" checked>
+                            <label class="form-check-label" for="copyRooms">Copy room numbers</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Copy Timetable</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let dragSrcElement = null;
+
+function handleDragStart(e) {
+    dragSrcElement = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.classList.add('dragging');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('over');
+}
+
+function handleDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (dragSrcElement !== this) {
+        dragSrcElement.innerHTML = this.innerHTML;
+        this.innerHTML = e.dataTransfer.getData('text/html');
+        
+        // Update period numbers
+        updatePeriodNumbers();
+    }
+    
+    this.classList.remove('over');
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.period-item').forEach(item => {
+        item.classList.remove('over');
+    });
+}
+
+// Initialize drag and drop
+document.querySelectorAll('.period-item').forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('dragleave', handleDragLeave);
+    item.addEventListener('drop', handleDrop);
+    item.addEventListener('dragend', handleDragEnd);
+});
+
+// Allow dropping on empty lists
+document.querySelectorAll('.periods-list').forEach(list => {
+    list.addEventListener('dragover', handleDragOver);
+    list.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (dragSrcElement) {
+            const day = this.dataset.day;
+            // Move period to this day
+            updatePeriodDay(dragSrcElement.dataset.id, day);
+        }
+    });
+});
+
+function updatePeriodNumbers() {
+    document.querySelectorAll('.periods-list').forEach((list, dayIndex) => {
+        list.querySelectorAll('.period-item').forEach((item, periodIndex) => {
+            const periodNum = periodIndex + 1;
+            item.querySelector('.period-badge').textContent = `P${periodNum}`;
+            item.dataset.period = periodNum;
+        });
+    });
+}
+
+function quickAddPeriod() {
+    const day = document.getElementById('quickDay').value;
+    const subject = document.getElementById('quickSubject').value;
+    const start = document.getElementById('quickStart').value;
+    const end = document.getElementById('quickEnd').value;
+    
+    if (!subject) {
+        alert('Please enter a subject');
+        return;
+    }
+    
+    // Submit via AJAX
+    fetch('/admin/timetable/entry/quick-add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            timetable_id: {{ timetable.id }},
+            day: day,
+            subject: subject,
+            start_time: start,
+            end_time: end
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function assignToTeacher(teacherId) {
+    // Highlight periods that can be assigned to this teacher
+    document.querySelectorAll('.period-item').forEach(item => {
+        if (!item.querySelector('.teacher-badge')) {
+            item.style.border = '2px solid #10b981';
+        }
+    });
+}
+
+function openTemplateModal() {
+    new bootstrap.Modal(document.getElementById('templateModal')).show();
+}
+
+function saveChanges() {
+    const periods = [];
+    document.querySelectorAll('.period-item').forEach(item => {
+        periods.push({
+            id: item.dataset.id,
+            period: parseInt(item.querySelector('.period-badge').textContent.substring(1)),
+            day: parseInt(item.closest('.periods-list').dataset.day)
+        });
+    });
+    
+    fetch('/admin/timetable/reorder', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            timetable_id: {{ timetable.id }},
+            periods: periods
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Changes saved successfully!', 'success');
+        }
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} notification-toast`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}
