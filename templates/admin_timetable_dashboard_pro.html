@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+{% block title %}Timetable Management{% endblock %}
+{% block header %}
+<div class="d-flex align-items-center">
+    <i class="fas fa-calendar-alt me-3 text-primary" style="font-size: 2rem;"></i>
+    <div>
+        <h1 class="display-6 fw-bold mb-0">Timetable Management</h1>
+        <p class="text-muted mb-0">Schedule and manage classes efficiently</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Timetable</li>
+{% endblock %}
+
+{% block actions %}
+<div class="btn-group shadow-sm">
+    <button class="btn btn-primary" onclick="openCreateModal()">
+        <i class="fas fa-plus-circle me-2"></i>Create Timetable
+    </button>
+    <button class="btn btn-outline-primary" onclick="openTemplateModal()">
+        <i class="fas fa-template me-2"></i>Templates
+    </button>
+    <div class="btn-group">
+        <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="fas fa-calendar-alt me-2"></i>{{ view_session.name }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            {% for session in context.all_sessions %}
+            <li>
+                <a class="dropdown-item {% if session.id == view_session.id %}active{% endif %}" 
+                   href="{{ url_for('switch_view_session', session_id=session.id) }}">
+                    {{ session.name }}
+                    {% if session.is_current %}
+                    <span class="badge bg-success ms-2">Current</span>
+                    {% endif %}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #4361ee, #7c3aed);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--hover-shadow);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-trend {
+        font-size: 0.875rem;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        display: inline-block;
+    }
+
+    .timetable-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .class-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+    }
+
+    .class-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .class-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        position: relative;
+    }
+
+    .class-header::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: inherit;
+        filter: blur(10px);
+        opacity: 0.5;
+    }
+
+    .class-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .class-code {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    .class-body {
+        padding: 1.5rem;
+    }
+
+    .timetable-preview {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .preview-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        border-radius: 12px;
+        background: white;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .preview-time {
+        font-size: 0.75rem;
+        color: #64748b;
+        min-width: 70px;
+    }
+
+    .preview-subject {
+        flex: 1;
+        font-weight: 500;
+        color: #1e293b;
+        margin-left: 0.5rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .status-badge i {
+        margin-right: 0.5rem;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state-icon {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 3rem;
+        color: white;
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+        justify-content: center;
+    }
+</style>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(67, 97, 238, 0.1); color: #4361ee;">
+            <i class="fas fa-chalkboard"></i>
+        </div>
+        <div class="stat-value">{{ class_data|length }}</div>
+        <div class="stat-label">Total Classes</div>
+        <span class="stat-trend"><i class="fas fa-arrow-up me-1"></i>{{ active_classes|default(0) }} active</span>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-value">{{ timetables_count|default(0) }}</div>
+        <div class="stat-label">Timetables Created</div>
+        <span class="stat-trend">{{ completion_rate|default(0) }}% completion</span>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value">{{ total_periods|default(0) }}</div>
+        <div class="stat-label">Total Periods</div>
+        <span class="stat-trend">Across all classes</span>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <div class="stat-value">{{ teachers_with_timetable|default(0) }}</div>
+        <div class="stat-label">Teachers Assigned</div>
+        <span class="stat-trend">{{ teacher_coverage|default(0) }}% coverage</span>
+    </div>
+</div>
+
+<!-- Quick Actions Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold">Classes Overview</h5>
+        <p class="text-muted small mb-0">Manage timetables for each class</p>
+    </div>
+    <div class="btn-group">
+        <button class="btn btn-outline-primary btn-sm" onclick="filterClasses('all')">
+            <i class="fas fa-th-large me-1"></i>All
+        </button>
+        <button class="btn btn-outline-primary btn-sm" onclick="filterClasses('with')">
+            <i class="fas fa-check-circle me-1"></i>With Timetable
+        </button>
+        <button class="btn btn-outline-primary btn-sm" onclick="filterClasses('without')">
+            <i class="fas fa-exclamation-circle me-1"></i>Without
+        </button>
+    </div>
+</div>
+
+<!-- Timetable Grid -->
+{% if class_data %}
+<div class="timetable-grid" id="classGrid">
+    {% for item in class_data %}
+    <div class="class-card" data-status="{{ 'has' if item.has_timetable else 'none' }}">
+        <div class="class-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="class-name">{{ item.class.name }}</div>
+                    <span class="class-code">{{ item.class.code }}</span>
+                </div>
+                <div>
+                    {% if item.has_timetable %}
+                    <span class="badge bg-white text-primary px-3 py-2 rounded-pill">
+                        <i class="fas fa-check-circle me-1"></i>Active
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="class-body">
+            {% if item.has_timetable and item.timetable.entries %}
+            <div class="timetable-preview">
+                {% for entry in item.timetable.entries[:3] %}
+                <div class="preview-item">
+                    <span class="preview-time">{{ entry.start_time.strftime('%H:%M') }}</span>
+                    <span class="preview-subject">{{ entry.subject }}</span>
+                    <span class="badge bg-light text-dark rounded-pill">P{{ entry.period }}</span>
+                </div>
+                {% endfor %}
+                {% if item.timetable.entries|length > 3 %}
+                <div class="text-center mt-2">
+                    <small class="text-muted">+{{ item.timetable.entries|length - 3 }} more periods</small>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="text-center py-3">
+                <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                <p class="text-muted small mb-0">No timetable set</p>
+            </div>
+            {% endif %}
+            
+            <div class="d-flex gap-2 mt-3">
+                {% if item.has_timetable %}
+                <a href="{{ url_for('view_timetable', class_id=item.class.id) }}" 
+                   class="btn btn-outline-primary btn-action flex-grow-1">
+                    <i class="fas fa-eye me-1"></i>View
+                </a>
+                <a href="{{ url_for('edit_timetable', class_id=item.class.id) }}" 
+                   class="btn btn-primary btn-action flex-grow-1">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </a>
+                <button class="btn btn-outline-secondary btn-action" 
+                        onclick="showQuickActions({{ item.class.id }})">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                {% else %}
+                <a href="{{ url_for('create_timetable', class_id=item.class.id) }}" 
+                   class="btn btn-success btn-action w-100">
+                    <i class="fas fa-plus-circle me-1"></i>Create Timetable
+                </a>
+                {% endif %}
+            </div>
+            
+            {% if item.has_timetable %}
+            <div class="mt-2 small text-muted text-center">
+                <i class="fas fa-clock me-1"></i>Last updated: {{ item.timetable.updated_at.strftime('%d %b %Y') }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="fas fa-calendar-alt"></i>
+    </div>
+    <h3 class="fw-bold mb-3">No Classes Available</h3>
+    <p class="text-muted mb-4">Create classes first to start building timetables</p>
+    <div class="quick-actions">
+        <a href="{{ url_for('create_class') }}" class="btn btn-primary btn-lg px-4">
+            <i class="fas fa-plus-circle me-2"></i>Create Class
+        </a>
+        <a href="{{ url_for('manage_classes') }}" class="btn btn-outline-primary btn-lg px-4">
+            <i class="fas fa-eye me-2"></i>View Classes
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions Modal -->
+<div class="modal fade" id="quickActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action" id="printTimetable">
+                        <i class="fas fa-print me-2 text-primary"></i>Print Timetable
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" id="exportPDF">
+                        <i class="fas fa-file-pdf me-2 text-danger"></i>Export as PDF
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" id="duplicateTimetable">
+                        <i class="fas fa-copy me-2 text-success"></i>Duplicate to Another Class
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" id="shareTimetable">
+                        <i class="fas fa-share-alt me-2 text-info"></i>Share with Teachers
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action text-danger" id="deleteTimetable">
+                        <i class="fas fa-trash-alt me-2"></i>Delete Timetable
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentClassId = null;
+
+function showQuickActions(classId) {
+    currentClassId = classId;
+    const modal = new bootstrap.Modal(document.getElementById('quickActionsModal'));
+    modal.show();
+}
+
+function filterClasses(filter) {
+    const cards = document.querySelectorAll('.class-card');
+    cards.forEach(card => {
+        if (filter === 'all') {
+            card.style.display = 'block';
+        } else if (filter === 'with') {
+            card.style.display = card.dataset.status === 'has' ? 'block' : 'none';
+        } else if (filter === 'without') {
+            card.style.display = card.dataset.status === 'none' ? 'block' : 'none';
+        }
+    });
+}
+
+// Handle quick actions
+document.getElementById('printTimetable')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (currentClassId) {
+        window.open(`/admin/timetable/view/${currentClassId}?print=true`, '_blank');
+    }
+});
+
+document.getElementById('exportPDF')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (currentClassId) {
+        window.open(`/admin/timetable/export/${currentClassId}/pdf`, '_blank');
+    }
+});
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(function(el) {
+        new bootstrap.Tooltip(el);
+    });
+});
+</script>
+{% endblock %}
