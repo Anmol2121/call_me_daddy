@@ -112,466 +112,62 @@ class FeeStructure(db.Model):
 
 # ==================== TIMETABLE MODELS ====================
 
-class Timetable(db.Model):
-    __tablename__ = 'timetables'
+# ==================== ENHANCED TIMETABLE MODELS ====================
+
+class TimetableTemplate(db.Model):
+    """Templates for reusing timetable structures"""
+    __tablename__ = 'timetable_templates'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=True)  # optional name e.g. "Regular Week"
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    is_default = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    is_active = db.Column(db.Boolean, default=True)
-
-    # Foreign keys
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
-    session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
-
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    
     # Relationships
-    class_ = db.relationship('Class', backref=db.backref('timetables', lazy='dynamic'))
-    session = db.relationship('AcademicSession', backref='timetables')
-    entries = db.relationship('TimetableEntry', back_populates='timetable', cascade='all, delete-orphan')
+    school = db.relationship('School', backref='timetable_templates')
+    periods = db.relationship('TimetableTemplatePeriod', back_populates='template', cascade='all, delete-orphan')
 
-    def __repr__(self):
-        return f'<Timetable {self.class_.name} - {self.session.name}>'
-
-
-class TimetableEntry(db.Model):
-    __tablename__ = 'timetable_entries'
+class TimetableTemplatePeriod(db.Model):
+    """Predefined periods for templates"""
+    __tablename__ = 'timetable_template_periods'
     id = db.Column(db.Integer, primary_key=True)
-    day = db.Column(db.Integer, nullable=False)          # 0=Monday, 6=Sunday (or use strings)
-    period = db.Column(db.Integer, nullable=False)       # period number
+    day = db.Column(db.Integer, nullable=False)
+    period = db.Column(db.Integer, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
-    subject = db.Column(db.String(100), nullable=False)  # subject name (copied from assignment)
-    room = db.Column(db.String(50))
-    is_break = db.Column(db.Boolean, default=False)      # marks break/lunch period
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    subject_default = db.Column(db.String(100))
+    template_id = db.Column(db.Integer, db.ForeignKey('timetable_templates.id'), nullable=False)
+    
+    template = db.relationship('TimetableTemplate', back_populates='periods')
 
-    # Foreign keys
-    timetable_id = db.Column(db.Integer, db.ForeignKey('timetables.id'), nullable=False)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # null if break
+class TimetableColor(db.Model):
+    """Color scheme for subjects/classes"""
+    __tablename__ = 'timetable_colors'
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(100), nullable=False)
+    color_code = db.Column(db.String(7), nullable=False)  # Hex color
+    text_color = db.Column(db.String(7), default='#ffffff')
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    
+    school = db.relationship('School', backref='timetable_colors')
+    
+    __table_args__ = (db.UniqueConstraint('school_id', 'subject', name='unique_subject_color'),)
 
-    # Relationships
-    timetable = db.relationship('Timetable', back_populates='entries')
+class TeacherAvailability(db.Model):
+    """Track teacher availability for timetable planning"""
+    __tablename__ = 'teacher_availability'
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    day = db.Column(db.Integer, nullable=False)  # 0-6
+    period = db.Column(db.Integer, nullable=False)
+    is_available = db.Column(db.Boolean, default=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
+    
     teacher = db.relationship('User', foreign_keys=[teacher_id])
-
-    __table_args__ = (
-        db.UniqueConstraint('timetable_id', 'day', 'period', name='unique_period_per_day'),
-    )
-
-    def __repr__(self):
-        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        return f'<Entry {day_names[self.day]} Period {self.period}>'
-
-class TimetableEntryForm(FlaskForm):
-    day = SelectField('Day', choices=[
-        (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'),
-        (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')
-    ], coerce=int, validators=[DataRequired()])
-    period = IntegerField('Period Number', validators=[DataRequired()])
-    start_time = StringField('Start Time', validators=[DataRequired()], render_kw={'type': 'time'})
-    end_time = StringField('End Time', validators=[DataRequired()], render_kw={'type': 'time'})
-    subject = StringField('Subject', validators=[DataRequired()])
-    teacher_id = SelectField('Teacher', coerce=int, validators=[Optional()])
-    room = StringField('Room')
-    is_break = BooleanField('Break/Lunch Period')
-    submit = SubmitField('Save Period')
-
-class TimetableCopyForm(FlaskForm):
-    source_session_id = SelectField('Copy From Session', coerce=int, validators=[DataRequired()])
-    submit = SubmitField('Copy Timetable')
-
-# ==================== TIMETABLE ROUTES ====================
-
-@app.route('/admin/timetable')
-@role_required(['admin'])
-@school_active_required
-def timetable_dashboard():
-    """List all classes and their timetable status"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    context = get_school_context()
-    view_session = context.get('view_session') or context['current_session']
-    if not view_session:
-        flash('No active session selected.', 'warning')
-        return redirect(url_for('admin_dashboard'))
-
-    classes = Class.query.filter_by(
-        school_id=current_user.school_id,
-        session_id=view_session.id,
-        is_active=True
-    ).all()
-
-    class_data = []
-    for class_obj in classes:
-        timetable = Timetable.query.filter_by(
-            class_id=class_obj.id,
-            session_id=view_session.id,
-            is_active=True
-        ).first()
-        class_data.append({
-            'class': class_obj,
-            'has_timetable': timetable is not None,
-            'timetable': timetable
-        })
-
-    return render_template('admin_timetable_dashboard.html',
-                           context=context,
-                           class_data=class_data,
-                           view_session=view_session)
-
-
-@app.route('/admin/timetable/create/<int:class_id>', methods=['GET', 'POST'])
-@role_required(['admin'])
-@school_active_required
-def create_timetable(class_id):
-    """Create a new empty timetable for a class"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    context = get_school_context()
-    view_session = context.get('view_session') or context['current_session']
-    class_obj = Class.query.filter_by(
-        id=class_id,
-        school_id=current_user.school_id,
-        session_id=view_session.id,
-        is_active=True
-    ).first_or_404()
-
-    # Check if already exists
-    existing = Timetable.query.filter_by(
-        class_id=class_obj.id,
-        session_id=view_session.id,
-        is_active=True
-    ).first()
-    if existing:
-        flash('Timetable already exists for this class.', 'info')
-        return redirect(url_for('edit_timetable', class_id=class_obj.id))
-
-    if request.method == 'POST':
-        # Create empty timetable
-        timetable = Timetable(
-            class_id=class_obj.id,
-            session_id=view_session.id,
-            name=request.form.get('name', 'Regular Timetable')
-        )
-        db.session.add(timetable)
-        db.session.commit()
-        flash(f'Timetable created for {class_obj.name}. Now add periods.', 'success')
-        return redirect(url_for('edit_timetable', class_id=class_obj.id))
-
-    return render_template('admin_timetable_create.html',
-                           context=context,
-                           class_obj=class_obj)
-
-
-@app.route('/admin/timetable/view/<int:class_id>')
-@role_required(['admin', 'teacher'])
-@school_active_required
-def view_timetable(class_id):
-    """Display timetable for a class"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    context = get_school_context()
-    view_session = context.get('view_session') or context['current_session']
-    class_obj = Class.query.filter_by(
-        id=class_id,
-        school_id=current_user.school_id,
-        session_id=view_session.id,
-        is_active=True
-    ).first_or_404()
-
-    timetable = Timetable.query.filter_by(
-        class_id=class_obj.id,
-        session_id=view_session.id,
-        is_active=True
-    ).first()
-
-    if not timetable:
-        flash('No timetable set for this class.', 'warning')
-        return redirect(url_for('timetable_dashboard'))
-
-    # Group entries by day
-    days = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
-    for entry in timetable.entries:
-        days[entry.day].append(entry)
-
-    # Sort periods within each day
-    for day in days:
-        days[day].sort(key=lambda e: e.period)
-
-    day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-    return render_template('admin_timetable_view.html',
-                           context=context,
-                           class_obj=class_obj,
-                           timetable=timetable,
-                           days=days,
-                           day_names=day_names)
-
-
-@app.route('/admin/timetable/edit/<int:class_id>')
-@role_required(['admin'])
-@school_active_required
-def edit_timetable(class_id):
-    """Edit timetable: list periods, add, delete, reorder"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    context = get_school_context()
-    view_session = context.get('view_session') or context['current_session']
-    class_obj = Class.query.filter_by(
-        id=class_id,
-        school_id=current_user.school_id,
-        session_id=view_session.id,
-        is_active=True
-    ).first_or_404()
-
-    timetable = Timetable.query.filter_by(
-        class_id=class_obj.id,
-        session_id=view_session.id,
-        is_active=True
-    ).first_or_404()
-
-    entries = timetable.entries.order_by(TimetableEntry.day, TimetableEntry.period).all()
-
-    return render_template('admin_timetable_edit.html',
-                           context=context,
-                           class_obj=class_obj,
-                           timetable=timetable,
-                           entries=entries)
-
-
-@app.route('/admin/timetable/entry/add/<int:timetable_id>', methods=['GET', 'POST'])
-@role_required(['admin'])
-@school_active_required
-def add_timetable_entry(timetable_id):
-    """Add a new period to timetable"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    timetable = Timetable.query.get_or_404(timetable_id)
-    class_obj = timetable.class_
-
-    # Security: ensure same school
-    if class_obj.school_id != current_user.school_id:
-        abort(403)
-
-    form = TimetableEntryForm()
-
-    # Populate teacher choices (active teachers in same school)
-    teachers = User.query.filter_by(
-        school_id=current_user.school_id,
-        role='teacher',
-        is_active=True
-    ).all()
-    form.teacher_id.choices = [(0, '-- No Teacher (Break) --')] + [(t.id, t.full_name) for t in teachers]
-
-    if form.validate_on_submit():
-        # Check for duplicate period on same day
-        existing = TimetableEntry.query.filter_by(
-            timetable_id=timetable_id,
-            day=form.day.data,
-            period=form.period.data
-        ).first()
-        if existing:
-            flash('A period already exists for this day and period number.', 'danger')
-            return render_template('admin_timetable_entry_form.html', form=form, timetable=timetable, class_obj=class_obj)
-
-        # Validate times
-        if form.end_time.data <= form.start_time.data:
-            flash('End time must be after start time.', 'danger')
-            return render_template('admin_timetable_entry_form.html', form=form, timetable=timetable, class_obj=class_obj)
-
-        entry = TimetableEntry(
-            timetable_id=timetable_id,
-            day=form.day.data,
-            period=form.period.data,
-            start_time=form.start_time.data,
-            end_time=form.end_time.data,
-            subject=form.subject.data,
-            teacher_id=form.teacher_id.data if form.teacher_id.data != 0 else None,
-            room=form.room.data,
-            is_break=form.is_break.data
-        )
-        db.session.add(entry)
-        db.session.commit()
-        flash('Period added successfully.', 'success')
-        return redirect(url_for('edit_timetable', class_id=class_obj.id))
-
-    return render_template('admin_timetable_entry_form.html',
-                           form=form,
-                           timetable=timetable,
-                           class_obj=class_obj,
-                           action='Add')
-
-
-@app.route('/admin/timetable/entry/edit/<int:entry_id>', methods=['GET', 'POST'])
-@role_required(['admin'])
-@school_active_required
-def edit_timetable_entry(entry_id):
-    """Edit an existing period"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    entry = TimetableEntry.query.get_or_404(entry_id)
-    timetable = entry.timetable
-    class_obj = timetable.class_
-
-    if class_obj.school_id != current_user.school_id:
-        abort(403)
-
-    form = TimetableEntryForm(obj=entry)  # pre-populate
-
-    teachers = User.query.filter_by(
-        school_id=current_user.school_id,
-        role='teacher',
-        is_active=True
-    ).all()
-    form.teacher_id.choices = [(0, '-- No Teacher (Break) --')] + [(t.id, t.full_name) for t in teachers]
-
-    if form.validate_on_submit():
-        # Check conflict with other entries (excluding itself)
-        conflict = TimetableEntry.query.filter(
-            TimetableEntry.timetable_id == timetable.id,
-            TimetableEntry.day == form.day.data,
-            TimetableEntry.period == form.period.data,
-            TimetableEntry.id != entry.id
-        ).first()
-        if conflict:
-            flash('Another period already exists for this day and period.', 'danger')
-            return render_template('admin_timetable_entry_form.html', form=form, timetable=timetable, class_obj=class_obj)
-
-        if form.end_time.data <= form.start_time.data:
-            flash('End time must be after start time.', 'danger')
-            return render_template('admin_timetable_entry_form.html', form=form, timetable=timetable, class_obj=class_obj)
-
-        entry.day = form.day.data
-        entry.period = form.period.data
-        entry.start_time = form.start_time.data
-        entry.end_time = form.end_time.data
-        entry.subject = form.subject.data
-        entry.teacher_id = form.teacher_id.data if form.teacher_id.data != 0 else None
-        entry.room = form.room.data
-        entry.is_break = form.is_break.data
-        db.session.commit()
-        flash('Period updated.', 'success')
-        return redirect(url_for('edit_timetable', class_id=class_obj.id))
-
-    return render_template('admin_timetable_entry_form.html',
-                           form=form,
-                           timetable=timetable,
-                           class_obj=class_obj,
-                           entry=entry,
-                           action='Edit')
-
-
-@app.route('/admin/timetable/entry/delete/<int:entry_id>', methods=['POST'])
-@role_required(['admin'])
-@school_active_required
-def delete_timetable_entry(entry_id):
-    """Delete a period"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    entry = TimetableEntry.query.get_or_404(entry_id)
-    class_id = entry.timetable.class_id
-    if entry.timetable.class_.school_id != current_user.school_id:
-        abort(403)
-
-    db.session.delete(entry)
-    db.session.commit()
-    flash('Period deleted.', 'success')
-    return redirect(url_for('edit_timetable', class_id=class_id))
-
-
-@app.route('/admin/timetable/copy/<int:class_id>', methods=['GET', 'POST'])
-@role_required(['admin'])
-@school_active_required
-def copy_timetable(class_id):
-    """Copy timetable from another session"""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-
-    context = get_school_context()
-    view_session = context.get('view_session') or context['current_session']
-    class_obj = Class.query.filter_by(
-        id=class_id,
-        school_id=current_user.school_id,
-        session_id=view_session.id,
-        is_active=True
-    ).first_or_404()
-
-    form = TimetableCopyForm()
-
-    # List all other sessions for this school
-    other_sessions = AcademicSession.query.filter(
-        AcademicSession.school_id == current_user.school_id,
-        AcademicSession.id != view_session.id,
-        AcademicSession.is_active == True
-    ).all()
-    form.source_session_id.choices = [(s.id, s.name) for s in other_sessions]
-
-    if not other_sessions:
-        flash('No other sessions available to copy from.', 'warning')
-        return redirect(url_for('timetable_dashboard'))
-
-    if form.validate_on_submit():
-        source_session = AcademicSession.query.get(form.source_session_id.data)
-        # Find source timetable for this class in that session
-        source_timetable = Timetable.query.filter_by(
-            class_id=class_obj.id,
-            session_id=source_session.id,
-            is_active=True
-        ).first()
-        if not source_timetable:
-            flash('No timetable found in the selected session for this class.', 'danger')
-            return render_template('admin_timetable_copy.html', form=form, class_obj=class_obj, context=context)
-
-        # Check if target timetable already exists
-        target_timetable = Timetable.query.filter_by(
-            class_id=class_obj.id,
-            session_id=view_session.id,
-            is_active=True
-        ).first()
-        if target_timetable:
-            # Option: overwrite? For simplicity, we'll create new if not exists, else ask to delete first.
-            flash('A timetable already exists for this session. Please delete it first if you want to replace.', 'warning')
-            return redirect(url_for('edit_timetable', class_id=class_obj.id))
-
-        # Create new timetable
-        new_timetable = Timetable(
-            class_id=class_obj.id,
-            session_id=view_session.id,
-            name=f"Copied from {source_session.name}"
-        )
-        db.session.add(new_timetable)
-        db.session.flush()
-
-        # Copy entries
-        for entry in source_timetable.entries:
-            new_entry = TimetableEntry(
-                timetable_id=new_timetable.id,
-                day=entry.day,
-                period=entry.period,
-                start_time=entry.start_time,
-                end_time=entry.end_time,
-                subject=entry.subject,
-                teacher_id=entry.teacher_id,
-                room=entry.room,
-                is_break=entry.is_break
-            )
-            db.session.add(new_entry)
-
-        db.session.commit()
-        flash('Timetable copied successfully.', 'success')
-        return redirect(url_for('edit_timetable', class_id=class_obj.id))
-
-    return render_template('admin_timetable_copy.html',
-                           form=form,
-                           class_obj=class_obj,
-                           context=context)
+    session = db.relationship('AcademicSession', backref='teacher_availability')
+    
+    __table_args__ = (db.UniqueConstraint('teacher_id', 'day', 'period', 'session_id', name='unique_teacher_availability'),)
 # ==================== ATTENDANCE MODELS ====================
 
 class Attendance(db.Model):
@@ -6881,6 +6477,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
