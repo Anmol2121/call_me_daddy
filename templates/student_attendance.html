@@ -1,88 +1,94 @@
 {% extends "base.html" %}
 
-{% block title %}Attendance Records · Premium Student Portal{% endblock %}
-{% block header %}Attendance Records{% endblock %}
+{% block title %}My Attendance · Premium Student Portal{% endblock %}
+{% block header %}Attendance Dashboard{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
-<li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Attendance</li>
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></th>
+<li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">Dashboard</a></th>
+<li class="breadcrumb-item active">Attendance</th>
 {% endblock %}
 
 {% block actions %}
-<!-- No print button -->
+<div class="btn-group" role="group">
+    <button class="btn btn-outline-primary btn-sm" onclick="refreshData()" data-bs-toggle="tooltip" title="Refresh">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+    <button class="btn btn-outline-primary btn-sm" onclick="window.print()" data-bs-toggle="tooltip" title="Print">
+        <i class="fas fa-print"></i>
+    </button>
+</div>
 {% endblock %}
 
 {% block content %}
 <!-- ==================== MOBILE APP BAR ==================== -->
 <div class="mobile-app-bar d-lg-none">
-    <div class="d-flex align-items-center justify-content-center p-3">
-        <h1 class="h5 mb-0 fw-bold text-dark">Attendance Records</h1>
+    <div class="d-flex align-items-center justify-content-between p-3">
+        <h1 class="h5 mb-0 fw-bold text-dark">Attendance</h1>
+        <div>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print"></i>
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- Desktop Header (hidden on mobile) -->
-<div class="d-none d-lg-block mb-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2 class="fw-bold"><i class="fas fa-clipboard-check text-primary me-3"></i>Attendance Records</h2>
-    </div>
-</div>
-
-<!-- Stats Cards -->
-<div class="row mb-4" data-aos="fade-up">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="glass-card h-100">
-            <div class="d-flex align-items-center p-3">
-                <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                    <i class="fas fa-user-check fa-2x"></i>
+<!-- ==================== STATS CARDS (Premium Glass) ==================== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card glass-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-success-light text-success rounded-circle me-3">
+                    <i class="fas fa-user-check fa-lg"></i>
                 </div>
                 <div>
-                    <h6 class="text-muted mb-1">Present Days</h6>
-                    <h3 class="mb-0 fw-bold text-dark">{{ attendance_stats.present_days }}/{{ attendance_stats.total_days }}</h3>
+                    <span class="stat-label text-muted">Present</span>
+                    <h3 class="stat-value">{{ attendance_stats.present_days }}</h3>
                     <small class="text-muted">{{ attendance_stats.current_month }}</small>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="glass-card h-100">
-            <div class="d-flex align-items-center p-3">
-                <div class="rounded-circle {% if attendance_stats.attendance_percentage >= 80 %}bg-success{% elif attendance_stats.attendance_percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %} bg-opacity-10 {% if attendance_stats.attendance_percentage >= 80 %}text-success{% elif attendance_stats.attendance_percentage >= 60 %}text-warning{% else %}text-danger{% endif %} d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                    <i class="fas fa-chart-line fa-2x"></i>
+    <div class="col-6 col-md-3">
+        <div class="stat-card glass-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-danger-light text-danger rounded-circle me-3">
+                    <i class="fas fa-user-times fa-lg"></i>
                 </div>
                 <div>
-                    <h6 class="text-muted mb-1">Attendance Rate</h6>
-                    <h3 class="mb-0 fw-bold text-dark">{{ attendance_stats.attendance_percentage }}%</h3>
-                    <small class="{% if attendance_stats.attendance_percentage >= 80 %}text-success{% elif attendance_stats.attendance_percentage >= 60 %}text-warning{% else %}text-danger{% endif %}">
-                        {% if attendance_stats.attendance_percentage >= 80 %}Excellent{% elif attendance_stats.attendance_percentage >= 60 %}Good{% else %}Needs Improvement{% endif %}
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="glass-card h-100">
-            <div class="d-flex align-items-center p-3">
-                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                    <i class="fas fa-user-times fa-2x"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-1">Absent Days</h6>
-                    <h3 class="mb-0 fw-bold text-dark">{{ attendance_stats.absent_days }}</h3>
+                    <span class="stat-label text-muted">Absent</span>
+                    <h3 class="stat-value">{{ attendance_stats.absent_days }}</h3>
                     <small class="text-muted">This month</small>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="glass-card h-100">
-            <div class="d-flex align-items-center p-3">
-                <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                    <i class="fas fa-clock fa-2x"></i>
+    <div class="col-6 col-md-3">
+        <div class="stat-card glass-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-warning-light text-warning rounded-circle me-3">
+                    <i class="fas fa-clock fa-lg"></i>
                 </div>
                 <div>
-                    <h6 class="text-muted mb-1">Late Arrivals</h6>
-                    <h3 class="mb-0 fw-bold text-dark">{{ attendance_stats.late_days }}</h3>
+                    <span class="stat-label text-muted">Late</span>
+                    <h3 class="stat-value">{{ attendance_stats.late_days }}</h3>
+                    <small class="text-muted">This month</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card glass-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-info-light text-info rounded-circle me-3">
+                    <i class="fas fa-hourglass-half fa-lg"></i>
+                </div>
+                <div>
+                    <span class="stat-label text-muted">Half Day</span>
+                    <h3 class="stat-value">{{ attendance_stats.half_days }}</h3>
                     <small class="text-muted">This month</small>
                 </div>
             </div>
@@ -90,102 +96,103 @@
     </div>
 </div>
 
-<!-- Class Average Comparison -->
-<div class="row mb-4" data-aos="fade-up">
-    <div class="col-12">
-        <div class="glass-card">
-            <div class="alert alert-info border-0 mb-0" style="background: linear-gradient(135deg, rgba(14,165,233,0.1) 0%, rgba(14,165,233,0.05) 100%);">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-chart-line fa-2x text-info me-3"></i>
-                    <div>
-                        <h6 class="mb-1">Your Performance vs Class Average</h6>
-                        <div class="d-flex gap-4">
-                            <div>
-                                <span class="text-muted">Your attendance:</span>
-                                <strong class="ms-2 {% if attendance_stats.attendance_percentage >= 80 %}text-success{% elif attendance_stats.attendance_percentage >= 60 %}text-warning{% else %}text-danger{% endif %}">
-                                    {{ attendance_stats.attendance_percentage }}%
-                                </strong>
-                            </div>
-                            <div>
-                                <span class="text-muted">Class average:</span>
-                                <strong class="ms-2">{{ class_avg|round(1) }}%</strong>
-                            </div>
-                        </div>
-                        <div class="progress mt-2" style="height: 6px;">
-                            <div class="progress-bar bg-info" style="width: {{ class_avg }}%"></div>
-                            <div class="progress-bar {% if attendance_stats.attendance_percentage >= class_avg %}bg-success{% else %}bg-warning{% endif %}" style="width: {{ attendance_stats.attendance_percentage }}%; margin-left: -{{ attendance_stats.attendance_percentage }}%;"></div>
-                        </div>
+<!-- ==================== ATTENDANCE RATE & CLASS COMPARISON ==================== -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="premium-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-chart-pie text-primary me-2"></i>Attendance Rate</h5>
+                <span class="badge {% if attendance_stats.attendance_percentage >= 80 %}bg-success{% elif attendance_stats.attendance_percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %} fs-6">
+                    {{ attendance_stats.attendance_percentage }}%
+                </span>
+            </div>
+            <div class="position-relative" style="height: 180px;">
+                <canvas id="attendanceGauge"></canvas>
+            </div>
+            <div class="row text-center mt-3">
+                <div class="col-4">
+                    <div class="small text-muted">Total Days</div>
+                    <div class="fw-bold">{{ attendance_stats.total_days }}</div>
+                </div>
+                <div class="col-4">
+                    <div class="small text-muted">Present</div>
+                    <div class="fw-bold text-success">{{ attendance_stats.present_days }}</div>
+                </div>
+                <div class="col-4">
+                    <div class="small text-muted">Absent</div>
+                    <div class="fw-bold text-danger">{{ attendance_stats.absent_days }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="premium-card h-100">
+            <h5 class="mb-3"><i class="fas fa-chart-line text-primary me-2"></i>vs Class Average</h5>
+            <div class="d-flex align-items-center mb-3">
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">Your attendance</span>
+                        <span class="fw-bold {% if attendance_stats.attendance_percentage >= class_avg %}text-success{% else %}text-warning{% endif %}">
+                            {{ attendance_stats.attendance_percentage }}%
+                        </span>
+                    </div>
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-info" style="width: {{ class_avg }}%" role="progressbar" aria-label="Class average"></div>
+                        <div class="progress-bar {% if attendance_stats.attendance_percentage >= class_avg %}bg-success{% else %}bg-warning{% endif %}" 
+                             style="width: {{ attendance_stats.attendance_percentage }}%; margin-left: -{{ attendance_stats.attendance_percentage }}%;" 
+                             role="progressbar" aria-label="Your attendance"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span>Class avg: {{ class_avg|round(1) }}%</span>
+                        <span>Difference: {{ (attendance_stats.attendance_percentage - class_avg)|round(1) }}%</span>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Attendance Trends Chart -->
-<div class="row mb-4" data-aos="fade-up">
-    <div class="col-12">
-        <div class="glass-card">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 class="mb-0">
-                        <i class="fas fa-chart-line me-2 text-primary"></i>
-                        Attendance Trends
-                    </h4>
-                    <small class="text-muted">Last 6 months</small>
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="changeChartPeriod('6months')">6M</button>
-                    <button class="btn btn-sm btn-outline-primary" onclick="changeChartPeriod('1year')">1Y</button>
-                    <button class="btn btn-sm btn-outline-primary" onclick="changeChartPeriod('all')">All</button>
-                </div>
-            </div>
-            <div style="height: 250px;">
-                <canvas id="attendanceTrendChart"></canvas>
+            <hr>
+            <h6 class="mb-3"><i class="fas fa-calendar-week text-primary me-2"></i>Last 7 Days Trend</h6>
+            <div style="height: 100px;">
+                <canvas id="weeklyTrend"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Calendar View Toggle -->
-<div class="row mb-4" data-aos="fade-up">
-    <div class="col-12">
-        <div class="glass-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-calendar-alt me-2 text-primary"></i>
-                    Calendar View
-                </h5>
-                <button class="btn btn-outline-primary btn-sm" id="toggleCalendar">
-                    <i class="fas fa-calendar-plus me-2"></i>Show Calendar
-                </button>
-            </div>
-            <div id="calendarContainer" style="display: none;" class="mt-4">
-                <div id="calendar"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Attendance Records Table -->
-<div class="glass-card mb-4" data-aos="fade-up">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="mb-0">
-                <i class="fas fa-history me-2 text-primary"></i>
-                Attendance History
-            </h4>
-            <small class="text-muted">{{ start_date.strftime('%b %d, %Y') }} to {{ end_date.strftime('%b %d, %Y') }}</small>
-        </div>
+<!-- ==================== CALENDAR & FILTERS ==================== -->
+<div class="premium-card mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h5 class="mb-0"><i class="fas fa-calendar-alt text-primary me-2"></i>Attendance Calendar</h5>
         <div class="d-flex gap-2">
-            <input type="month" class="form-control form-control-sm" id="monthFilter" value="{{ date.today().strftime('%Y-%m') }}" onchange="filterByMonth(this.value)">
-            <button class="btn btn-outline-dark btn-sm" onclick="resetFilter()">
-                <i class="fas fa-sync me-1"></i>Reset
-            </button>
+            <select class="form-select form-select-sm" id="monthFilter" style="width: auto;" onchange="filterByMonth(this.value)">
+                <option value="">All Months</option>
+                <option value="{{ date.today().strftime('%Y-%m') }}" selected>Current Month</option>
+                <option value="last">Last Month</option>
+                <option value="custom">Custom Range...</option>
+            </select>
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-primary btn-sm" onclick="changeView('dayGridMonth')">Month</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="changeView('timeGridWeek')">Week</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="changeView('listWeek')">List</button>
+            </div>
         </div>
     </div>
+    <div id="calendar"></div>
+</div>
 
-    {% if attendance_records %}
+<!-- ==================== ATTENDANCE HISTORY TABLE ==================== -->
+<div class="premium-card">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h5 class="mb-0"><i class="fas fa-history text-primary me-2"></i>Detailed Records</h5>
+        <div class="d-flex gap-2">
+            <input type="text" class="form-control form-control-sm" id="tableSearch" placeholder="Search date, status..." style="width: 200px;">
+            <select class="form-select form-select-sm" id="statusFilter" style="width: 130px;" onchange="filterTable()">
+                <option value="all">All Status</option>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="late">Late</option>
+                <option value="half_day">Half Day</option>
+            </select>
+        </div>
+    </div>
     <div class="table-responsive">
         <table class="premium-table" id="attendanceTable">
             <thead>
@@ -194,84 +201,55 @@
                     <th>Day</th>
                     <th>Status</th>
                     <th>Class</th>
+                    <th>Subject</th>
                     <th>Notes</th>
                 </tr>
             </thead>
             <tbody>
                 {% for record in attendance_records %}
-                <tr data-date="{{ record.date.strftime('%Y-%m') }}">
+                <tr>
+                    <td data-order="{{ record.date.isoformat() }}">{{ record.date.strftime('%d %b %Y') }}</td>
+                    <td>{{ record.date.strftime('%A') }}</td>
                     <td>
-                        <div class="fw-bold">{{ record.date.strftime('%d %b %Y') }}</div>
-                        <small class="text-muted">Week {{ ((record.date.day - 1)//7) + 1 }}</small>
+                        <span class="status-badge status-{{ record.status }}">
+                            <i class="fas fa-{% if record.status == 'present' %}check-circle{% elif record.status == 'absent' %}times-circle{% elif record.status == 'late' %}clock{% else %}hourglass-half{% endif %} me-1"></i>
+                            {{ record.status|title }}
+                        </span>
                     </td>
-                    <td><span class="badge bg-light text-dark border">{{ record.date.strftime('%A') }}</span></td>
-                    <td>
-                        {% if record.status == 'present' %}
-                        <span class="status-badge status-paid">
-                            <i class="fas fa-check-circle"></i> Present
-                        </span>
-                        {% elif record.status == 'absent' %}
-                        <span class="status-badge status-overdue">
-                            <i class="fas fa-times-circle"></i> Absent
-                        </span>
-                        {% elif record.status == 'late' %}
-                        <span class="status-badge status-pending">
-                            <i class="fas fa-clock"></i> Late
-                        </span>
-                        {% elif record.status == 'half_day' %}
-                        <span class="status-badge bg-info bg-opacity-10 text-info border border-info">
-                            <i class="fas fa-hourglass-half"></i> Half Day
-                        </span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="fw-bold">{{ record.class_.name }}</div>
-                        <small class="text-muted">{{ record.class_.code }}</small>
-                    </td>
+                    <td>{{ record.class_.name }}</td>
+                    <td>{{ record.class_.subject or '—' }}</td>
                     <td>{% if record.notes %}{{ record.notes }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    {% else %}
-    <div class="text-center py-5">
-        <div class="mb-4">
-            <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
-                <i class="fas fa-calendar-times fa-3x text-muted"></i>
-            </div>
-        </div>
-        <h4 class="mb-3">No Attendance Records Found</h4>
-        <p class="text-muted mb-4">No attendance records for the selected period.</p>
-        <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary px-4">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-        </a>
+    <div class="text-muted small mt-3 text-center">
+        Showing {{ attendance_records|length }} records · Last updated {{ date.today().strftime('%d %b %Y') }}
     </div>
-    {% endif %}
 </div>
 
-<!-- Subject-wise Attendance (if available) -->
+<!-- ==================== SUBJECT-WISE ATTENDANCE (if available) ==================== -->
 {% if subject_attendance %}
-<div class="glass-card" data-aos="fade-up">
-    <h4 class="mb-4">
-        <i class="fas fa-book-open me-2 text-primary"></i>
-        Subject-wise Attendance
-    </h4>
-    <div class="row">
+<div class="premium-card mt-4">
+    <h5 class="mb-3"><i class="fas fa-book-open text-primary me-2"></i>Subject-wise Attendance</h5>
+    <div class="row g-3">
         {% for subject, data in subject_attendance.items() %}
-        <div class="col-md-6 col-lg-4 mb-3">
-            <div class="p-3 border rounded-3">
+        <div class="col-md-6 col-lg-4">
+            <div class="subject-card p-3 border rounded-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="fw-bold mb-0">{{ subject }}</h6>
                     <span class="badge {% if data.percentage >= 80 %}bg-success{% elif data.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
                         {{ data.percentage|round|int }}%
                     </span>
                 </div>
-                <div class="progress" style="height: 4px;">
-                    <div class="progress-bar {% if data.percentage >= 80 %}bg-success{% elif data.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ data.percentage }}%"></div>
+                <div class="progress mb-2" style="height: 4px;">
+                    <div class="progress-bar {% if data.percentage >= 80 %}bg-success{% elif data.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                         style="width: {{ data.percentage }}%"></div>
                 </div>
-                <div class="small text-muted mt-2">
-                    Present: {{ data.present }}/{{ data.total }} days
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>Present: {{ data.present }}/{{ data.total }}</span>
+                    <span>Absent: {{ data.total - data.present }}</span>
                 </div>
             </div>
         </div>
@@ -280,19 +258,16 @@
 </div>
 {% endif %}
 
-<!-- Monthly Summary Pie Chart -->
-<div class="glass-card mt-4" data-aos="fade-up">
+<!-- ==================== MONTHLY SUMMARY CHART ==================== -->
+<div class="premium-card mt-4">
+    <h5 class="mb-3"><i class="fas fa-chart-bar text-primary me-2"></i>Monthly Attendance Summary</h5>
     <div class="row align-items-center">
-        <div class="col-md-6">
-            <h4 class="mb-3">
-                <i class="fas fa-chart-pie me-2 text-primary"></i>
-                Monthly Summary
-            </h4>
-            <div style="height: 200px; width: 200px; margin: 0 auto;">
-                <canvas id="monthlyPieChart"></canvas>
+        <div class="col-md-8">
+            <div style="height: 250px;">
+                <canvas id="monthlyBarChart"></canvas>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="list-group list-group-flush">
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <span><i class="fas fa-check-circle text-success me-2"></i>Present</span>
@@ -311,7 +286,7 @@
                     <span class="fw-bold">{{ attendance_stats.half_days }}</span>
                 </div>
                 <div class="list-group-item d-flex justify-content-between align-items-center bg-light">
-                    <span><i class="fas fa-chart-line text-primary me-2"></i>Total Days</span>
+                    <span><i class="fas fa-calendar-alt text-primary me-2"></i>Total Days</span>
                     <span class="fw-bold">{{ attendance_stats.total_days }}</span>
                 </div>
             </div>
@@ -319,67 +294,127 @@
     </div>
 </div>
 
+<!-- ==================== STYLES ==================== -->
 <style>
-.glass-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    --border-light: 1px solid rgba(226, 232, 240, 0.6);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+body {
+    background-color: #f8fafc;
+    padding-bottom: 80px;
 }
 
+/* Glass card effect */
+.glass-card, .premium-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: var(--glass-shadow);
+    border: var(--border-light);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.premium-card {
+    padding: 1.25rem;
+}
+.glass-card:hover, .premium-card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Stat cards */
+.stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.25rem;
+    border: var(--border-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #1e293b;
+}
+.stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Background tints */
+.bg-success-light { background: rgba(16, 185, 129, 0.1); }
+.bg-danger-light { background: rgba(239, 68, 68, 0.1); }
+.bg-warning-light { background: rgba(245, 158, 11, 0.1); }
+.bg-info-light { background: rgba(14, 165, 233, 0.1); }
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.9rem;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.status-present {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.status-absent {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+.status-late {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.status-half_day {
+    background: rgba(14, 165, 233, 0.1);
+    color: #0ea5e9;
+    border: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+/* Premium table */
 .premium-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
 }
-
 .premium-table th {
     background: #f8fafc;
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     font-weight: 600;
     color: #1e293b;
     border-bottom: 2px solid #e2e8f0;
+    font-size: 0.875rem;
 }
-
 .premium-table td {
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid #e2e8f0;
     vertical-align: middle;
 }
-
 .premium-table tbody tr:hover {
     background: #f8fafc;
 }
 
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.3rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.status-paid {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-}
-
-.status-pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-}
-
-.status-overdue {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-}
-
+/* Mobile adjustments */
 .mobile-app-bar {
     background: white;
+    border-bottom: 1px solid #e2e8f0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     margin-bottom: 1rem;
     position: sticky;
@@ -391,130 +426,180 @@
     font-size: 1.25rem;
     letter-spacing: 0.3px;
 }
+
+/* Subject card */
+.subject-card {
+    background: white;
+    transition: transform 0.2s;
+}
+.subject-card:active {
+    transform: scale(0.98);
+}
+
+/* FullCalendar customization */
+.fc {
+    --fc-border-color: #e2e8f0;
+    --fc-button-text-color: #fff;
+    --fc-button-bg-color: #4f46e5;
+    --fc-button-border-color: #4f46e5;
+    --fc-button-hover-bg-color: #4338ca;
+    --fc-button-hover-border-color: #4338ca;
+    --fc-button-active-bg-color: #3730a3;
+}
+.fc .fc-toolbar-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+.fc-event {
+    border: none;
+    padding: 2px 4px;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .stat-value { font-size: 1.4rem; }
+    .stat-icon { width: 40px; height: 40px; font-size: 1rem; }
+    .premium-card { padding: 1rem; }
+    .fc .fc-toolbar { flex-direction: column; gap: 0.5rem; }
+    .fc .fc-toolbar-title { font-size: 1rem; }
+}
+@media (min-width: 992px) {
+    body { padding-bottom: 0; }
+}
 </style>
 
-<!-- Include FullCalendar -->
+<!-- Include FullCalendar & Chart.js -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Attendance trend chart
-    const months = {{ months|tojson }};
-    const percentages = {{ percentages|tojson }};
-    const trendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
-    new Chart(trendCtx, {
+    // ========== GAUGE CHART ==========
+    const gaugeCtx = document.getElementById('attendanceGauge').getContext('2d');
+    new Chart(gaugeCtx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [{{ attendance_stats.attendance_percentage }}, 100 - {{ attendance_stats.attendance_percentage }}],
+                backgroundColor: ['#10b981', '#e2e8f0'],
+                borderWidth: 0,
+                circumference: 180,
+                rotation: 270
+            }]
+        },
+        options: {
+            cutout: '70%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        }
+    });
+
+    // ========== WEEKLY TREND (dummy data - replace with real) ==========
+    const weeklyCtx = document.getElementById('weeklyTrend').getContext('2d');
+    new Chart(weeklyCtx, {
         type: 'line',
         data: {
-            labels: months,
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             datasets: [{
-                label: 'Attendance %',
-                data: percentages,
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                borderWidth: 3,
+                data: [85, 92, 78, 88, 95, 70],
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                borderWidth: 2,
                 fill: true,
                 tension: 0.4,
-                pointBackgroundColor: '#667eea',
-                pointBorderColor: '#ffffff',
+                pointBackgroundColor: '#4f46e5',
+                pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7
+                pointRadius: 3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y}%` } }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: { callback: value => value + '%' }
-                }
-            }
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100, display: false }, x: { display: true } }
         }
     });
 
-    // Monthly summary pie chart
-    const pieCtx = document.getElementById('monthlyPieChart').getContext('2d');
-    new Chart(pieCtx, {
-        type: 'doughnut',
+    // ========== MONTHLY BAR CHART ==========
+    const barCtx = document.getElementById('monthlyBarChart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
         data: {
-            labels: ['Present', 'Absent', 'Late', 'Half Day'],
+            labels: {{ months|tojson }},
             datasets: [{
-                data: [
-                    {{ attendance_stats.present_days }},
-                    {{ attendance_stats.absent_days }},
-                    {{ attendance_stats.late_days }},
-                    {{ attendance_stats.half_days }}
-                ],
-                backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#0ea5e9'],
-                borderWidth: 0
+                label: 'Present',
+                data: {{ percentages|tojson }},
+                backgroundColor: '#10b981',
+                borderRadius: 6
             }]
         },
         options: {
-            cutout: '70%',
-            plugins: { legend: { display: false } }
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
         }
     });
 
-    // Calendar toggle
+    // ========== FULLCALENDAR ==========
     const calendarEl = document.getElementById('calendar');
-    const calendarContainer = document.getElementById('calendarContainer');
-    const toggleBtn = document.getElementById('toggleCalendar');
-    let calendar = null;
-
-    toggleBtn.addEventListener('click', function() {
-        if (calendarContainer.style.display === 'none') {
-            calendarContainer.style.display = 'block';
-            toggleBtn.innerHTML = '<i class="fas fa-calendar-minus me-2"></i>Hide Calendar';
-            if (!calendar) {
-                fetch('/student/attendance/calendar-data')
-                    .then(res => res.json())
-                    .then(events => {
-                        calendar = new FullCalendar.Calendar(calendarEl, {
-                            initialView: 'dayGridMonth',
-                            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                            events: events,
-                            eventColor: '#667eea',
-                            height: 'auto'
-                        });
-                        calendar.render();
-                    });
-            }
-        } else {
-            calendarContainer.style.display = 'none';
-            toggleBtn.innerHTML = '<i class="fas fa-calendar-plus me-2"></i>Show Calendar';
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+        events: '/student/attendance/calendar-data',  // endpoint returning JSON events
+        eventColor: '#4f46e5',
+        height: 'auto',
+        eventDidMount: function(info) {
+            // Add custom tooltip
+            info.el.setAttribute('title', info.event.title);
         }
     });
+    calendar.render();
+    window.calendar = calendar;  // make accessible globally
+
+    // ========== TABLE SEARCH & FILTER ==========
+    const table = document.getElementById('attendanceTable');
+    const searchInput = document.getElementById('tableSearch');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const status = statusFilter.value;
+        const rows = table.tBodies[0].rows;
+        Array.from(rows).forEach(row => {
+            const date = row.cells[0].innerText.toLowerCase();
+            const day = row.cells[1].innerText.toLowerCase();
+            const statusCell = row.cells[2].innerText.toLowerCase();
+            const matchesSearch = date.includes(searchTerm) || day.includes(searchTerm);
+            const matchesStatus = status === 'all' || statusCell.includes(status);
+            row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('keyup', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+
+    // ========== MONTH FILTER (simplified) ==========
+    window.filterByMonth = function(monthValue) {
+        if (monthValue === 'custom') {
+            // Open custom range picker (simplified)
+            alert('Custom range coming soon!');
+        } else if (monthValue) {
+            // Change calendar view to month
+            calendar.gotoDate(monthValue + '-01');
+        }
+    };
+
+    window.changeView = function(view) {
+        calendar.changeView(view);
+    };
 });
 
-function filterByMonth(monthValue) {
-    const [year, month] = monthValue.split('-');
-    const rows = document.querySelectorAll('#attendanceTable tbody tr');
-    rows.forEach(row => {
-        const rowDate = row.dataset.date; // format YYYY-MM
-        if (rowDate === monthValue) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-}
-
-function resetFilter() {
-    document.querySelectorAll('#attendanceTable tbody tr').forEach(row => row.style.display = '');
-    document.getElementById('monthFilter').value = "{{ date.today().strftime('%Y-%m') }}";
-}
-
-function changeChartPeriod(period) {
-    // This would fetch new data and update chart
-    alert('Change chart period to ' + period);
+function refreshData() {
+    location.reload();
 }
 </script>
 {% endblock %}
