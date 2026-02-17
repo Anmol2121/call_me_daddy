@@ -831,6 +831,15 @@
                         </a>
                     </li>
                     
+                    <!-- New Timetable Link -->
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['timetable_dashboard', 'view_timetable', 'edit_timetable', 'create_timetable', 'add_timetable_entry'] %}active{% endif %}" href="{{ url_for('timetable_dashboard') }}">
+                            <i class="fas fa-calendar-alt menu-icon"></i>
+                            <span class="menu-text">Timetable</span>
+                            <span class="menu-badge">Manage</span>
+                        </a>
+                    </li>
+                    
                     {% elif current_user.role == 'teacher' %}
                     <li class="menu-item">
                         <a class="menu-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">
