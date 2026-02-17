@@ -109,6 +109,58 @@ class FeeStructure(db.Model):
                 is_active=True
             ).all()
 
+
+# ==================== TIMETABLE MODELS ====================
+
+class Timetable(db.Model):
+    __tablename__ = 'timetables'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=True)  # optional name e.g. "Regular Week"
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Foreign keys
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
+
+    # Relationships
+    class_ = db.relationship('Class', backref=db.backref('timetables', lazy='dynamic'))
+    session = db.relationship('AcademicSession', backref='timetables')
+    entries = db.relationship('TimetableEntry', back_populates='timetable', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Timetable {self.class_.name} - {self.session.name}>'
+
+
+class TimetableEntry(db.Model):
+    __tablename__ = 'timetable_entries'
+    id = db.Column(db.Integer, primary_key=True)
+    day = db.Column(db.Integer, nullable=False)          # 0=Monday, 6=Sunday (or use strings)
+    period = db.Column(db.Integer, nullable=False)       # period number
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    subject = db.Column(db.String(100), nullable=False)  # subject name (copied from assignment)
+    room = db.Column(db.String(50))
+    is_break = db.Column(db.Boolean, default=False)      # marks break/lunch period
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Foreign keys
+    timetable_id = db.Column(db.Integer, db.ForeignKey('timetables.id'), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # null if break
+
+    # Relationships
+    timetable = db.relationship('Timetable', back_populates='entries')
+    teacher = db.relationship('User', foreign_keys=[teacher_id])
+
+    __table_args__ = (
+        db.UniqueConstraint('timetable_id', 'day', 'period', name='unique_period_per_day'),
+    )
+
+    def __repr__(self):
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        return f'<Entry {day_names[self.day]} Period {self.period}>'
 # ==================== ATTENDANCE MODELS ====================
 
 class Attendance(db.Model):
@@ -6418,6 +6470,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
