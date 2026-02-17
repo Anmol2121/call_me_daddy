@@ -6303,7 +6303,33 @@ def edit_teacher(teacher_id):
     return render_template('admin_edit_teacher.html', 
                          form=form, teacher=teacher, context=context)
 
+@app.route('/admin/timetable/export/<int:class_id>/pdf')
+@role_required(['admin', 'teacher'])
+def export_timetable_pdf(class_id):
+    """Export timetable as PDF"""
+    # Use WeasyPrint or ReportLab to generate PDF
+    # For now, redirect to view with print layout
+    return redirect(url_for('view_timetable', class_id=class_id, print=true))
 
+@app.route('/admin/timetable/reorder', methods=['POST'])
+@role_required(['admin'])
+def reorder_timetable():
+    """Reorder periods via drag and drop"""
+    data = request.get_json()
+    timetable_id = data.get('timetable_id')
+    periods = data.get('periods', [])
+    
+    try:
+        for period_data in periods:
+            entry = TimetableEntry.query.get(period_data['id'])
+            if entry:
+                entry.period = period_data['period']
+                entry.day = period_data['day']
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 @app.route('/admin/teachers/<int:teacher_id>/view', methods=['GET'])
 @role_required(['admin'])
 @school_active_required
@@ -6477,6 +6503,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
