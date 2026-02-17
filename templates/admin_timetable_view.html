@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Timetable - {{ class_obj.name }}{% endblock %}
+{% block header %}Timetable: {{ class_obj.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('timetable_dashboard') }}">Timetables</a></li>
+<li class="breadcrumb-item active">View</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('edit_timetable', class_id=class_obj.id) }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-edit me-1"></i> Edit
+</a>
+<button onclick="window.print()" class="btn btn-outline-secondary btn-sm ms-2">
+    <i class="fas fa-print"></i> Print
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ class_obj.name }} - {{ timetable.name }}</h5>
+        <small class="text-muted">Session: {{ context.view_session.name }}</small>
+    </div>
+    <div class="card-body">
+        {% set has_entries = false %}
+        {% for day_entries in days.values() %}
+            {% if day_entries|length > 0 %}{% set has_entries = true %}{% endif %}
+        {% endfor %}
+
+        {% if has_entries %}
+        <div class="table-responsive">
+            <table class="table table-bordered timetable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 12%">Day</th>
+                        <th>Period 1</th>
+                        <th>Period 2</th>
+                        <th>Period 3</th>
+                        <th>Period 4</th>
+                        <th>Period 5</th>
+                        <th>Period 6</th>
+                        <th>Period 7</th>
+                        <th>Period 8</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day_idx in range(7) %}
+                    <tr>
+                        <td class="fw-bold">{{ day_names[day_idx] }}</td>
+                        {% for period in range(1, 9) %}
+                            {% set period_entries = days[day_idx]|selectattr('period', 'equalto', period)|list %}
+                            <td class="text-center">
+                                {% if period_entries %}
+                                    {% for entry in period_entries %}
+                                    <div class="period-entry">
+                                        <strong>{{ entry.subject }}</strong><br>
+                                        <small>{{ entry.start_time.strftime('%H:%M') }}-{{ entry.end_time.strftime('%H:%M') }}</small><br>
+                                        {% if entry.teacher %}
+                                        <span class="badge bg-info">{{ entry.teacher.full_name }}</span>
+                                        {% endif %}
+                                        {% if entry.room %}
+                                        <div class="small text-muted">Room: {{ entry.room }}</div>
+                                        {% endif %}
+                                        {% if entry.is_break %}
+                                        <span class="badge bg-warning">Break</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No periods have been added to this timetable yet.</p>
+            <a href="{{ url_for('add_timetable_entry', timetable_id=timetable.id) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add First Period
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.timetable td {
+    vertical-align: middle;
+    min-width: 100px;
+}
+.period-entry {
+    padding: 5px;
+    border-radius: 4px;
+}
+@media print {
+    .btn, .breadcrumb, .navbar, .sidebar-desktop, .bottom-nav {
+        display: none !important;
+    }
+    .main-content {
+        margin: 0 !important;
+    }
+}
+</style>
+{% endblock %}
