@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Timetable Period{% endblock %}
+{% block header %}{{ action }} Period for {{ class_obj.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('timetable_dashboard') }}">Timetables</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('edit_timetable', class_id=class_obj.id) }}">Edit</a></li>
+<li class="breadcrumb-item active">{{ action }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.day.label(class="form-label") }}
+                            {{ form.day(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.period.label(class="form-label") }}
+                            {{ form.period(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.start_time.label(class="form-label") }}
+                            {{ form.start_time(class="form-control") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.end_time.label(class="form-label") }}
+                            {{ form.end_time(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.subject.label(class="form-label") }}
+                        {{ form.subject(class="form-control") }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.teacher_id.label(class="form-label") }}
+                            {{ form.teacher_id(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.room.label(class="form-label") }}
+                            {{ form.room(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.is_break(class="form-check-input") }}
+                        {{ form.is_break.label(class="form-check-label") }}
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('edit_timetable', class_id=class_obj.id) }}" class="btn btn-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
