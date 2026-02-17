@@ -371,4 +371,172 @@
                 {% if periods %}
                     {% for entry in periods %}
                     <div class="period-card compact mb-2" style="border-left-color: {{ entry.color|default('#4361ee') }}; padding: 0.75rem;">
-                        <div
+                        <div class="small"><strong>P{{ entry.period }}</strong> • {{ entry.start_time.strftime('%H:%M') }}</div>
+                        <div class="fw-bold">{{ entry.subject }}</div>
+                        {% if entry.teacher %}
+                        <div class="small text-muted">{{ entry.teacher.full_name }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center text-muted small py-3">No classes</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- List View -->
+    <div id="listView" class="view-pane" style="display: none;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Day</th>
+                        <th>Period</th>
+                        <th>Time</th>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Room</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day_idx in range(5) %}
+                        {% set periods = days[day_idx]|sort(attribute='period') %}
+                        {% for entry in periods %}
+                        <tr>
+                            <td><span class="badge bg-light text-dark px-3 py-2">{{ day_names[day_idx] }}</span></td>
+                            <td><strong>Period {{ entry.period }}</strong></td>
+                            <td>{{ entry.start_time.strftime('%H:%M') }} - {{ entry.end_time.strftime('%H:%M') }}</td>
+                            <td>
+                                <span class="subject-badge" style="background: {{ entry.color|default('#4361ee') }}20; color: {{ entry.color|default('#4361ee') }};">
+                                    {{ entry.subject }}
+                                </span>
+                            </td>
+                            <td>{{ entry.teacher.full_name if entry.teacher else '—' }}</td>
+                            <td>{{ entry.room or '—' }}</td>
+                            <td>
+                                {% if entry.is_break %}
+                                <span class="badge bg-warning">Break</span>
+                                {% else %}
+                                <span class="badge bg-primary">Class</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="summary-stats">
+        <div class="stat-item">
+            <div class="stat-value">{{ timetable.entries|length }}</div>
+            <div class="stat-label">Total Periods</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ teachers_count|default(0) }}</div>
+            <div class="stat-label">Teachers</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ subjects_count|default(0) }}</div>
+            <div class="stat-label">Subjects</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ breaks_count|default(0) }}</div>
+            <div class="stat-label">Breaks</div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-clock fa-4x text-muted mb-3"></i>
+        <h3 class="fw-bold mb-3">No Timetable Set</h3>
+        <p class="text-muted mb-4">This class doesn't have any periods scheduled yet.</p>
+        <a href="{{ url_for('edit_timetable', class_id=class_obj.id) }}" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-plus-circle me-2"></i>Create Timetable
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+let currentDay = 0;
+
+function switchView(view) {
+    // Update view buttons
+    document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Show selected view
+    document.querySelectorAll('.view-pane').forEach(pane => pane.style.display = 'none');
+    document.getElementById(view + 'View').style.display = 'block';
+    
+    // Save preference
+    localStorage.setItem('timetableView', view);
+}
+
+function showDay(day) {
+    // Update day tabs
+    document.querySelectorAll('.day-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.day-tab[data-day="${day}"]`).classList.add('active');
+    
+    // Show selected day
+    document.querySelectorAll('.day-content').forEach(content => content.style.display = 'none');
+    document.getElementById(`day-${day}`).style.display = 'block';
+    
+    currentDay = day;
+}
+
+// Load saved preference
+document.addEventListener('DOMContentLoaded', function() {
+    const savedView = localStorage.getItem('timetableView');
+    if (savedView) {
+        const btn = document.querySelector(`.view-btn[onclick*="${savedView}"]`);
+        if (btn) btn.click();
+    }
+    
+    // Assign colors to subjects
+    const subjects = {};
+    document.querySelectorAll('.period-subject').forEach(el => {
+        const subject = el.textContent;
+        if (!subjects[subject]) {
+            subjects[subject] = '#' + Math.floor(Math.random()*16777215).toString(16);
+        }
+        el.closest('.period-card').style.borderLeftColor = subjects[subject];
+    });
+});
+
+function exportAsPDF() {
+    window.open(`/admin/timetable/export/{{ class_obj.id }}/pdf`, '_blank');
+}
+
+function printTimetable() {
+    window.print();
+}
+
+function downloadImage() {
+    html2canvas(document.querySelector('.timetable-container')).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'timetable-{{ class_obj.name }}.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+}
+
+function shareTimetable() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ class_obj.name }} Timetable',
+            text: 'Check out the timetable for {{ class_obj.name }}',
+            url: window.location.href
+        });
+    } else {
+        alert('Share feature not supported in this browser');
+    }
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+{% endblock %}
