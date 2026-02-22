@@ -112,6 +112,76 @@ class TimetableEntry(db.Model):
     teacher = db.relationship('User', foreign_keys=[teacher_id])
 
 # ==================== TIMETABLE ROUTES ====================
+@app.route('/student/timetable')
+@login_required
+@role_required(['student'])
+def student_timetable():
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+
+    student = Student.query.filter_by(id=current_user.student_id).first()
+    if not student:
+        flash('Student record not found', 'danger')
+        return redirect(url_for('logout'))
+
+    current_session = get_current_session(student.school_id)
+    if not current_session:
+        flash('No active session found', 'warning')
+        return render_template('student_timetable.html',
+                               context={'school': student.school, 'current_session': None},
+                               periods=[], entries=[], day_info=[], student=student, class_name=None)
+
+    # Get student's enrollment
+    enrollment = StudentEnrollment.query.filter_by(
+        student_id=student.id,
+        session_id=current_session.id,
+        is_active=True
+    ).first()
+    if not enrollment:
+        flash('You are not enrolled in any class for the current session.', 'warning')
+        return redirect(url_for('student_dashboard'))
+
+    class_id = enrollment.class_id
+    class_obj = Class.query.get(class_id)
+
+    # Get active timetable for the school and session
+    timetable = Timetable.query.filter_by(
+        school_id=student.school_id,
+        session_id=current_session.id,
+        is_active=True
+    ).first()
+    if not timetable:
+        # No timetable defined
+        return render_template('student_timetable.html',
+                               context={'school': student.school, 'current_session': current_session},
+                               periods=[], entries=[], day_info=[], student=student, class_name=class_obj.name)
+
+    # Get periods
+    periods = TimetablePeriod.query.filter_by(timetable_id=timetable.id)\
+                                   .order_by(TimetablePeriod.period_number).all()
+
+    # Get entries for this class
+    entries = TimetableEntry.query.filter_by(
+        timetable_id=timetable.id,
+        class_id=class_id
+    ).all()
+
+    # Prepare day headers (Monday…Saturday)
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    today = date.today()
+    day_info = []
+    for idx, day_name in enumerate(days):
+        day_date = today + timedelta(days=idx)
+        day_info.append({'name': day_name, 'date': day_date.strftime('%d %b')})
+
+    return render_template('student_timetable.html',
+                           context={'school': student.school, 'current_session': current_session},
+                           periods=periods,
+                           entries=entries,
+                           day_info=day_info,
+                           student=student,
+                           class_name=class_obj.name)
+
 
 @app.route('/admin/timetable')
 @role_required(['admin'])
@@ -6712,3 +6782,4 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
