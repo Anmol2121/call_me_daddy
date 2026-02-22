@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}My Timetable{% endblock %}
+{% block header %}Class Timetable{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}" class="text-decoration-none text-muted">Dashboard</a></li>
+<li class="breadcrumb-item active fw-medium text-dark">Timetable</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0 px-lg-3 py-3 animate-fade-in">
+
+    <!-- Header card with class info -->
+    <div class="mb-3 bg-white rounded-3 shadow-sm border border-slate-200 overflow-hidden">
+        <div class="row g-0 align-items-center p-3">
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-square bg-slate-50 border border-slate-200 text-primary rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                        <i class="far fa-calendar-alt fs-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-bolder text-slate-900 tracking-tight" style="font-size: 1.1rem;">
+                            {{ class_name or 'Timetable' }}
+                        </h4>
+                        <div class="d-flex align-items-center text-slate-500 font-xs fw-medium mt-1">
+                            <span class="text-primary bg-primary-subtle px-2 py-0 rounded border border-primary-subtle fw-bold me-2">
+                                {{ context.current_session.name if context.current_session else 'No Session' }}
+                            </span>
+                            <i class="far fa-clock me-1"></i> {{ periods|length }} Periods
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timetable Table -->
+    {% if periods %}
+    <div class="card border border-slate-200 shadow-sm rounded-3 overflow-hidden bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: calc(100vh - 220px); overflow-y: auto;">
+                <table class="table timetable-table mb-0">
+                    <thead class="sticky-top z-1 bg-white shadow-sm">
+                        <tr>
+                            <th class="period-col text-slate-500 fw-bold text-uppercase font-xs tracking-wide align-middle text-center border-bottom border-slate-200" style="width: 100px;">
+                                <i class="far fa-clock me-1"></i> Time
+                            </th>
+                            {% for day in day_info %}
+                            <th class="text-center day-col align-middle border-bottom border-slate-200 py-2">
+                                <div class="d-flex flex-column align-items-center">
+                                    <span class="day-name text-slate-900 fw-bold" style="font-size: 0.9rem;">{{ day.name }}</span>
+                                    <span class="day-date text-slate-400" style="font-size: 0.65rem;">{{ day.date }}</span>
+                                </div>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for period in periods %}
+                        <tr>
+                            <td class="period-info-cell bg-slate-50 align-middle border-end border-bottom border-slate-200 p-2">
+                                <div class="period-card position-relative text-center">
+                                    <div class="text-slate-400 fw-bold text-uppercase tracking-wide mb-1" style="font-size: 0.65rem;">
+                                        Period {{ period.period_number }}
+                                    </div>
+                                    <div class="period-time-badge text-slate-800 fw-bold bg-white border border-slate-200 shadow-sm rounded-pill px-2 py-1 d-inline-block" style="font-size: 0.7rem;">
+                                        {{ period.start_time.strftime('%H:%M') }} – {{ period.end_time.strftime('%H:%M') }}
+                                    </div>
+                                </div>
+                            </td>
+
+                            {% for day in day_info %}
+                            {% set day_idx = loop.index0 %}
+                            {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
+
+                            <td class="timetable-cell border-end border-bottom border-slate-200 {% if entry %}has-entry{% endif %}" style="height: 105px; padding: 0.35rem; vertical-align: top;">
+                                {% if entry %}
+                                    {% set border_colors = ['#4f46e5', '#059669', '#ea580c', '#e11d48', '#7c3aed'] %}
+                                    {% set bg_colors     = ['#eef2ff', '#ecfdf5', '#fff7ed', '#fff1f2', '#f5f3ff'] %}
+                                    {% set color_idx = loop.index % 5 %}
+
+                                    <div class="entry-card d-flex flex-column h-100" style="background-color: {{ bg_colors[color_idx] }}; border-left: 3px solid {{ border_colors[color_idx] }}; border-radius: 6px; padding: 0.5rem;">
+                                        <div class="d-flex justify-content-center align-items-center mb-1">
+                                            <span class="subject-title fw-bold text-center text-truncate w-100" style="color: {{ border_colors[color_idx] }}; font-size: 0.85rem;">
+                                                {{ entry.subject }}
+                                            </span>
+                                        </div>
+                                        <div class="entry-details d-flex flex-column align-items-center mt-auto">
+                                            <div class="detail-item text-slate-700 fw-bold" style="font-size: 0.7rem;">
+                                                {{ entry.teacher.full_name }}
+                                            </div>
+                                            {% if entry.room %}
+                                            <div class="detail-item text-slate-500 mt-1" style="font-size: 0.65rem;">
+                                                <i class="fas fa-map-marker-alt text-slate-400 me-1"></i> {{ entry.room }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="empty-cell w-100 h-100 d-flex align-items-center justify-content-center">
+                                        <span class="text-slate-300" style="font-size: 0.7rem;">—</span>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+
+                        <!-- Optional lunch break marker (optional) -->
+                        {% if loop.index == 4 and loop.length > 4 %}
+                        <tr class="lunch-break-row">
+                            <td colspan="{{ day_info|length + 1 }}" class="align-middle text-center bg-slate-50 border-bottom border-slate-200 py-1">
+                                <div class="d-inline-flex align-items-center bg-white px-3 py-0 rounded-pill border border-slate-200 shadow-sm">
+                                    <i class="fas fa-utensils text-slate-400 me-2" style="font-size: 0.7rem;"></i>
+                                    <span class="fw-bold text-slate-500 text-uppercase tracking-wide" style="font-size: 0.65rem;">Lunch Break</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card border border-slate-200 shadow-sm rounded-4 overflow-hidden bg-white text-center py-5">
+        <div class="card-body py-5">
+            <div class="icon-circle bg-slate-50 border border-slate-200 mx-auto mb-4 d-flex align-items-center justify-content-center text-primary shadow-sm" style="width: 60px; height: 60px; border-radius: 50%;">
+                <i class="fas fa-calendar-times fs-2"></i>
+            </div>
+            <h5 class="fw-bold text-slate-900 tracking-tight">No Timetable Defined</h5>
+            <p class="text-slate-500 mb-0 font-sm">Your class timetable has not been set up yet. Please check back later.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Reuse same styles as admin_timetable for consistency */
+    .timetable-table { table-layout: fixed; width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; }
+    .timetable-table td, .timetable-table th { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+    .timetable-table tr td:last-child, .timetable-table tr th:last-child { border-right: none; }
+    .timetable-table tr:last-child td { border-bottom: none; }
+    .period-info-cell { background-color: #f8fafc; }
+    .entry-card { transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .timetable-cell { vertical-align: top; }
+    .subject-title { line-height: 1.1; margin-bottom: 0.25rem; }
+    .detail-item { display: flex; align-items: center; gap: 0.25rem; justify-content: center; line-height: 1.2; }
+    .lunch-break-row td { background-color: #f1f5f9; }
+    @media (max-width: 768px) {
+        .timetable-table { min-width: 100%; }
+        .period-col { width: 80px; }
+    }
+</style>
+{% endblock %}
