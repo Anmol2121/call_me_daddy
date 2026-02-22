@@ -464,6 +464,12 @@
             height: 36px;
             font-size: 1rem;
         }
+        /* New extra small avatar class for the profile button */
+        .avatar-xs {
+            width: 32px;
+            height: 32px;
+            font-size: 0.85rem;
+        }
         .avatar-primary { background: #eef2ff; color: #4f46e5; }
         .avatar-success { background: #d1fae5; color: #10b981; }
         .avatar-info    { background: #e0f2fe; color: #0ea5e9; }
@@ -525,6 +531,19 @@
         @media (min-width: 992px) {
             .bottom-nav {
                 display: none;
+            }
+        }
+        
+        /* Optional: fine-tuning for very small screens */
+        @media (max-width: 360px) {
+            .avatar-xs {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+            .btn-sm.px-3 {
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
             }
         }
     </style>
@@ -647,8 +666,9 @@
                 <!-- User Profile -->
                 <div class="dropdown">
                     <button class="btn btn-sm btn-light d-flex align-items-center gap-2 px-3" type="button" data-bs-toggle="dropdown" style="border-radius: 20px; border: 1px solid #e2e8f0;">
-                        <div class="avatar-circle avatar-primary" style="width: 32px; height: 32px;">
-                            {{ current_user.full_name[0]|upper if current_user.full_name else 'U' }}
+                        <!-- Avatar with new class (replaced inline style) -->
+                        <div class="avatar-circle avatar-primary avatar-xs">
+                            {{ (current_user.full_name and current_user.full_name[0]) or 'U' }}
                         </div>
                         <div class="d-none d-md-block text-start">
                             <div class="small fw-bold">{{ current_user.full_name }}</div>
@@ -780,6 +800,15 @@
                             <i class="fas fa-chalkboard menu-icon"></i>
                             <span class="menu-text">Classes</span>
                             <span class="menu-badge">{{ total_classes|default(0) }}</span>
+                        </a>
+                    </li>
+                    
+                    <!-- NEW TIMETABLE MENU ITEM -->
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'admin_timetable' %}active{% endif %}" href="{{ url_for('admin_timetable') }}">
+                            <i class="fas fa-calendar-alt menu-icon"></i>
+                            <span class="menu-text">Timetable</span>
+                            <span class="menu-badge">Manage</span>
                         </a>
                     </li>
                     
@@ -1052,6 +1081,11 @@
             <a class="bottom-nav-item {% if request.endpoint in ['manage_fee_structures'] %}active{% endif %}" href="{{ url_for('manage_fee_structures') }}">
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Fees</span>
+            </a>
+            <!-- NEW TIMETABLE BOTTOM NAV ITEM -->
+            <a class="bottom-nav-item {% if request.endpoint == 'admin_timetable' %}active{% endif %}" href="{{ url_for('admin_timetable') }}">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Timetable</span>
             </a>
             <a class="bottom-nav-item" href="{{ url_for('logout') }}">
                 <i class="fas fa-sign-out-alt"></i>
