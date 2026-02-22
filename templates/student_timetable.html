@@ -10,231 +10,258 @@
 {% block content %}
 <style>
     :root {
-        --glass-bg: rgba(255, 255, 255, 0.9);
-        --premium-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 10px -7px rgba(0, 0, 0, 0.05);
-        --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+        --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        --surface-color: #ffffff;
+        --border-color: #f1f5f9;
+        --text-main: #1e293b;
     }
 
-    body { background-color: #f8fafc; }
-
-    /* Premium Header */
-    .timetable-header {
-        background: var(--accent-gradient);
-        border-radius: 20px;
+    /* Overall Layout */
+    .timetable-wrapper {
+        background: #f8fafc;
+        border-radius: 2rem;
         padding: 1.5rem;
-        color: white;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3);
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
     }
 
-    /* Modern Day Picker */
-    .day-picker {
+    /* Top Stats Bar */
+    .timetable-stats {
         display: flex;
-        gap: 10px;
-        padding: 5px;
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: var(--premium-shadow);
-        margin-bottom: 1.5rem;
+        gap: 1rem;
+        margin-bottom: 2rem;
         overflow-x: auto;
+        padding-bottom: 5px;
         scrollbar-width: none;
     }
-    .day-picker::-webkit-scrollbar { display: none; }
-
-    .day-btn {
-        flex: 1;
-        min-width: 65px;
-        border: none;
-        background: transparent;
-        padding: 12px 8px;
-        border-radius: 12px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .day-btn.active {
-        background: #000;
-        color: #fff !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .day-btn .d-name { font-size: 0.75rem; font-weight: 700; text-uppercase; letter-spacing: 0.5px; }
-    .day-btn .d-date { font-size: 0.65rem; opacity: 0.6; }
-
-    /* Mobile Class Cards */
-    .class-card {
-        background: #fff;
-        border-radius: 18px;
-        border: none;
-        margin-bottom: 1rem;
-        transition: transform 0.2s;
-        box-shadow: var(--premium-shadow);
-        overflow: hidden;
+    .stat-pill {
+        background: white;
+        padding: 0.75rem 1.25rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        white-space: nowrap;
         display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid var(--border-color);
     }
-    .class-card:active { transform: scale(0.98); }
-    
-    .time-sidebar {
-        width: 75px;
-        background: #f1f5f9;
+
+    /* The Realistic Grid */
+    .tt-grid {
+        display: grid;
+        grid-template-columns: 80px repeat({{ day_info|length }}, minmax(160px, 1fr));
+        background: white;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .tt-header-cell {
+        background: #f8fafc;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        border-bottom: 2px solid #e2e8f0;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .tt-header-cell .day-name {
+        font-weight: 800;
+        color: var(--text-main);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .tt-time-col {
+        background: #fdfdfd;
+        border-right: 2px solid #e2e8f0;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        padding: 1rem 0.5rem;
+        font-size: 0.75rem;
         font-weight: 700;
-        color: #475569;
-        border-right: 1px dashed #e2e8f0;
+        color: #64748b;
     }
 
-    .subject-info {
-        padding: 1rem;
-        flex: 1;
+    /* Class Entry Styling */
+    .tt-cell {
+        min-height: 120px;
+        padding: 8px;
+        border-bottom: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    .tt-entry {
+        height: 100%;
+        width: 100%;
+        border-radius: 1rem;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .tt-entry:hover {
+        transform: scale(1.02);
+        z-index: 10;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .subject-name {
+        font-weight: 800;
+        font-size: 0.85rem;
+        line-height: 1.2;
+        margin-bottom: auto;
+    }
+
+    .teacher-name {
+        font-size: 0.7rem;
+        font-weight: 600;
+        opacity: 0.8;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .room-badge {
+        background: rgba(255, 255, 255, 0.5);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        align-self: flex-start;
+    }
+
+    /* Current Time Indicator */
+    .current-marker {
+        border: 2px solid #ef4444 !important;
         position: relative;
     }
-    .subject-tag {
-        font-size: 0.65rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 4px;
-        display: block;
+    .current-marker::after {
+        content: "LIVE";
+        position: absolute;
+        top: -8px;
+        right: 10px;
+        background: #ef4444;
+        color: white;
+        font-size: 0.5rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 900;
     }
 
-    /* Desktop Grid Styles */
-    @media (min-width: 992px) {
-        .desktop-timetable {
-            background: #fff;
-            border-radius: 24px;
-            padding: 1.5rem;
-            box-shadow: var(--premium-shadow);
+    /* Mobile Adaptations */
+    @media (max-width: 992px) {
+        .timetable-wrapper { padding: 0.5rem; border-radius: 1rem; }
+        .tt-grid { 
+            grid-template-columns: 70px repeat({{ day_info|length }}, 180px); 
+            overflow-x: auto; 
+            display: grid;
         }
-        .grid-header { font-weight: 700; color: #64748b; padding-bottom: 1rem; border-bottom: 2px solid #f1f5f9; }
-        .grid-cell { height: 120px; border-radius: 16px; margin: 5px; transition: all 0.3s; }
-        .grid-cell:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-    }
-
-    .empty-state {
-        opacity: 0.5;
-        font-style: italic;
-        font-size: 0.8rem;
+        .tt-header-cell { padding: 1rem 0.5rem; }
     }
 </style>
 
-<div class="container py-4">
-    <div class="timetable-header d-flex align-items-center justify-content-between">
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-end mb-4 px-2">
         <div>
-            <h2 class="fw-bold mb-1" style="letter-spacing: -1px;">{{ class_name or 'My Schedule' }}</h2>
-            <p class="mb-0 opacity-75 fw-medium"><i class="far fa-calendar-check me-2"></i> {{ context.current_session.name }}</p>
+            <span class="badge bg-primary-subtle text-primary mb-2 px-3 py-2 rounded-pill fw-bold">Academic Year 2026</span>
+            <h1 class="display-6 fw-extrabold text-slate-900 mb-0" style="letter-spacing: -2px;">Master Schedule</h1>
         </div>
-        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-            <i class="fas fa-bolt fs-4"></i>
+        <div class="text-end d-none d-md-block">
+            <p class="text-muted small mb-0">Class Reference</p>
+            <h5 class="fw-bold">{{ class_name }}</h5>
         </div>
     </div>
 
-    {% if periods %}
-    <div class="d-lg-none">
-        <div class="day-picker nav" id="pills-tab" role="tablist">
-            {% for day in day_info %}
-            <button class="day-btn nav-link {% if loop.first %}active{% endif %}" 
-                    id="p-{{ day.name|lower }}" data-bs-toggle="pill" 
-                    data-bs-target="#content-{{ day.name|lower }}">
-                <div class="d-name">{{ day.name[:3] }}</div>
-                <div class="d-date">{{ day.date.split(' ')[0] }}</div>
-            </button>
-            {% endfor %}
+    <div class="timetable-stats">
+        <div class="stat-pill">
+            <i class="fas fa-book-open text-primary"></i>
+            <span class="fw-bold">{{ periods|length }} Periods Daily</span>
         </div>
+        <div class="stat-pill">
+            <i class="fas fa-calendar-day text-success"></i>
+            <span class="fw-bold">{{ day_info|length }} Days Active</span>
+        </div>
+        <div class="stat-pill">
+            <i class="fas fa-clock text-warning"></i>
+            <span id="current-time-display" class="fw-bold">00:00 AM</span>
+        </div>
+    </div>
 
-        <div class="tab-content" id="pills-tabContent">
-            {% for day in day_info %}
-            {% set day_idx = loop.index0 %}
-            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="content-{{ day.name|lower }}">
+    <div class="timetable-wrapper">
+        <div class="table-responsive" style="border-radius: 1.5rem;">
+            <div class="tt-grid">
+                <div class="tt-header-cell d-flex align-items-center justify-content-center">
+                    <i class="fas fa-bolt text-warning"></i>
+                </div>
+                
+                {% for day in day_info %}
+                <div class="tt-header-cell">
+                    <div class="day-name">{{ day.name }}</div>
+                    <div class="text-muted small" style="font-size: 0.65rem;">{{ day.date }}</div>
+                </div>
+                {% endfor %}
+
                 {% for period in periods %}
-                    {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
-                    <div class="class-card">
-                        <div class="time-sidebar">
-                            <span style="font-size: 0.85rem;">{{ period.start_time.strftime('%H:%M') }}</span>
-                            <div style="width: 1px; height: 15px; background: #cbd5e1; margin: 4px 0;"></div>
-                            <span style="font-size: 0.7rem; opacity: 0.6;">{{ period.end_time.strftime('%H:%M') }}</span>
-                        </div>
-                        <div class="subject-info">
+                    <div class="tt-time-col">
+                        <span class="text-dark">{{ period.start_time.strftime('%H:%M') }}</span>
+                        <div style="height: 20px; width: 1px; border-left: 1px dashed #cbd5e1; margin: 5px 0;"></div>
+                        <span>{{ period.end_time.strftime('%H:%M') }}</span>
+                    </div>
+
+                    {% for day in day_info %}
+                        {% set day_idx = loop.index0 %}
+                        {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
+                        
+                        <div class="tt-cell">
                             {% if entry %}
-                                {% set colors = [['#6366f1', '#eef2ff'], ['#10b981', '#ecfdf5'], ['#f59e0b', '#fffbeb'], ['#ef4444', '#fef2f2'], ['#8b5cf6', '#f5f3ff']] %}
-                                {% set theme = colors[loop.index0 % 5] %}
-                                <span class="subject-tag" style="color: {{ theme[0] }}">{{ entry.subject }}</span>
-                                <h5 class="fw-bold text-dark mb-1" style="font-size: 1rem;">{{ entry.subject }}</h5>
-                                <div class="d-flex align-items-center gap-3 mt-2 text-slate-500" style="font-size: 0.75rem;">
-                                    <span><i class="far fa-user me-1"></i> {{ entry.teacher.full_name }}</span>
+                                {% set themes = [
+                                    {'bg': '#EEF2FF', 'text': '#4338CA', 'border': '#C7D2FE'},
+                                    {'bg': '#ECFDF5', 'text': '#047857', 'border': '#A7F3D0'},
+                                    {'bg': '#FFFBEB', 'text': '#B45309', 'border': '#FDE68A'},
+                                    {'bg': '#FEF2F2', 'text': '#B91C1C', 'border': '#FECACA'},
+                                    {'bg': '#FAF5FF', 'text': '#7E22CE', 'border': '#E9D5FF'}
+                                ] %}
+                                {% set theme = themes[loop.index % 5] %}
+                                
+                                <div class="tt-entry" style="background: {{ theme.bg }}; border-color: {{ theme.border }}; color: {{ theme.text }};">
+                                    <div class="subject-name">{{ entry.subject }}</div>
+                                    <div class="teacher-name">
+                                        <i class="far fa-user-circle"></i> {{ entry.teacher.full_name }}
+                                    </div>
                                     {% if entry.room %}
-                                    <span><i class="fas fa-door-open me-1"></i> {{ entry.room }}</span>
+                                    <div class="room-badge" style="color: {{ theme.text }};">
+                                        <i class="fas fa-location-arrow me-1"></i>{{ entry.room }}
+                                    </div>
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <div class="h-100 d-flex align-items-center justify-content-center">
-                                    <span class="empty-state">No classes scheduled</span>
+                                <div class="d-flex align-items-center justify-content-center h-100 opacity-10">
+                                    <div style="width: 4px; height: 4px; background: #000; border-radius: 50%;"></div>
                                 </div>
                             {% endif %}
                         </div>
-                    </div>
+                    {% endfor %}
                 {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
-
-    <div class="d-none d-lg-block desktop-timetable">
-        <div class="row mb-3">
-            <div class="col-1"></div>
-            {% for day in day_info %}
-            <div class="col text-center grid-header">{{ day.name }}</div>
-            {% endfor %}
-        </div>
-        
-        {% for period in periods %}
-        <div class="row align-items-center mb-2">
-            <div class="col-1 text-end pr-3">
-                <div class="fw-bold text-dark" style="font-size: 0.8rem;">{{ period.start_time.strftime('%H:%M') }}</div>
-                <div class="text-muted" style="font-size: 0.7rem;">{{ period.end_time.strftime('%H:%M') }}</div>
-            </div>
-            {% for day in day_info %}
-                {% set day_idx = loop.index0 %}
-                {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
-                <div class="col p-0">
-                    {% if entry %}
-                        {% set colors = [['#6366f1', '#eef2ff'], ['#10b981', '#ecfdf5'], ['#f59e0b', '#fffbeb'], ['#ef4444', '#fef2f2'], ['#8b5cf6', '#f5f3ff']] %}
-                        {% set theme = colors[loop.index % 5] %}
-                        <div class="grid-cell p-3 d-flex flex-column" style="background: {{ theme[1] }}; border-left: 4px solid {{ theme[0] }};">
-                            <span class="fw-bold text-dark text-truncate" style="font-size: 0.85rem;">{{ entry.subject }}</span>
-                            <span class="text-muted mt-1 text-truncate" style="font-size: 0.7rem;">{{ entry.teacher.full_name }}</span>
-                            <div class="mt-auto d-flex justify-content-between align-items-center">
-                                <span class="badge rounded-pill bg-white text-dark border shadow-sm" style="font-size: 0.6rem;">{{ entry.room or 'N/A' }}</span>
-                                <i class="fas fa-ellipsis-h opacity-25"></i>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="grid-cell d-flex align-items-center justify-content-center" style="background: #fafafa; border: 1px dashed #e2e8f0;">
-                            <span class="opacity-25">—</span>
-                        </div>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-        {% endfor %}
-    </div>
-
-    {% else %}
-    <div class="text-center py-5">
-        <img src="https://illustrations.popsy.co/gray/calendar.svg" alt="Empty" style="width: 200px;" class="mb-4">
-        <h4 class="fw-bold text-dark">Schedule Empty</h4>
-        <p class="text-muted">No timetable entries found for your account.</p>
-    </div>
-    {% endif %}
 </div>
 
 <script>
-    // Simple active state toggle for mobile buttons (Bootstrap handles the tab switching)
-    document.querySelectorAll('.day-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('current-time-display').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
 </script>
 {% endblock %}
