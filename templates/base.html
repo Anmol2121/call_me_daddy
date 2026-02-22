@@ -909,6 +909,15 @@
                             <span class="menu-badge">View</span>
                         </a>
                     </li>
+
+                    <!-- NEW TIMETABLE MENU ITEM FOR STUDENT -->
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'student_timetable' %}active{% endif %}" href="{{ url_for('student_timetable') }}">
+                            <i class="fas fa-calendar-alt menu-icon"></i>
+                            <span class="menu-text">Timetable</span>
+                            <span class="menu-badge">View</span>
+                        </a>
+                    </li>
                     
                     <li class="menu-item">
                         <a class="menu-link {% if request.endpoint == 'student_profile' %}active{% endif %}" href="{{ url_for('student_profile') }}">
@@ -1118,6 +1127,11 @@
             <a class="bottom-nav-item {% if request.endpoint == 'student_attendance' %}active{% endif %}" href="{{ url_for('student_attendance') }}">
                 <i class="fas fa-clipboard-check"></i>
                 <span>Attendance</span>
+            </a>
+            <!-- NEW TIMETABLE BOTTOM NAV ITEM FOR STUDENT -->
+            <a class="bottom-nav-item {% if request.endpoint == 'student_timetable' %}active{% endif %}" href="{{ url_for('student_timetable') }}">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Timetable</span>
             </a>
             <a class="bottom-nav-item {% if request.endpoint == 'student_profile' %}active{% endif %}" href="{{ url_for('student_profile') }}">
                 <i class="fas fa-user"></i>
