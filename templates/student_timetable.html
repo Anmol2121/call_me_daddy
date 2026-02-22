@@ -10,211 +10,160 @@
 {% block content %}
 <style>
     :root {
-        --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        --surface-color: #ffffff;
-        --border-color: #f1f5f9;
         --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-color: #f1f5f9;
     }
 
-    /* Overall Layout */
+    /* Overall Cleanliness */
     .timetable-wrapper {
         background: #f8fafc;
-        border-radius: 2rem;
-        padding: 1.5rem;
-        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        border-radius: 1.25rem;
+        padding: 1rem;
     }
 
-    /* Top Stats Bar */
-    .timetable-stats {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        overflow-x: auto;
-        padding-bottom: 5px;
-        scrollbar-width: none;
-    }
-    .stat-pill {
-        background: white;
-        padding: 0.75rem 1.25rem;
-        border-radius: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        white-space: nowrap;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        border: 1px solid var(--border-color);
-    }
-
-    /* The Realistic Grid */
     .tt-grid {
         display: grid;
-        grid-template-columns: 80px repeat({{ day_info|length }}, minmax(160px, 1fr));
+        grid-template-columns: 70px repeat({{ day_info|length }}, minmax(140px, 1fr));
         background: white;
-        border-radius: 1.5rem;
+        border-radius: 1rem;
         overflow: hidden;
         border: 1px solid var(--border-color);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
     }
 
+    /* Smaller Header Text */
     .tt-header-cell {
-        background: #f8fafc;
-        padding: 1.5rem 1rem;
+        background: #fafafa;
+        padding: 0.75rem 0.5rem;
         text-align: center;
-        border-bottom: 2px solid #e2e8f0;
+        border-bottom: 1.5px solid #f1f5f9;
         border-right: 1px solid var(--border-color);
     }
 
     .tt-header-cell .day-name {
-        font-weight: 800;
+        font-weight: 700;
         color: var(--text-main);
-        font-size: 0.9rem;
+        font-size: 0.7rem; /* Small & Professional */
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
     }
 
+    .tt-header-cell .day-date {
+        font-size: 0.6rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Minimalist Time Column */
     .tt-time-col {
         background: #fdfdfd;
-        border-right: 2px solid #e2e8f0;
+        border-right: 1.5px solid #f1f5f9;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 1rem 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #64748b;
+        padding: 0.5rem;
+        color: var(--text-muted);
     }
+    .time-val { font-size: 0.65rem; font-weight: 700; }
+    .time-sep { height: 10px; width: 1px; border-left: 1px solid #e2e8f0; margin: 2px 0; }
 
-    /* Class Entry Styling */
+    /* Compact Entry Styling */
     .tt-cell {
-        min-height: 120px;
-        padding: 8px;
+        min-height: 90px;
+        padding: 5px;
         border-bottom: 1px solid var(--border-color);
         border-right: 1px solid var(--border-color);
-        position: relative;
-        transition: all 0.2s ease;
     }
 
     .tt-entry {
         height: 100%;
         width: 100%;
-        border-radius: 1rem;
-        padding: 12px;
+        border-radius: 0.6rem;
+        padding: 8px;
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: pointer;
-        border: 1px solid rgba(255,255,255,0.4);
-    }
-
-    .tt-entry:hover {
-        transform: scale(1.02);
-        z-index: 10;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
     }
 
     .subject-name {
-        font-weight: 800;
-        font-size: 0.85rem;
+        font-weight: 700;
+        font-size: 0.72rem; /* Reduced size */
         line-height: 1.2;
-        margin-bottom: auto;
+        margin-bottom: 3px;
     }
 
     .teacher-name {
-        font-size: 0.7rem;
-        font-weight: 600;
-        opacity: 0.8;
+        font-size: 0.6rem; /* Micro text */
+        font-weight: 500;
+        opacity: 0.85;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
+        margin-bottom: auto;
     }
 
     .room-badge {
-        background: rgba(255, 255, 255, 0.5);
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-size: 0.65rem;
-        font-weight: 700;
-        align-self: flex-start;
-    }
-
-    /* Current Time Indicator */
-    .current-marker {
-        border: 2px solid #ef4444 !important;
-        position: relative;
-    }
-    .current-marker::after {
-        content: "LIVE";
-        position: absolute;
-        top: -8px;
-        right: 10px;
-        background: #ef4444;
-        color: white;
-        font-size: 0.5rem;
-        padding: 2px 6px;
+        background: rgba(255, 255, 255, 0.4);
+        padding: 1px 5px;
         border-radius: 4px;
-        font-weight: 900;
+        font-size: 0.55rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-top: 4px;
     }
 
-    /* Mobile Adaptations */
+    /* Stats bar micro-styling */
+    .stat-pill {
+        background: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.75rem;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+
     @media (max-width: 992px) {
-        .timetable-wrapper { padding: 0.5rem; border-radius: 1rem; }
         .tt-grid { 
-            grid-template-columns: 70px repeat({{ day_info|length }}, 180px); 
-            overflow-x: auto; 
-            display: grid;
+            grid-template-columns: 60px repeat({{ day_info|length }}, 150px); 
+            overflow-x: auto;
         }
-        .tt-header-cell { padding: 1rem 0.5rem; }
     }
 </style>
 
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-end mb-4 px-2">
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 px-1">
         <div>
-            <span class="badge bg-primary-subtle text-primary mb-2 px-3 py-2 rounded-pill fw-bold">Academic Year 2026</span>
-            <h1 class="display-6 fw-extrabold text-slate-900 mb-0" style="letter-spacing: -2px;">Master Schedule</h1>
+            <h6 class="fw-bold text-dark mb-0" style="letter-spacing: -0.5px;">{{ class_name }}</h6>
+            <p class="text-muted mb-0" style="font-size: 0.6rem;">Academic Session: {{ context.current_session.name }}</p>
         </div>
-        <div class="text-end d-none d-md-block">
-            <p class="text-muted small mb-0">Class Reference</p>
-            <h5 class="fw-bold">{{ class_name }}</h5>
-        </div>
-    </div>
-
-    <div class="timetable-stats">
-        <div class="stat-pill">
-            <i class="fas fa-book-open text-primary"></i>
-            <span class="fw-bold">{{ periods|length }} Periods Daily</span>
-        </div>
-        <div class="stat-pill">
-            <i class="fas fa-calendar-day text-success"></i>
-            <span class="fw-bold">{{ day_info|length }} Days Active</span>
-        </div>
-        <div class="stat-pill">
-            <i class="fas fa-clock text-warning"></i>
-            <span id="current-time-display" class="fw-bold">00:00 AM</span>
+        <div class="d-flex gap-2">
+            <div class="stat-pill"><i class="far fa-clock me-1 text-primary"></i> <span id="live-clock">00:00</span></div>
         </div>
     </div>
 
     <div class="timetable-wrapper">
-        <div class="table-responsive" style="border-radius: 1.5rem;">
+        <div class="table-responsive" style="border-radius: 1rem;">
             <div class="tt-grid">
-                <div class="tt-header-cell d-flex align-items-center justify-content-center">
-                    <i class="fas fa-bolt text-warning"></i>
-                </div>
+                <div class="tt-header-cell"></div>
                 
                 {% for day in day_info %}
                 <div class="tt-header-cell">
                     <div class="day-name">{{ day.name }}</div>
-                    <div class="text-muted small" style="font-size: 0.65rem;">{{ day.date }}</div>
+                    <div class="day-date">{{ day.date }}</div>
                 </div>
                 {% endfor %}
 
                 {% for period in periods %}
                     <div class="tt-time-col">
-                        <span class="text-dark">{{ period.start_time.strftime('%H:%M') }}</span>
-                        <div style="height: 20px; width: 1px; border-left: 1px dashed #cbd5e1; margin: 5px 0;"></div>
-                        <span>{{ period.end_time.strftime('%H:%M') }}</span>
+                        <span class="time-val">{{ period.start_time.strftime('%H:%M') }}</span>
+                        <div class="time-sep"></div>
+                        <span class="time-val" style="opacity:0.5">{{ period.end_time.strftime('%H:%M') }}</span>
                     </div>
 
                     {% for day in day_info %}
@@ -224,28 +173,26 @@
                         <div class="tt-cell">
                             {% if entry %}
                                 {% set themes = [
-                                    {'bg': '#EEF2FF', 'text': '#4338CA', 'border': '#C7D2FE'},
-                                    {'bg': '#ECFDF5', 'text': '#047857', 'border': '#A7F3D0'},
-                                    {'bg': '#FFFBEB', 'text': '#B45309', 'border': '#FDE68A'},
-                                    {'bg': '#FEF2F2', 'text': '#B91C1C', 'border': '#FECACA'},
-                                    {'bg': '#FAF5FF', 'text': '#7E22CE', 'border': '#E9D5FF'}
+                                    {'bg': '#f5f7ff', 'text': '#3b82f6', 'border': '#e0e7ff'},
+                                    {'bg': '#f0fdf4', 'text': '#16a34a', 'border': '#dcfce7'},
+                                    {'bg': '#fffbeb', 'text': '#d97706', 'border': '#fef3c7'},
+                                    {'bg': '#fef2f2', 'text': '#dc2626', 'border': '#fee2e2'},
+                                    {'bg': '#faf5ff', 'text': '#9333ea', 'border': '#f3e8ff'}
                                 ] %}
                                 {% set theme = themes[loop.index % 5] %}
                                 
                                 <div class="tt-entry" style="background: {{ theme.bg }}; border-color: {{ theme.border }}; color: {{ theme.text }};">
                                     <div class="subject-name">{{ entry.subject }}</div>
                                     <div class="teacher-name">
-                                        <i class="far fa-user-circle"></i> {{ entry.teacher.full_name }}
+                                        <i class="far fa-user" style="font-size: 0.55rem;"></i> {{ entry.teacher.full_name }}
                                     </div>
                                     {% if entry.room %}
-                                    <div class="room-badge" style="color: {{ theme.text }};">
-                                        <i class="fas fa-location-arrow me-1"></i>{{ entry.room }}
-                                    </div>
+                                    <div><span class="room-badge" style="border: 1px solid {{ theme.border }};">{{ entry.room }}</span></div>
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <div class="d-flex align-items-center justify-content-center h-100 opacity-10">
-                                    <div style="width: 4px; height: 4px; background: #000; border-radius: 50%;"></div>
+                                <div class="d-flex align-items-center justify-content-center h-100 opacity-20">
+                                    <div style="width: 2px; height: 2px; background: #94a3b8; border-radius: 50%;"></div>
                                 </div>
                             {% endif %}
                         </div>
@@ -257,11 +204,12 @@
 </div>
 
 <script>
-    function updateTime() {
+    function updateClock() {
         const now = new Date();
-        document.getElementById('current-time-display').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true});
+        document.getElementById('live-clock').innerText = timeStr;
     }
-    setInterval(updateTime, 1000);
-    updateTime();
+    setInterval(updateClock, 1000);
+    updateClock();
 </script>
 {% endblock %}
