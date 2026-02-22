@@ -8,203 +8,233 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid px-2 px-lg-3 py-3 animate-fade-in">
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --premium-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 10px -7px rgba(0, 0, 0, 0.05);
+        --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+    }
 
-    <div class="mb-3 bg-white rounded-4 shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-3">
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="icon-square bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px;">
-                        <i class="far fa-calendar-alt fs-5"></i>
-                    </div>
-                    <div>
-                        <h4 class="mb-0 fw-bolder text-slate-900" style="font-size: 1.1rem;">{{ class_name or 'Class Timetable' }}</h4>
-                        <div class="text-slate-500 fw-medium" style="font-size: 0.8rem;">
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">
-                                {{ context.current_session.name if context.current_session else 'Active Session' }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-end d-none d-md-block">
-                    <span class="text-slate-400 small d-block">Total Periods</span>
-                    <span class="fw-bold text-slate-700">{{ periods|length }} Daily Slots</span>
-                </div>
-            </div>
+    body { background-color: #f8fafc; }
+
+    /* Premium Header */
+    .timetable-header {
+        background: var(--accent-gradient);
+        border-radius: 20px;
+        padding: 1.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Modern Day Picker */
+    .day-picker {
+        display: flex;
+        gap: 10px;
+        padding: 5px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: var(--premium-shadow);
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .day-picker::-webkit-scrollbar { display: none; }
+
+    .day-btn {
+        flex: 1;
+        min-width: 65px;
+        border: none;
+        background: transparent;
+        padding: 12px 8px;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .day-btn.active {
+        background: #000;
+        color: #fff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .day-btn .d-name { font-size: 0.75rem; font-weight: 700; text-uppercase; letter-spacing: 0.5px; }
+    .day-btn .d-date { font-size: 0.65rem; opacity: 0.6; }
+
+    /* Mobile Class Cards */
+    .class-card {
+        background: #fff;
+        border-radius: 18px;
+        border: none;
+        margin-bottom: 1rem;
+        transition: transform 0.2s;
+        box-shadow: var(--premium-shadow);
+        overflow: hidden;
+        display: flex;
+    }
+    .class-card:active { transform: scale(0.98); }
+    
+    .time-sidebar {
+        width: 75px;
+        background: #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #475569;
+        border-right: 1px dashed #e2e8f0;
+    }
+
+    .subject-info {
+        padding: 1rem;
+        flex: 1;
+        position: relative;
+    }
+    .subject-tag {
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    /* Desktop Grid Styles */
+    @media (min-width: 992px) {
+        .desktop-timetable {
+            background: #fff;
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: var(--premium-shadow);
+        }
+        .grid-header { font-weight: 700; color: #64748b; padding-bottom: 1rem; border-bottom: 2px solid #f1f5f9; }
+        .grid-cell { height: 120px; border-radius: 16px; margin: 5px; transition: all 0.3s; }
+        .grid-cell:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    }
+
+    .empty-state {
+        opacity: 0.5;
+        font-style: italic;
+        font-size: 0.8rem;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="timetable-header d-flex align-items-center justify-content-between">
+        <div>
+            <h2 class="fw-bold mb-1" style="letter-spacing: -1px;">{{ class_name or 'My Schedule' }}</h2>
+            <p class="mb-0 opacity-75 fw-medium"><i class="far fa-calendar-check me-2"></i> {{ context.current_session.name }}</p>
+        </div>
+        <div class="bg-white bg-opacity-25 rounded-circle p-3">
+            <i class="fas fa-bolt fs-4"></i>
         </div>
     </div>
 
     {% if periods %}
-    <div class="d-md-none mb-3">
-        <div class="nav nav-pills nav-fill bg-white p-1 rounded-3 border border-slate-200 shadow-sm" id="dayTabs" role="tablist">
+    <div class="d-lg-none">
+        <div class="day-picker nav" id="pills-tab" role="tablist">
             {% for day in day_info %}
-            <button class="nav-link {% if loop.first %}active{% endif %} py-2 px-1" 
-                    id="tab-{{ day.name|lower }}" 
-                    data-bs-toggle="pill" 
-                    data-bs-target="#day-{{ day.name|lower }}" 
-                    type="button" style="font-size: 0.75rem;">
-                <span class="d-block fw-bold">{{ day.name[:3] }}</span>
-                <span class="opacity-75" style="font-size: 0.6rem;">{{ day.date.split(' ')[0] }}</span>
+            <button class="day-btn nav-link {% if loop.first %}active{% endif %}" 
+                    id="p-{{ day.name|lower }}" data-bs-toggle="pill" 
+                    data-bs-target="#content-{{ day.name|lower }}">
+                <div class="d-name">{{ day.name[:3] }}</div>
+                <div class="d-date">{{ day.date.split(' ')[0] }}</div>
             </button>
             {% endfor %}
         </div>
-    </div>
 
-    <div class="tab-content mt-2" id="timetableContent">
-        
-        <div class="d-none d-md-block card border border-slate-200 shadow-sm rounded-3 overflow-hidden bg-white">
-            <div class="table-responsive">
-                <table class="table timetable-table mb-0">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="text-center py-3 border-bottom border-slate-200" style="width: 120px;">
-                                <small class="text-uppercase fw-bold text-slate-500 tracking-wider">Time</small>
-                            </th>
-                            {% for day in day_info %}
-                            <th class="text-center border-bottom border-slate-200">
-                                <span class="d-block text-slate-900 fw-bold">{{ day.name }}</span>
-                                <small class="text-slate-400 fw-normal" style="font-size: 0.7rem;">{{ day.date }}</small>
-                            </th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for period in periods %}
-                        <tr>
-                            <td class="bg-slate-50 border-end border-slate-200 align-middle text-center p-3">
-                                <div class="fw-bold text-slate-800 mb-0" style="font-size: 0.85rem;">
-                                    {{ period.start_time.strftime('%H:%M') }}
-                                </div>
-                                <div class="text-slate-400" style="font-size: 0.7rem;">
-                                    {{ period.end_time.strftime('%H:%M') }}
-                                </div>
-                            </td>
-                            {% for day in day_info %}
-                                {% set day_idx = loop.index0 %}
-                                {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
-                                <td class="p-2 border-end border-bottom border-slate-100" style="height: 110px; width: 160px;">
-                                    {% if entry %}
-                                        {% set color_schemes = [
-                                            {'bg': '#eef2ff', 'border': '#4f46e5', 'text': '#4338ca'},
-                                            {'bg': '#ecfdf5', 'border': '#059669', 'text': '#047857'},
-                                            {'bg': '#fff7ed', 'border': '#ea580c', 'text': '#c2410c'},
-                                            {'bg': '#fff1f2', 'border': '#e11d48', 'text': '#be123c'},
-                                            {'bg': '#f5f3ff', 'border': '#7c3aed', 'text': '#6d28d9'}
-                                        ] %}
-                                        {% set theme = color_schemes[loop.index % 5] %}
-                                        <div class="h-100 rounded-3 p-2 d-flex flex-column shadow-sm border-start border-4" 
-                                             style="background-color: {{ theme.bg }}; border-color: {{ theme.border }} !important;">
-                                            <div class="fw-bolder text-truncate mb-1" style="color: {{ theme.text }}; font-size: 0.85rem;">
-                                                {{ entry.subject }}
-                                            </div>
-                                            <div class="mt-auto">
-                                                <div class="text-slate-700 fw-medium text-truncate" style="font-size: 0.75rem;">
-                                                    <i class="far fa-user me-1 opacity-50"></i>{{ entry.teacher.full_name }}
-                                                </div>
-                                                {% if entry.room %}
-                                                <div class="text-slate-500 text-truncate" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-map-marker-alt me-1 opacity-50"></i>{{ entry.room }}
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% else %}
-                                        <div class="h-100 d-flex align-items-center justify-content-center opacity-25">
-                                            <span class="text-slate-300">—</span>
-                                        </div>
-                                    {% endif %}
-                                </td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="d-md-none">
+        <div class="tab-content" id="pills-tabContent">
             {% for day in day_info %}
             {% set day_idx = loop.index0 %}
-            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="day-{{ day.name|lower }}" role="tabpanel">
-                <div class="d-flex flex-column gap-3">
-                    {% for period in periods %}
-                        {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
-                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                            <div class="row g-0">
-                                <div class="col-3 bg-slate-50 d-flex flex-column align-items-center justify-content-center border-end border-slate-100 py-3">
-                                    <span class="fw-bold text-slate-800" style="font-size: 0.9rem;">{{ period.start_time.strftime('%H:%M') }}</span>
-                                    <span class="text-slate-400" style="font-size: 0.7rem;">{{ period.end_time.strftime('%H:%M') }}</span>
-                                    <span class="badge bg-slate-200 text-slate-600 mt-2" style="font-size: 0.6rem;">P{{ period.period_number }}</span>
-                                </div>
-                                <div class="col-9 bg-white p-3">
-                                    {% if entry %}
-                                        <h6 class="fw-bold mb-1 text-primary">{{ entry.subject }}</h6>
-                                        <div class="d-flex flex-column gap-1">
-                                            <span class="text-slate-600 small"><i class="far fa-user-circle me-2"></i>{{ entry.teacher.full_name }}</span>
-                                            {% if entry.room %}
-                                            <span class="text-slate-500 small"><i class="fas fa-location-arrow me-2"></i>Room: {{ entry.room }}</span>
-                                            {% endif %}
-                                        </div>
-                                    {% else %}
-                                        <div class="h-100 d-flex align-items-center">
-                                            <span class="text-slate-400 italic small">No scheduled class</span>
-                                        </div>
+            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="content-{{ day.name|lower }}">
+                {% for period in periods %}
+                    {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
+                    <div class="class-card">
+                        <div class="time-sidebar">
+                            <span style="font-size: 0.85rem;">{{ period.start_time.strftime('%H:%M') }}</span>
+                            <div style="width: 1px; height: 15px; background: #cbd5e1; margin: 4px 0;"></div>
+                            <span style="font-size: 0.7rem; opacity: 0.6;">{{ period.end_time.strftime('%H:%M') }}</span>
+                        </div>
+                        <div class="subject-info">
+                            {% if entry %}
+                                {% set colors = [['#6366f1', '#eef2ff'], ['#10b981', '#ecfdf5'], ['#f59e0b', '#fffbeb'], ['#ef4444', '#fef2f2'], ['#8b5cf6', '#f5f3ff']] %}
+                                {% set theme = colors[loop.index0 % 5] %}
+                                <span class="subject-tag" style="color: {{ theme[0] }}">{{ entry.subject }}</span>
+                                <h5 class="fw-bold text-dark mb-1" style="font-size: 1rem;">{{ entry.subject }}</h5>
+                                <div class="d-flex align-items-center gap-3 mt-2 text-slate-500" style="font-size: 0.75rem;">
+                                    <span><i class="far fa-user me-1"></i> {{ entry.teacher.full_name }}</span>
+                                    {% if entry.room %}
+                                    <span><i class="fas fa-door-open me-1"></i> {{ entry.room }}</span>
                                     {% endif %}
                                 </div>
-                            </div>
+                            {% else %}
+                                <div class="h-100 d-flex align-items-center justify-content-center">
+                                    <span class="empty-state">No classes scheduled</span>
+                                </div>
+                            {% endif %}
                         </div>
-                    {% endfor %}
-                </div>
+                    </div>
+                {% endfor %}
             </div>
             {% endfor %}
         </div>
     </div>
 
-    {% else %}
-    <div class="card border border-slate-200 shadow-sm rounded-4 bg-white text-center py-5">
-        <div class="card-body">
-            <div class="bg-slate-50 text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
-                <i class="fas fa-calendar-times fs-1"></i>
-            </div>
-            <h5 class="fw-bold">No Timetable Found</h5>
-            <p class="text-slate-500">Your schedule hasn't been uploaded yet.</p>
+    <div class="d-none d-lg-block desktop-timetable">
+        <div class="row mb-3">
+            <div class="col-1"></div>
+            {% for day in day_info %}
+            <div class="col text-center grid-header">{{ day.name }}</div>
+            {% endfor %}
         </div>
+        
+        {% for period in periods %}
+        <div class="row align-items-center mb-2">
+            <div class="col-1 text-end pr-3">
+                <div class="fw-bold text-dark" style="font-size: 0.8rem;">{{ period.start_time.strftime('%H:%M') }}</div>
+                <div class="text-muted" style="font-size: 0.7rem;">{{ period.end_time.strftime('%H:%M') }}</div>
+            </div>
+            {% for day in day_info %}
+                {% set day_idx = loop.index0 %}
+                {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
+                <div class="col p-0">
+                    {% if entry %}
+                        {% set colors = [['#6366f1', '#eef2ff'], ['#10b981', '#ecfdf5'], ['#f59e0b', '#fffbeb'], ['#ef4444', '#fef2f2'], ['#8b5cf6', '#f5f3ff']] %}
+                        {% set theme = colors[loop.index % 5] %}
+                        <div class="grid-cell p-3 d-flex flex-column" style="background: {{ theme[1] }}; border-left: 4px solid {{ theme[0] }};">
+                            <span class="fw-bold text-dark text-truncate" style="font-size: 0.85rem;">{{ entry.subject }}</span>
+                            <span class="text-muted mt-1 text-truncate" style="font-size: 0.7rem;">{{ entry.teacher.full_name }}</span>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <span class="badge rounded-pill bg-white text-dark border shadow-sm" style="font-size: 0.6rem;">{{ entry.room or 'N/A' }}</span>
+                                <i class="fas fa-ellipsis-h opacity-25"></i>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="grid-cell d-flex align-items-center justify-content-center" style="background: #fafafa; border: 1px dashed #e2e8f0;">
+                            <span class="opacity-25">—</span>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center py-5">
+        <img src="https://illustrations.popsy.co/gray/calendar.svg" alt="Empty" style="width: 200px;" class="mb-4">
+        <h4 class="fw-bold text-dark">Schedule Empty</h4>
+        <p class="text-muted">No timetable entries found for your account.</p>
     </div>
     {% endif %}
 </div>
 
-<style>
-    /* Styling for the Day Tabs on Mobile */
-    .nav-pills .nav-link {
-        color: #64748b;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    .nav-pills .nav-link.active {
-        background-color: #4f46e5;
-        color: white;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-    }
-    
-    /* Timetable Table Styles (Desktop) */
-    .timetable-table thead th {
-        background-color: #f8fafc;
-        border-top: none;
-    }
-    
-    /* Animation */
-    .animate-fade-in {
-        animation: fadeIn 0.4s ease-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Mobile specific tweaks */
-    @media (max-width: 767.98px) {
-        .container-fluid { padding-bottom: 80px !important; }
-        .card { border: 1px solid #f1f5f9; }
-    }
-</style>
+<script>
+    // Simple active state toggle for mobile buttons (Bootstrap handles the tab switching)
+    document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+</script>
 {% endblock %}
