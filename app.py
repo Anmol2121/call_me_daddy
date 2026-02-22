@@ -64,7 +64,282 @@ def school_active_required(f):
                 return redirect(url_for('logout'))
         return f(*args, **kwargs)
     return decorated_function
+#==================== Time Table ==========================
+# ==================== TIMETABLE MODELS ====================
 
+class Timetable(db.Model):
+    __tablename__ = 'timetables'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, default='Default Timetable')
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    school = db.relationship('School', backref='timetables')
+    session = db.relationship('AcademicSession', backref='timetables')
+    periods = db.relationship('TimetablePeriod', back_populates='timetable', cascade='all, delete-orphan')
+    entries = db.relationship('TimetableEntry', back_populates='timetable', cascade='all, delete-orphan')
+
+
+class TimetablePeriod(db.Model):
+    __tablename__ = 'timetable_periods'
+    id = db.Column(db.Integer, primary_key=True)
+    timetable_id = db.Column(db.Integer, db.ForeignKey('timetables.id'), nullable=False)
+    period_number = db.Column(db.Integer, nullable=False)  # 1,2,3...
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    
+    timetable = db.relationship('Timetable', back_populates='periods')
+    entries = db.relationship('TimetableEntry', back_populates='period', cascade='all, delete-orphan')
+
+
+class TimetableEntry(db.Model):
+    __tablename__ = 'timetable_entries'
+    id = db.Column(db.Integer, primary_key=True)
+    timetable_id = db.Column(db.Integer, db.ForeignKey('timetables.id'), nullable=False)
+    period_id = db.Column(db.Integer, db.ForeignKey('timetable_periods.id'), nullable=False)
+    day_of_week = db.Column(db.Integer, nullable=False)  # 0=Monday, 1=Tuesday ... 5=Saturday
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    subject = db.Column(db.String(100), nullable=False)
+    room = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    timetable = db.relationship('Timetable', back_populates='entries')
+    period = db.relationship('TimetablePeriod', back_populates='entries')
+    class_ = db.relationship('Class', foreign_keys=[class_id])
+    teacher = db.relationship('User', foreign_keys=[teacher_id])
+
+# ==================== TIMETABLE ROUTES ====================
+
+@app.route('/admin/timetable')
+@role_required(['admin'])
+@school_active_required
+def admin_timetable():
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+
+    if not view_session:
+        flash('No active session found', 'warning')
+        return redirect(url_for('admin_dashboard'))
+
+    # Get or create the default timetable for this school/session
+    timetable = Timetable.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=view_session.id,
+        is_active=True
+    ).first()
+    if not timetable:
+        timetable = Timetable(
+            name='Default Timetable',
+            school_id=current_user.school_id,
+            session_id=view_session.id
+        )
+        db.session.add(timetable)
+        db.session.commit()
+
+    # --- NEW: class selection ---
+    selected_class_id = request.args.get('class_id', type=int)
+    selected_class = None
+    if selected_class_id:
+        selected_class = Class.query.filter_by(
+            id=selected_class_id,
+            school_id=current_user.school_id,
+            session_id=view_session.id,
+            is_active=True
+        ).first()
+        if not selected_class:
+            flash('Selected class not found.', 'warning')
+            selected_class_id = None
+
+    # Get periods and all entries for this timetable
+    periods = TimetablePeriod.query.filter_by(timetable_id=timetable.id)\
+                                   .order_by(TimetablePeriod.period_number).all()
+    all_entries = TimetableEntry.query.filter_by(timetable_id=timetable.id).all()
+
+    # --- NEW: filter entries by the chosen class ---
+    if selected_class_id:
+        entries = [e for e in all_entries if e.class_id == selected_class_id]
+    else:
+        entries = []   # No class selected → show empty grid
+
+    # Prepare day headers (Monday…Saturday with example dates)
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    today = date.today()
+    day_info = []
+    for idx, day_name in enumerate(days):
+        day_date = today + timedelta(days=idx)
+        day_info.append({'name': day_name, 'date': day_date.strftime('%d %b')})
+
+    # All classes (for the dropdown) and all teachers (for the modal)
+    classes = Class.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=view_session.id,
+        is_active=True
+    ).all()
+    teachers = User.query.filter_by(
+        school_id=current_user.school_id,
+        role='teacher',
+        is_active=True
+    ).all()
+
+    return render_template(
+        'admin_timetable.html',
+        context=context,
+        timetable=timetable,
+        periods=periods,
+        entries=entries,
+        day_info=day_info,
+        classes=classes,
+        teachers=teachers,
+        selected_class=selected_class   # pass to template
+    )
+
+
+@app.route('/admin/timetable/api/periods', methods=['GET', 'POST', 'DELETE'])
+@role_required(['admin'])
+@school_active_required
+def api_timetable_periods():
+    """API for managing timetable periods"""
+    if request.method == 'GET':
+        timetable_id = request.args.get('timetable_id', type=int)
+        periods = TimetablePeriod.query.filter_by(timetable_id=timetable_id).order_by(TimetablePeriod.period_number).all()
+        return jsonify([{
+            'id': p.id,
+            'period_number': p.period_number,
+            'start_time': p.start_time.strftime('%H:%M'),
+            'end_time': p.end_time.strftime('%H:%M')
+        } for p in periods])
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        try:
+            # Check if period number already exists
+            existing = TimetablePeriod.query.filter_by(
+                timetable_id=data['timetable_id'],
+                period_number=data['period_number']
+            ).first()
+            if existing:
+                return jsonify({'error': 'Period number already exists'}), 400
+            
+            period = TimetablePeriod(
+                timetable_id=data['timetable_id'],
+                period_number=data['period_number'],
+                start_time=datetime.strptime(data['start_time'], '%H:%M').time(),
+                end_time=datetime.strptime(data['end_time'], '%H:%M').time()
+            )
+            db.session.add(period)
+            db.session.commit()
+            return jsonify({'id': period.id, 'message': 'Period created'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+    
+    elif request.method == 'DELETE':
+        period_id = request.args.get('id', type=int)
+        period = TimetablePeriod.query.get_or_404(period_id)
+        db.session.delete(period)
+        db.session.commit()
+        return jsonify({'message': 'Period deleted'})
+
+
+@app.route('/admin/timetable/api/entries', methods=['GET', 'POST', 'DELETE'])
+@role_required(['admin'])
+@school_active_required
+def api_timetable_entries():
+    """API for managing timetable entries"""
+    if request.method == 'GET':
+        timetable_id = request.args.get('timetable_id', type=int)
+        class_id = request.args.get('class_id', type=int)          # optional filter
+        query = TimetableEntry.query.filter_by(timetable_id=timetable_id)
+        if class_id:
+            query = query.filter_by(class_id=class_id)
+        entries = query.all()
+        return jsonify([{
+            'id': e.id,
+            'period_id': e.period_id,
+            'day_of_week': e.day_of_week,
+            'class_id': e.class_id,
+            'class_name': e.class_.name if e.class_ else '',
+            'teacher_id': e.teacher_id,
+            'teacher_name': e.teacher.full_name if e.teacher else '',
+            'subject': e.subject,
+            'room': e.room
+        } for e in entries])
+
+    elif request.method == 'POST':
+        data = request.get_json()
+        try:
+            # Check if entry already exists for this period and day
+            existing = TimetableEntry.query.filter_by(
+                timetable_id=data['timetable_id'],
+                period_id=data['period_id'],
+                day_of_week=data['day_of_week']
+            ).first()
+
+            if existing:
+                # Update existing entry
+                existing.class_id = data['class_id']
+                existing.teacher_id = data['teacher_id']
+                existing.subject = data['subject']
+                existing.room = data.get('room', '')
+                db.session.commit()
+                return jsonify({'id': existing.id, 'message': 'Entry updated'})
+            else:
+                entry = TimetableEntry(
+                    timetable_id=data['timetable_id'],
+                    period_id=data['period_id'],
+                    day_of_week=data['day_of_week'],
+                    class_id=data['class_id'],
+                    teacher_id=data['teacher_id'],
+                    subject=data['subject'],
+                    room=data.get('room', '')
+                )
+                db.session.add(entry)
+                db.session.commit()
+                return jsonify({'id': entry.id, 'message': 'Entry created'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+
+    elif request.method == 'DELETE':
+        entry_id = request.args.get('id', type=int)
+        entry = TimetableEntry.query.get_or_404(entry_id)
+        db.session.delete(entry)
+        db.session.commit()
+        return jsonify({'message': 'Entry deleted'})
+
+
+@app.route('/admin/timetable/api/classes')
+@role_required(['admin'])
+@school_active_required
+def api_timetable_classes():
+    """Get classes for current session"""
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    classes = Class.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=view_session.id,
+        is_active=True
+    ).all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in classes])
+
+
+@app.route('/admin/timetable/api/teachers')
+@role_required(['admin'])
+@school_active_required
+def api_timetable_teachers():
+    """Get teachers for current school"""
+    teachers = User.query.filter_by(
+        school_id=current_user.school_id,
+        role='teacher',
+        is_active=True
+    ).all()
+    return jsonify([{'id': t.id, 'name': t.full_name} for t in teachers])
 
 # ==================== FEE MANAGEMENT MODELS ====================
 
@@ -2487,7 +2762,7 @@ def fee_dashboard():
     ).all()
     
     # Calculate comprehensive statistics
-    stats = {
+    fee_stats = {
         'total_fees': sum([f.fee_amount for f in student_fees]),
         'total_paid': sum([f.paid_amount for f in student_fees]),
         'total_discount': sum([f.discount_amount for f in student_fees]),
@@ -2503,11 +2778,11 @@ def fee_dashboard():
     }
     
     # Calculate collection rate
-    total_net = stats['total_fees'] - stats['total_discount'] + stats['total_fine']
+    total_net = fee_stats['total_fees'] - fee_stats['total_discount'] + fee_stats['total_fine']
     if total_net > 0:
-        stats['collection_rate'] = (stats['total_paid'] / total_net) * 100
+        fee_stats['collection_rate'] = (fee_stats['total_paid'] / total_net) * 100
     else:
-        stats['collection_rate'] = 0
+        fee_stats['collection_rate'] = 0
     
     # Get real chart data
     monthly_collection = get_monthly_collection_data(current_user.school_id, view_session.id)
@@ -2522,7 +2797,7 @@ def fee_dashboard():
     
     return render_template('admin_fee_dashboard.html',
                          context=context,
-                         stats=stats,
+                         fee_stats=fee_stats,          # <-- renamed variable
                          class_distribution=class_collection,
                          recent_transactions=recent_transactions,
                          monthly_collection=monthly_collection,
@@ -4168,22 +4443,30 @@ def admin_dashboard():
         
         student_ids = [e.student_id for e in enrollments]
         
+        # Initialize variables with default values
+        class_total_fees = 0
+        class_total_paid = 0
+        class_total_discount = 0
+        class_total_fine = 0
+        class_total_net = 0
+        class_total_due = 0
+        class_collection_rate = 0
+
         if student_ids:
             class_fees = StudentFee.query.filter(
                 StudentFee.student_id.in_(student_ids),
                 StudentFee.session_id == view_session.id
             ).all()
             
-            class_total_fees = sum([f.fee_amount for f in class_fees]) if class_fees else 0
-            class_total_paid = sum([f.paid_amount for f in class_fees]) if class_fees else 0
-            class_total_discount = sum([f.discount_amount for f in class_fees]) if class_fees else 0
-            class_total_fine = sum([f.fine_amount for f in class_fees]) if class_fees else 0
-            class_total_net = class_total_fees - class_total_discount + class_total_fine
-            class_total_due = max(0, class_total_net - class_total_paid)
-            class_collection_rate = (class_total_paid / class_total_net * 100) if class_total_net > 0 else 0
-        else:
-            class_collection_rate = 0
-        
+            if class_fees:
+                class_total_fees = sum(f.fee_amount for f in class_fees)
+                class_total_paid = sum(f.paid_amount for f in class_fees)
+                class_total_discount = sum(f.discount_amount for f in class_fees)
+                class_total_fine = sum(f.fine_amount for f in class_fees)
+                class_total_net = class_total_fees - class_total_discount + class_total_fine
+                class_total_due = max(0, class_total_net - class_total_paid)
+                class_collection_rate = (class_total_paid / class_total_net * 100) if class_total_net > 0 else 0
+
         class_distribution.append({
             'class': class_obj,
             'total_fees': class_total_fees,
@@ -6429,15 +6712,3 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-
-
-
-
-
-
-
-
-
-
-
-
