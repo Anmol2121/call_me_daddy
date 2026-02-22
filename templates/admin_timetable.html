@@ -1,0 +1,774 @@
+{% extends "base.html" %}
+{% block title %}Professional Timetable{% endblock %}
+{% block header %}Class Timetable{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}" class="text-decoration-none text-muted">Dashboard</a></li>
+<li class="breadcrumb-item active fw-medium text-dark">Timetable</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0 px-lg-3 py-3 animate-fade-in">
+    
+    <div class="print-hide mb-3 bg-white rounded-3 shadow-sm border border-slate-200 overflow-hidden">
+        <div class="row g-0 align-items-center p-3">
+            <div class="col-lg-5 mb-3 mb-lg-0 border-end-lg border-slate-100 pe-lg-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-square bg-slate-50 border border-slate-200 text-primary rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                        <i class="far fa-calendar-alt fs-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-bolder text-slate-900 tracking-tight" style="font-size: 1.1rem;">{{ timetable.name }}</h4>
+                        <div class="d-flex align-items-center text-slate-500 font-xs fw-medium mt-1">
+                            <span class="text-primary bg-primary-subtle px-2 py-0 rounded border border-primary-subtle fw-bold me-2">{{ context.view_session.name }}</span>
+                            <i class="far fa-clock me-1"></i> {{ periods|length }} Periods
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-3 mb-lg-0 px-lg-3">
+                <div class="d-flex align-items-center gap-2">
+                    <label for="classSelector" class="form-label text-slate-500 fw-bold font-xs text-uppercase tracking-wide mb-0 text-nowrap">View Class:</label>
+                    <select class="form-select form-select-sm border-slate-200 shadow-sm fw-medium text-slate-700 focus-ring" id="classSelector" onchange="window.location.href = '?class_id=' + this.value" style="border-radius: 6px;">
+                        <option value="">-- Select a Class --</option>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}" {% if selected_class and selected_class.id == class.id %}selected{% endif %}>
+                            {{ class.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 ps-lg-3 d-flex justify-content-lg-end gap-2 mt-2 mt-lg-0 pt-2 pt-lg-0 border-top-sm border-slate-100">
+                <button class="btn btn-sm btn-white border border-slate-200 shadow-sm hover-elevate fw-bold text-slate-700 px-3" onclick="window.print()">
+                    <i class="fas fa-print me-1 text-primary"></i> Print
+                </button>
+                <button class="btn btn-sm btn-dark shadow-sm hover-elevate fw-bold px-3" data-bs-toggle="modal" data-bs-target="#addPeriodModal">
+                    <i class="fas fa-plus me-1"></i> Add Period
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printZone">
+        
+        <div class="print-watermark d-none d-print-block">OFFICIAL</div>
+
+        <div class="d-none d-print-flex justify-content-between align-items-end mb-2 pb-2" style="border-bottom: 2px solid #000; flex-shrink: 0;">
+            <div class="d-flex align-items-center gap-2">
+                <div style="width: 36px; height: 36px; border: 2px solid #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #fff;">
+                    <i class="fas fa-university" style="font-size: 14pt; color: #000;"></i>
+                </div>
+                <div>
+                    <h1 class="fw-bolder m-0" style="color: #000; font-family: 'Times New Roman', serif; font-size: 14pt; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Institution Name
+                    </h1>
+                    <p class="m-0 fw-bold" style="color: #475569; font-size: 7.5pt; letter-spacing: 1px; text-transform: uppercase;">
+                        Official Master Schedule
+                    </p>
+                </div>
+            </div>
+            <div class="text-end">
+                <h4 class="m-0 fw-bolder" style="color: #000; font-size: 11pt; text-transform: uppercase;">{{ selected_class.name if selected_class else timetable.name }}</h4>
+                <p class="m-0 fw-bold" style="color: #475569; font-size: 7.5pt;">Session: {{ context.view_session.name }}</p>
+            </div>
+        </div>
+
+        {% if selected_class %}
+        <div class="card border border-slate-200 shadow-sm rounded-3 overflow-hidden bg-white print-card-reset">
+            <div class="card-body p-0 d-flex flex-column h-100 print-card-reset">
+                <div class="table-responsive custom-scrollbar print-table-wrapper" style="max-height: calc(100vh - 220px); overflow-y: auto;">
+                    <table class="table timetable-table mb-0 h-100">
+                        <thead class="sticky-top z-1 print-thead glass-header shadow-sm">
+                            <tr>
+                                <th class="period-col text-slate-500 fw-bold text-uppercase font-xs tracking-wide align-middle text-center print-header-cell border-bottom border-slate-200" style="width: 100px;">
+                                    <i class="far fa-clock me-1 print-hide"></i> Time
+                                </th>
+                                {% for day in day_info %}
+                                <th class="text-center day-col align-middle print-header-cell border-bottom border-slate-200 py-2">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <span class="day-name text-slate-900 fw-bold" style="font-size: 0.9rem;">{{ day.name }}</span>
+                                        <span class="day-date text-slate-400 print-hide" style="font-size: 0.65rem; font-weight: 500;">{{ day.date }}</span>
+                                    </div>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for period in periods %}
+                            <tr class="animate-row" style="animation-delay: {{ loop.index0 * 0.03 }}s;">
+                                <td class="period-info-cell bg-slate-50 align-middle print-time-cell border-end border-bottom border-slate-200 p-2">
+                                    <div class="period-card position-relative text-center">
+                                        <div class="text-slate-400 fw-bold text-uppercase tracking-wide mb-1 print-text-dark" style="font-size: 0.65rem;">
+                                            <span class="period-number">Period {{ period.period_number }}</span>
+                                        </div>
+                                        <div class="period-time-badge text-slate-800 fw-bold print-time-text bg-white border border-slate-200 shadow-sm rounded-pill px-2 py-1 d-inline-block" style="font-size: 0.7rem;">
+                                            {{ period.start_time.strftime('%H:%M') }} 
+                                            <span class="mx-1 text-slate-300 fw-normal print-hide">-</span> 
+                                            <span class="d-none d-print-inline text-slate-600 fw-normal px-1">-</span>
+                                            {{ period.end_time.strftime('%H:%M') }}
+                                        </div>
+                                        <button class="btn-delete-period print-hide shadow-sm bg-white text-danger" data-period-id="{{ period.id }}" title="Delete period">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </td>
+
+                                {% for day in day_info %}
+                                {% set day_idx = loop.index0 %}
+                                {% set entry = entries|selectattr('period_id', 'equalto', period.id)|selectattr('day_of_week', 'equalto', day_idx)|first %}
+
+                                <td class="timetable-cell border-end border-bottom border-slate-200 {% if entry %}has-entry{% endif %} print-data-cell"
+                                    data-period-id="{{ period.id }}"
+                                    data-day="{{ day_idx }}"
+                                    data-entry-id="{{ entry.id if entry else '' }}"
+                                    tabindex="0"
+                                    role="button"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editEntryModal">
+
+                                    {% if entry %}
+                                        {% set border_colors = ['#4f46e5', '#059669', '#ea580c', '#e11d48', '#7c3aed'] %}
+                                        {% set bg_colors =     ['#eef2ff', '#ecfdf5', '#fff7ed', '#fff1f2', '#f5f3ff'] %}
+                                        {% set color_idx = loop.index % 5 %}
+
+                                        <div class="entry-card d-flex flex-column h-100 print-entry-card" style="background-color: {{ bg_colors[color_idx] }}; border-left: 3px solid {{ border_colors[color_idx] }};">
+                                            <div class="d-flex justify-content-center align-items-center mb-1 print-mb-0">
+                                                <span class="subject-title fw-bold text-center print-subject text-truncate w-100" style="color: {{ border_colors[color_idx] }};" title="{{ entry.subject }}">
+                                                    {{ entry.subject }}
+                                                </span>
+                                            </div>
+                                            <div class="entry-details d-flex flex-column align-items-center mt-auto print-gap-0">
+                                                <div class="detail-item text-slate-700 fw-bold print-class" title="{{ entry.class_.name }}">
+                                                    {{ entry.class_.name }}
+                                                </div>
+                                                <div class="detail-item text-slate-600 text-center print-teacher" title="{{ entry.teacher.full_name }}">
+                                                    <i class="far fa-user text-slate-400 me-1 print-hide" style="font-size: 0.65rem;"></i> {{ entry.teacher.full_name }}
+                                                </div>
+                                                {% if entry.room %}
+                                                <div class="detail-item text-slate-500 print-hide mt-1" title="{{ entry.room }}">
+                                                    <span class="bg-white px-1 rounded border border-slate-200" style="font-size: 0.65rem;"><i class="fas fa-map-marker-alt text-slate-400 me-1"></i> {{ entry.room }}</span>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="entry-actions-glass print-hide">
+                                                <button class="action-icon edit shadow-sm" title="Edit"><i class="fas fa-pen"></i></button>
+                                                <button class="action-icon delete btn-delete-entry shadow-sm" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-cell w-100 h-100 rounded-2 print-hide-empty">
+                                            <div class="empty-action-btn print-hide">
+                                                <i class="fas fa-plus mb-1 d-block text-slate-400"></i>
+                                                <span class="fw-bold" style="font-size: 0.65rem;">Assign</span>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+
+                            {% if loop.index == 4 and loop.length > 4 %}
+                            <tr class="lunch-break-row animate-row" style="animation-delay: 0.2s;">
+                                <td colspan="{{ day_info|length + 1 }}" class="align-middle text-center print-lunch-cell lunch-bg border-bottom border-slate-200 py-1 py-print-0">
+                                    <div class="d-inline-flex align-items-center bg-white px-3 py-0 rounded-pill border border-slate-200 shadow-sm lunch-pill print-lunch-pill">
+                                        <i class="fas fa-utensils text-slate-400 me-2 print-hide" style="font-size: 0.7rem;"></i>
+                                        <span class="fw-bold text-slate-500 text-uppercase tracking-wide print-lunch-text" style="font-size: 0.65rem; letter-spacing: 0.15em;">Lunch Break</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+
+                            {% else %}
+                            <tr class="print-hide">
+                                <td colspan="7" class="text-center py-5 bg-slate-50 border-0">
+                                    <div class="empty-state d-flex flex-column align-items-center justify-content-center py-5">
+                                        <div class="icon-circle bg-white border border-slate-200 mb-3 d-flex align-items-center justify-content-center text-slate-300 shadow-sm" style="width: 60px; height: 60px; border-radius: 50%;">
+                                            <i class="far fa-calendar-plus text-slate-400 fs-3"></i>
+                                        </div>
+                                        <h6 class="fw-bold text-slate-800 tracking-tight">No Schedule Defined</h6>
+                                        <p class="text-slate-500 mb-0" style="font-size: 0.8rem;">Use the quick-add tool below to define your first period slot.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                            <tr class="add-period-row bg-white print-hide">
+                                <td colspan="7" class="p-2 border-0 border-top border-slate-200 bg-slate-50">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-center gap-2">
+                                        <div class="text-slate-500 fw-bold text-uppercase tracking-wide me-2 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm" style="font-size: 0.7rem;"><i class="fas fa-bolt text-warning me-1"></i> Quick Add</div>
+                                        <div class="input-group input-group-sm shadow-sm rounded-2" style="max-width: 100px;">
+                                            <span class="input-group-text bg-white border-slate-200 text-slate-500 fw-bold">#</span>
+                                            <input type="number" class="form-control border-slate-200 shadow-none bg-white" id="inlinePeriodNumber" placeholder="No." min="1">
+                                        </div>
+                                        <div class="input-group input-group-sm shadow-sm rounded-2" style="max-width: 120px;">
+                                            <span class="input-group-text bg-white border-slate-200 text-slate-500"><i class="far fa-clock"></i></span>
+                                            <input type="time" class="form-control border-slate-200 shadow-none bg-white" id="inlineStartTime">
+                                        </div>
+                                        <span class="text-slate-400 fw-bold"><i class="fas fa-arrow-right" style="font-size: 0.7rem;"></i></span>
+                                        <div class="input-group input-group-sm shadow-sm rounded-2" style="max-width: 120px;">
+                                            <span class="input-group-text bg-white border-slate-200 text-slate-500"><i class="far fa-clock"></i></span>
+                                            <input type="time" class="form-control border-slate-200 shadow-none bg-white" id="inlineEndTime">
+                                        </div>
+                                        <button class="btn btn-dark btn-sm px-3 shadow-sm fw-bold hover-elevate rounded-2" id="inlineAddPeriodBtn" style="font-size: 0.8rem;">
+                                            Save Slot
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card border border-slate-200 shadow-sm rounded-4 overflow-hidden bg-white text-center py-5">
+            <div class="card-body py-5 my-3">
+                <div class="icon-circle bg-slate-50 border border-slate-200 mx-auto mb-4 d-flex align-items-center justify-content-center text-primary shadow-sm" style="width: 60px; height: 60px; border-radius: 50%;">
+                    <i class="fas fa-hand-pointer fs-2"></i>
+                </div>
+                <h5 class="fw-bold text-slate-900 tracking-tight">Select a Class First</h5>
+                <p class="text-slate-500 mb-0 font-sm max-w-sm mx-auto">Use the dropdown menu at the top of the page to choose a class and manage its specific timetable.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="d-none d-print-flex justify-content-between align-items-end mt-2 pt-1" style="flex-shrink: 0;">
+            <div>
+                <p class="m-0 fw-bold" style="color: #000; font-size: 6pt;">DOCUMENT GENERATED BY SYSTEM ADMIN</p>
+                <p class="m-0" style="color: #475569; font-size: 6pt;" id="printTimestamp"></p>
+            </div>
+            <div style="width: 180px; text-align: center;">
+                <div style="border-bottom: 1px solid #000; height: 15px; margin-bottom: 3px;"></div>
+                <p class="m-0 fw-bold text-uppercase" style="color: #000; font-size: 6pt;">Authorized Signature</p>
+            </div>
+        </div>
+    </div> </div>
+
+<div class="modal fade" id="addPeriodModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-white">
+                <h6 class="modal-title fw-bold text-slate-900"><i class="fas fa-clock me-2 text-primary"></i> Create Time Slot</h6>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-slate-50">
+                <form id="addPeriodForm">
+                    <div class="mb-3">
+                        <label class="form-label text-slate-700 fw-bold font-xs text-uppercase tracking-wide">Period Number</label>
+                        <input type="number" class="form-control form-control-sm bg-white border-slate-200 shadow-sm focus-ring" id="modalPeriodNumber" min="1" placeholder="e.g. 1" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label text-slate-700 fw-bold font-xs text-uppercase tracking-wide">Start</label>
+                            <input type="time" class="form-control form-control-sm bg-white border-slate-200 shadow-sm focus-ring" id="modalStartTime" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-slate-700 fw-bold font-xs text-uppercase tracking-wide">End</label>
+                            <input type="time" class="form-control form-control-sm bg-white border-slate-200 shadow-sm focus-ring" id="modalEndTime" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top px-4 py-2 bg-white">
+                <button type="button" class="btn btn-sm btn-white border border-slate-200 fw-bold text-slate-600" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-dark px-4 fw-bold shadow-sm" id="savePeriodBtn">Save Slot</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editEntryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-white">
+                <h6 class="modal-title fw-bold text-slate-900" id="modalActionTitle"><i class="fas fa-edit me-2 text-primary"></i> Assign Schedule</h6>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-slate-50">
+                <form id="editEntryForm">
+                    <input type="hidden" id="entryPeriodId">
+                    <input type="hidden" id="entryDay">
+                    <input type="hidden" id="entryClassId" value="{{ selected_class.id if selected_class else '' }}">
+
+                    <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-white rounded-2 border border-slate-200 shadow-sm">
+                        <div class="icon-square bg-slate-50 border border-slate-200 text-slate-600 rounded-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="far fa-calendar-alt fs-6"></i>
+                        </div>
+                        <div>
+                            <div class="text-slate-900 fw-bold fs-6" id="entryDayDisplay" style="line-height: 1;">Monday</div>
+                            <div class="text-slate-500 font-xs fw-bold text-uppercase tracking-wide mt-1" id="entryPeriodDisplay">Period 1</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label text-slate-700 fw-bold font-xs text-uppercase tracking-wide">Class</label>
+                            <input type="text" class="form-control form-control-sm bg-slate-100 border-slate-200 text-slate-600 fw-medium" value="{{ selected_class.name if selected_class else '' }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-slate-700 fw-bold font-xs text-uppercase tracking-wide">Teacher</label>
+                            <select class="form-select form-select-sm bg-white border-slate-200 shadow-sm focus-ring" id="entryTeacher" required>
+                                <option value="" selected disabled>Select Teacher</option>
+                                {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}">{{ teacher.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-slate-700 fw-bold font-xs text-uppercase tracking-wide">Subject</label>
+                            <input type="text" class="form-control form-control-sm bg-white border-slate-200 shadow-sm focus-ring" id="entrySubject" placeholder="e.g. Mathematics" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label text-slate-700 fw-bold font-xs text-uppercase tracking-wide">Room <span class="fw-normal text-slate-400">(Optional)</span></label>
+                            <div class="input-group input-group-sm shadow-sm rounded-2">
+                                <span class="input-group-text bg-white border-slate-200 text-slate-400"><i class="fas fa-door-open"></i></span>
+                                <input type="text" class="form-control bg-white border-slate-200 shadow-none focus-ring" id="entryRoom" placeholder="e.g. Room 204">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top px-4 py-2 bg-white d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold d-none hover-elevate" id="deleteEntryBtn">
+                    <i class="fas fa-trash-alt me-1"></i> Remove
+                </button>
+                <div class="ms-auto">
+                    <button type="button" class="btn btn-sm btn-white border border-slate-200 fw-bold text-slate-600 me-2" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-dark px-4 fw-bold shadow-sm hover-elevate" id="saveEntryBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-4 print-hide" style="z-index: 1060;">
+    <div id="liveToast" class="toast border-0 shadow-lg rounded-3 overflow-hidden" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-body d-flex align-items-center p-3 bg-white border border-slate-200">
+            <div id="toastIcon" class="me-3 fs-5"></div>
+            <div>
+                <h6 class="mb-0 fw-bold text-slate-900" id="toastTitle" style="font-size: 0.9rem;">Notification</h6>
+                <div class="text-slate-500 font-sm mt-1" id="toastMessage" style="font-size: 0.8rem;"></div>
+            </div>
+            <button type="button" class="btn-close ms-auto shadow-none" data-bs-dismiss="toast" style="font-size: 0.7rem;"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* High Density SaaS Color Palette */
+    :root {
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-300: #cbd5e1;
+        --slate-400: #94a3b8;
+        --slate-500: #64748b;
+        --slate-600: #475569;
+        --slate-700: #334155;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a;
+    }
+
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8fafc; }
+    
+    /* Utilities */
+    .bg-slate-50 { background-color: var(--slate-50) !important; }
+    .bg-slate-100 { background-color: var(--slate-100) !important; }
+    .border-slate-100 { border-color: var(--slate-100) !important; }
+    .border-slate-200 { border-color: var(--slate-200) !important; }
+    .text-slate-300 { color: var(--slate-300) !important; }
+    .text-slate-400 { color: var(--slate-400) !important; }
+    .text-slate-500 { color: var(--slate-500) !important; }
+    .text-slate-600 { color: var(--slate-600) !important; }
+    .text-slate-700 { color: var(--slate-700) !important; }
+    .text-slate-800 { color: var(--slate-800) !important; }
+    .text-slate-900 { color: var(--slate-900) !important; }
+    
+    .tracking-tight { letter-spacing: -0.025em; }
+    .tracking-wide { letter-spacing: 0.05em; }
+    .font-xs { font-size: 0.7rem; }
+    .font-sm { font-size: 0.8rem; }
+    
+    .btn-white { background-color: white; color: var(--slate-700); }
+    .btn-white:hover { background-color: var(--slate-50); color: var(--slate-900); }
+    
+    .border-end-lg { border-right: 1px solid var(--slate-200); }
+    @media (max-width: 991px) { .border-end-lg { border-right: none; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem; } .border-top-sm { border-top: 1px solid var(--slate-100); } }
+
+    /* Animations */
+    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    .animate-row { opacity: 0; animation: slideUpFade 0.2s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUpFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .hover-elevate { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-elevate:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important; }
+
+    /* Forms */
+    .focus-ring:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important; outline: none; }
+
+    /* Glass Header */
+    .glass-header {
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Web Grid Layout - High Density */
+    .timetable-table { table-layout: fixed; width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; }
+    .timetable-table th { padding: 0.6rem 0.5rem; }
+    .period-col { width: 105px; } /* Slimmer time column */
+    
+    /* Strict Web Borders */
+    .timetable-table td, .timetable-table th {
+        border-right: 1px solid var(--slate-200);
+        border-bottom: 1px solid var(--slate-200);
+    }
+    .timetable-table tr td:last-child, .timetable-table tr th:last-child { border-right: none; }
+    .timetable-table tr:last-child td { border-bottom: none; }
+    
+    /* Compact Cells */
+    .timetable-cell { height: 105px; padding: 0.35rem !important; transition: background-color 0.2s ease; vertical-align: top; position: relative; }
+    .timetable-cell:not(.has-entry):hover { cursor: pointer; }
+
+    /* Empty State Interactive */
+    .empty-cell { border: 1.5px dashed transparent; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
+    .empty-action-btn { color: var(--slate-400); text-align: center; transform: scale(0.95); opacity: 0; transition: all 0.2s ease; }
+    .timetable-cell:not(.has-entry):hover .empty-cell { background-color: white; border-color: var(--slate-300); }
+    .timetable-cell:not(.has-entry):hover .empty-action-btn { opacity: 1; transform: scale(1); color: var(--slate-800); }
+
+    /* Web Enterprise Cards - Compact */
+    .entry-card {
+        border-radius: 6px; padding: 0.5rem; 
+        position: relative; overflow: hidden; 
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .timetable-cell:hover .entry-card { 
+        transform: translateY(-2px); 
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); 
+    }
+
+    .subject-title { font-size: 0.85rem; letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 0.25rem !important;}
+    .detail-item { font-size: 0.7rem; display: flex; align-items: center; gap: 0.25rem; justify-content: center; line-height: 1.2;}
+    .detail-item i { width: 12px; text-align: center; }
+
+    /* Striped Lunch Break */
+    .lunch-bg { background-color: var(--slate-50) !important; position: relative; }
+    .lunch-bg::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: repeating-linear-gradient(-45deg, rgba(203, 213, 225, 0.15), rgba(203, 213, 225, 0.15) 8px, transparent 8px, transparent 16px);
+        z-index: 0;
+    }
+    .lunch-pill { position: relative; z-index: 1; }
+
+    /* Action Buttons Hover */
+    .btn-delete-period {
+        position: absolute; top: 50%; right: -0.75rem; transform: translateY(-50%) scale(0.9);
+        border: 1px solid var(--slate-200); border-radius: 50%; width: 24px; height: 24px;
+        display: flex; align-items: center; justify-content: center; font-size: 0.7rem; opacity: 0; transition: all 0.2s ease; z-index: 10;
+    }
+    .period-info-cell:hover .btn-delete-period { opacity: 1; right: -0.25rem; transform: translateY(-50%) scale(1); }
+    .btn-delete-period:hover { background: #ef4444 !important; color: white !important; border-color: #ef4444; }
+
+    .entry-actions-glass {
+        position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+        display: flex; align-items: center; justify-content: center; gap: 0.4rem; opacity: 0; transition: opacity 0.2s ease; border-radius: 0 6px 6px 0;
+    }
+    .entry-card:hover .entry-actions-glass { opacity: 1; }
+    .action-icon { background: white; border: 1px solid var(--slate-200); color: var(--slate-700); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition: all 0.2s ease; }
+    .action-icon.edit:hover { background: var(--slate-900); color: white; border-color: var(--slate-900); transform: scale(1.1); }
+    .action-icon.delete:hover { background: #ef4444; color: white; border-color: #ef4444; transform: scale(1.1); }
+
+    /* Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 10px; }
+
+
+    /* ========================================= */
+    /* 🖨️ FLAWLESS BORDER 1-PAGE PRINT CSS 🖨️ */
+    /* ========================================= */
+    @media print {
+        @page { size: A4 landscape; margin: 6mm; } 
+        
+        html, body { height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; background-color: white !important; }
+        body * { visibility: hidden !important; }
+        #printZone, #printZone * { visibility: visible !important; }
+        
+        #printZone {
+            position: absolute !important; left: 0 !important; top: 0 !important;
+            width: 100% !important; height: auto !important; 
+            margin: 0 !important; padding: 0 !important; display: block !important; 
+        }
+
+        .print-hide { display: none !important; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        
+        /* Official Background Watermark */
+        .print-watermark {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 60pt; color: rgba(203, 213, 225, 0.2); font-weight: 900; z-index: -1;
+            white-space: nowrap; pointer-events: none;
+        }
+
+        .print-card-reset { display: block !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; }
+        .print-table-wrapper { overflow: visible !important; max-height: none !important; height: auto !important; margin:0!important; padding:0!important; }
+        
+        /* Strict Borders */
+        #printZone .timetable-table {
+            height: auto !important; width: 100% !important; table-layout: fixed !important; 
+            border-collapse: separate !important; border-spacing: 0 !important;
+            border: 2px solid #000 !important; margin: 0 !important;
+        }
+        
+        #printZone .timetable-table td, 
+        #printZone .timetable-table th { 
+            border: none !important; 
+            border-bottom: 1px solid #000 !important; 
+            border-right: 1px solid #000 !important;  
+            word-wrap: break-word !important; 
+        }
+
+        #printZone .timetable-table tr:last-child td { border-bottom: none !important; }
+        #printZone .timetable-table th:last-child,
+        #printZone .timetable-table td:last-child { border-right: none !important; }
+        
+        .print-thead th { background-color: #f1f5f9 !important; color: #000 !important; font-size: 8pt !important; padding: 4px !important; text-transform: uppercase !important; }
+        .timetable-cell { height: auto !important; padding: 2px !important; vertical-align: middle !important; }
+        
+        .print-time-cell { padding: 2px !important; background-color: #f8fafc !important; text-align: center !important; border-right: 2px solid #000 !important; }
+        
+        .print-entry-card { padding: 1px !important; border: none !important; box-shadow: none !important; transform: none !important; height: 100% !important; background-color: transparent !important; border-left: 3px solid var(--border-color) !important;}
+
+        /* Lunch compact */
+        .lunch-break-row { height: 1px !important; } 
+        .print-lunch-cell { padding: 1px !important; height: 10px !important; background: #e2e8f0 !important; border-top: 2px solid #000 !important; border-bottom: 2px solid #000 !important; }
+        .lunch-bg::before { display: none !important; }
+        .print-lunch-pill { border: none !important; padding: 0 !important; box-shadow: none !important; background: transparent !important; }
+        .print-lunch-text { color: #000 !important; font-weight: 900 !important; letter-spacing: 0.1em !important; font-size: 7pt !important;}
+        .py-print-0 { padding-top: 0 !important; padding-bottom: 0 !important; }
+        
+        /* Typography */
+        .print-subject { font-size: 7.5pt !important; font-weight: 900 !important; margin-bottom: 1px !important; color: #000 !important; text-transform: uppercase;}
+        .print-class { font-size: 7pt !important; font-weight: 700 !important; color: #000 !important; }
+        .print-teacher { font-size: 6.5pt !important; color: #000 !important; font-style: italic;}
+        .day-name { font-size: 8pt !important; color: #000 !important; margin: 0 !important;}
+        .print-text-dark { color: #000 !important; font-size: 7pt !important; margin-bottom: 0!important;}
+        .print-time-text { font-size: 6.5pt !important; color: #000 !important; display: block !important; margin-top: 1px !important; border: none !important; padding: 0 !important;}
+        
+        .print-gap-0 { gap: 0px !important; }
+        .print-mb-0 { margin-bottom: 1px !important; }
+        .print-hide-empty { border: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const timetableId = {{ timetable.id }};
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // Format print timestamp
+        const now = new Date();
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit' };
+        document.getElementById('printTimestamp').textContent = `Generated on ${now.toLocaleDateString('en-US', dateOptions)} at ${now.toLocaleTimeString('en-US', timeOptions)}`;
+
+        function showToast(title, message, type = 'info') {
+            const toastEl = document.getElementById('liveToast');
+            const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
+            const iconEl = document.getElementById('toastIcon');
+            const titleEl = document.getElementById('toastTitle');
+            const msgEl = document.getElementById('toastMessage');
+            if (type === 'success') {
+                iconEl.innerHTML = '<div class="icon-square bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;"><i class="fas fa-check font-sm"></i></div>';
+            } else if (type === 'danger') {
+                iconEl.innerHTML = '<div class="icon-square bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;"><i class="fas fa-exclamation font-sm"></i></div>';
+            } else if (type === 'warning') {
+                iconEl.innerHTML = '<div class="icon-square bg-warning-subtle text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;"><i class="fas fa-exclamation-triangle font-sm"></i></div>';
+            }
+            titleEl.innerText = title;
+            msgEl.innerText = message;
+            toast.show();
+        }
+
+        // Quick add period (inline)
+        document.getElementById('inlineAddPeriodBtn')?.addEventListener('click', function() {
+            const btn = this;
+            const periodNumber = document.getElementById('inlinePeriodNumber').value;
+            const startTime = document.getElementById('inlineStartTime').value;
+            const endTime = document.getElementById('inlineEndTime').value;
+            if (!periodNumber || !startTime || !endTime) {
+                showToast('Missing Details', 'Please fill all period details.', 'warning');
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            fetch('/admin/timetable/api/periods', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    timetable_id: timetableId,
+                    period_number: parseInt(periodNumber),
+                    start_time: startTime,
+                    end_time: endTime
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                showToast('Period Added', 'Time slot created.', 'success');
+                setTimeout(() => location.reload(), 800);
+            })
+            .catch(err => {
+                showToast('Error', err.message || 'Network error.', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = 'Save Slot';
+            });
+        });
+
+        // Delete period button
+        document.querySelector('.timetable-table')?.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('.btn-delete-period');
+            if (!deleteBtn) return;
+            e.preventDefault();
+            if (!confirm('Delete this period? All scheduled classes in this slot will be removed.')) return;
+            fetch(`/admin/timetable/api/periods?id=${deleteBtn.dataset.periodId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    showToast('Removed', 'Period deleted successfully.', 'success');
+                    setTimeout(() => location.reload(), 800);
+                })
+                .catch(err => showToast('Error', 'Could not delete period.', 'danger'));
+        });
+
+        // Open modal for editing/adding entry
+        const editModal = document.getElementById('editEntryModal');
+        const deleteEntryBtn = document.getElementById('deleteEntryBtn');
+        const modalActionTitle = document.getElementById('modalActionTitle');
+
+        editModal?.addEventListener('show.bs.modal', function(event) {
+            let cell = event.relatedTarget;
+            if (cell.classList.contains('action-icon')) {
+                cell = cell.closest('.timetable-cell');
+            }
+            const periodId = cell.dataset.periodId;
+            const day = cell.dataset.day;
+            const periodNumber = cell.closest('tr').querySelector('.period-number').innerText.replace('Period ', '');
+            const entryId = cell.dataset.entryId;
+
+            document.getElementById('entryPeriodId').value = periodId;
+            document.getElementById('entryDay').value = day;
+            document.getElementById('entryPeriodDisplay').innerText = `Period ${periodNumber}`;
+            document.getElementById('entryDayDisplay').innerText = days[day];
+
+            if (entryId) {
+                modalActionTitle.innerHTML = '<i class="fas fa-edit me-2 text-primary"></i> Edit Schedule';
+                deleteEntryBtn.classList.remove('d-none');
+                fetch(`/admin/timetable/api/entries?timetable_id=${timetableId}`)
+                    .then(res => res.json())
+                    .then(entries => {
+                        const entry = entries.find(e => e.id == entryId);
+                        if (entry) {
+                            document.getElementById('entryTeacher').value = entry.teacher_id;
+                            document.getElementById('entrySubject').value = entry.subject;
+                            document.getElementById('entryRoom').value = entry.room || '';
+                            editModal.dataset.entryId = entry.id;
+                        }
+                    });
+            } else {
+                modalActionTitle.innerHTML = '<i class="fas fa-plus-circle me-2 text-primary"></i> Assign Schedule';
+                deleteEntryBtn.classList.add('d-none');
+                document.getElementById('editEntryForm').reset();
+                delete editModal.dataset.entryId;
+            }
+        });
+
+        // Save entry
+        document.getElementById('saveEntryBtn')?.addEventListener('click', function() {
+            const btn = this;
+            const classId = document.getElementById('entryClassId').value;
+            if (!classId) {
+                showToast('No Class Selected', 'Please select a class from the dropdown above.', 'warning');
+                return;
+            }
+            const formObj = {
+                timetable_id: timetableId,
+                period_id: parseInt(document.getElementById('entryPeriodId').value),
+                day_of_week: parseInt(document.getElementById('entryDay').value),
+                class_id: parseInt(classId),
+                teacher_id: parseInt(document.getElementById('entryTeacher').value),
+                subject: document.getElementById('entrySubject').value.trim(),
+                room: document.getElementById('entryRoom').value.trim()
+            };
+
+            if (!formObj.teacher_id || !formObj.subject) {
+                showToast('Required Fields', 'Please fill out Teacher and Subject.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Saving...';
+
+            fetch('/admin/timetable/api/entries', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formObj)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                showToast('Success', 'Schedule updated.', 'success');
+                setTimeout(() => location.reload(), 800);
+            })
+            .catch(err => {
+                showToast('Error', err.message || 'Could not save entry.', 'danger');
+                btn.disabled = false;
+                btn.innerText = 'Save';
+            });
+        });
+
+        // Delete entry
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-delete-entry')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const cell = e.target.closest('.timetable-cell');
+                const entryId = cell.dataset.entryId;
+                deleteScheduleEntry(entryId);
+            }
+        });
+
+        document.getElementById('deleteEntryBtn')?.addEventListener('click', function() {
+            const entryId = document.getElementById('editEntryModal').dataset.entryId;
+            deleteScheduleEntry(entryId);
+        });
+
+        function deleteScheduleEntry(entryId) {
+            if (!entryId) return;
+            if (!confirm('Remove this schedule assignment?')) return;
+            fetch(`/admin/timetable/api/entries?id=${entryId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    showToast('Removed', 'Schedule entry cleared.', 'success');
+                    setTimeout(() => location.reload(), 800);
+                })
+                .catch(err => showToast('Error', 'Failed to remove entry.', 'danger'));
+        }
+    });
+</script>
+{% endblock %}
