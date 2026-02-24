@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Manage Subjects{% endblock %}
+{% block header %}Subjects{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Subjects</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('create_subject') }}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>New Subject
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <!-- Filter by class -->
+        <form method="GET" class="row mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Filter by Class</label>
+                <select name="class_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Classes</option>
+                    {% for cls in classes %}
+                    <option value="{{ cls.id }}" {% if selected_class == cls.id %}selected{% endif %}>
+                        {{ cls.name }} ({{ cls.code }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+
+        {% if subjects %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Subject Name</th>
+                        <th>Code</th>
+                        <th>Class</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subjects %}
+                    <tr>
+                        <td>{{ subject.name }}</td>
+                        <td>{{ subject.code or '—' }}</td>
+                        <td>{{ subject.class_.name }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-warning" disabled><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" disabled><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-book fa-4x text-muted opacity-25"></i>
+            <h5>No Subjects Added</h5>
+            <p>Add subjects for your classes.</p>
+            <a href="{{ url_for('create_subject') }}" class="btn btn-primary mt-3">Add Subject</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
