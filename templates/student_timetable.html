@@ -15,7 +15,7 @@
         --border-color: #f1f5f9;
     }
 
-    /* Overall Cleanliness */
+    /* --- Screen Styles --- */
     .timetable-wrapper {
         background: #f8fafc;
         border-radius: 1.25rem;
@@ -32,7 +32,6 @@
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
     }
 
-    /* Smaller Header Text */
     .tt-header-cell {
         background: #fafafa;
         padding: 0.75rem 0.5rem;
@@ -44,7 +43,7 @@
     .tt-header-cell .day-name {
         font-weight: 700;
         color: var(--text-main);
-        font-size: 0.7rem; /* Small & Professional */
+        font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 1.2px;
     }
@@ -55,7 +54,6 @@
         font-weight: 500;
     }
 
-    /* Minimalist Time Column */
     .tt-time-col {
         background: #fdfdfd;
         border-right: 1.5px solid #f1f5f9;
@@ -69,7 +67,6 @@
     .time-val { font-size: 0.65rem; font-weight: 700; }
     .time-sep { height: 10px; width: 1px; border-left: 1px solid #e2e8f0; margin: 2px 0; }
 
-    /* Compact Entry Styling */
     .tt-cell {
         min-height: 90px;
         padding: 5px;
@@ -90,13 +87,13 @@
 
     .subject-name {
         font-weight: 700;
-        font-size: 0.72rem; /* Reduced size */
+        font-size: 0.72rem;
         line-height: 1.2;
         margin-bottom: 3px;
     }
 
     .teacher-name {
-        font-size: 0.6rem; /* Micro text */
+        font-size: 0.6rem;
         font-weight: 500;
         opacity: 0.85;
         display: flex;
@@ -116,7 +113,6 @@
         margin-top: 4px;
     }
 
-    /* Stats bar micro-styling */
     .stat-pill {
         background: white;
         padding: 0.4rem 0.8rem;
@@ -128,6 +124,11 @@
         white-space: nowrap;
     }
 
+    /* Print-Only Elements Hidden on Screen */
+    .print-only-header, .print-only-footer {
+        display: none;
+    }
+
     @media (max-width: 992px) {
         .tt-grid { 
             grid-template-columns: 60px repeat({{ day_info|length }}, 150px); 
@@ -136,80 +137,111 @@
     }
 
     /* =========================================
-       PRINT STYLES FOR PROFESSIONAL OUTPUT
+       BEAUTIFUL PRINT STYLES
        ========================================= */
     @media print {
-        /* Set page size to landscape for better grid fitting */
         @page {
             size: landscape;
-            margin: 10mm;
+            margin: 12mm; /* Clean margins */
         }
 
-        /* Force browsers to print background colors and images */
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
-        /* Hide UI elements not needed on paper */
-        .breadcrumb, 
-        .btn-print, 
-        .clock-container,
-        nav, header, footer, .sidebar {
+        /* Hide entire web UI */
+        nav, header, footer, .sidebar, .breadcrumb, .screen-controls {
             display: none !important;
         }
 
-        /* Reset wrappers to remove shadows, margins, and scrolls */
         body {
             background: white !important;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            padding: 0 !important;
         }
 
+        /* --- Print Specific Layout --- */
+        .print-only-header {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .print-only-footer {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 10px;
+            margin-top: 20px;
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+
+        /* --- Table Print Optimization --- */
         .timetable-wrapper {
             background: transparent !important;
             padding: 0 !important;
-            border-radius: 0 !important;
-        }
-
-        .table-responsive {
-            overflow: visible !important;
         }
 
         .tt-grid {
             box-shadow: none !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 0 !important;
+            border: 2px solid #1e293b !important; /* Bold outer border */
+            border-radius: 0 !important; /* Square corners look more professional on paper */
             grid-template-columns: 60px repeat({{ day_info|length }}, 1fr) !important;
             width: 100% !important;
+            page-break-inside: avoid; /* Prevents breaking mid-row */
         }
 
-        /* Enhance border visibility for print */
+        /* Sharp inner borders for readability */
         .tt-header-cell, .tt-cell, .tt-time-col {
-            border-color: #cbd5e1 !important;
+            border-right: 1px solid #94a3b8 !important;
+            border-bottom: 1px solid #94a3b8 !important;
         }
 
         .tt-header-cell {
-            background-color: #f8fafc !important;
+            background-color: #f1f5f9 !important;
+            border-bottom: 2px solid #1e293b !important; /* Distinct header line */
         }
 
-        /* Adjust text colors to ensure readability on paper */
-        .subject-name { color: #000 !important; }
+        /* Make sure subjects and teachers are dark enough */
+        .subject-name { color: #000 !important; font-size: 0.8rem; }
         .teacher-name { color: #333 !important; }
-        .tt-header-cell .day-name { color: #000 !important; }
-        .text-dark { color: #000 !important; }
+        .tt-header-cell .day-name { color: #000 !important; font-size: 0.8rem; }
+        
+        .tt-entry {
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            border-radius: 0.3rem !important; /* Slight rounding internally */
+        }
     }
 </style>
 
 <div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+    
+    <div class="print-only-header">
         <div>
-            <h6 class="fw-bold text-dark mb-0 print-title" style="letter-spacing: -0.5px;">{{ class_name }} - Timetable</h6>
+            <h2 class="fw-bold mb-1" style="color: #1e293b; font-size: 1.5rem; letter-spacing: -0.5px;">Official Timetable</h2>
+            <p class="mb-0" style="color: #64748b; font-size: 0.9rem;"><strong>Class:</strong> {{ class_name }} | <strong>Session:</strong> {{ context.current_session.name }}</p>
+        </div>
+        <div class="text-end">
+            <i class="fas fa-graduation-cap" style="font-size: 2rem; color: #1e293b;"></i>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 px-1 screen-controls">
+        <div>
+            <h6 class="fw-bold text-dark mb-0" style="letter-spacing: -0.5px;">{{ class_name }}</h6>
             <p class="text-muted mb-0" style="font-size: 0.6rem;">Academic Session: {{ context.current_session.name }}</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-dark btn-print" onclick="window.print()" style="font-size: 0.75rem; border-radius: 0.5rem;">
-                <i class="fas fa-print me-1"></i> Print
+            <button class="btn btn-sm btn-dark" onclick="window.print()" style="font-size: 0.75rem; border-radius: 0.5rem; padding: 0.4rem 0.8rem;">
+                <i class="fas fa-print me-1"></i> Print Timetable
             </button>
-            <div class="stat-pill clock-container"><i class="far fa-clock me-1 text-primary"></i> <span id="live-clock">00:00</span></div>
+            <div class="stat-pill"><i class="far fa-clock me-1 text-primary"></i> <span id="live-clock">00:00</span></div>
         </div>
     </div>
 
@@ -267,6 +299,11 @@
             </div>
         </div>
     </div>
+
+    <div class="print-only-footer">
+        <div>Generated by School Management System</div>
+        <div><strong>Date Printed:</strong> <span id="print-date"></span></div>
+    </div>
 </div>
 
 <script>
@@ -276,6 +313,10 @@
         const clockElem = document.getElementById('live-clock');
         if(clockElem) clockElem.innerText = timeStr;
     }
+    
+    // Set the date in the print footer when page loads
+    document.getElementById('print-date').innerText = new Date().toLocaleDateString();
+
     setInterval(updateClock, 1000);
     updateClock();
 </script>
