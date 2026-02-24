@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Grading Scales{% endblock %}
+{% block header %}Grading Scales{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Grading Scales</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">Add New Grade</div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.grade.label(class="form-label") }}
+                        {{ form.grade(class="form-control") }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.min_percentage.label(class="form-label") }}
+                            {{ form.min_percentage(class="form-control", step="0.01") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.max_percentage.label(class="form-label") }}
+                            {{ form.max_percentage(class="form-control", step="0.01") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control") }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Grade</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">Existing Grades</div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Grade</th>
+                            <th>Range</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scale in scales %}
+                        <tr>
+                            <td><strong>{{ scale.grade }}</strong></td>
+                            <td>{{ scale.min_percentage }}% - {{ scale.max_percentage }}%</td>
+                            <td>{{ scale.description or '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
