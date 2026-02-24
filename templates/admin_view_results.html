@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Results - {{ exam.name }}{% endblock %}
+{% block header %}Results: {{ exam.name }} ({{ exam.class_.name }}){% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_exams') }}">Exams</a></li>
+<li class="breadcrumb-item active">Results</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('enter_marks', exam_id=exam.id) }}" class="btn btn-outline-primary">
+    <i class="fas fa-edit me-2"></i>Edit Marks
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Roll No.</th>
+                        <th>Student Name</th>
+                        {% for subject in subjects %}
+                        <th>{{ subject.name }}<br><small>Marks</small></th>
+                        <th><small>Max</small></th>
+                        <th><small>Grade</small></th>
+                        {% endfor %}
+                        <th>Total</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in marks_data %}
+                    <tr>
+                        <td>{{ data.roll_number }}</td>
+                        <td>{{ data.student.first_name }} {{ data.student.last_name }}</td>
+                        {% for subject in subjects %}
+                        {% set mark = data.marks.get(subject.id) %}
+                        <td>{{ mark.marks_obtained if mark else '—' }}</td>
+                        <td>{{ mark.max_marks if mark else '—' }}</td>
+                        <td>{{ mark.grade if mark else '—' }}</td>
+                        {% endfor %}
+                        <td><strong>{{ data.total_obtained }} / {{ data.total_max }}</strong></td>
+                        <td><strong>{{ data.percentage }}%</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
