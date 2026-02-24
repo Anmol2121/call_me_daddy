@@ -64,6 +64,365 @@ def school_active_required(f):
                 return redirect(url_for('logout'))
         return f(*args, **kwargs)
     return decorated_function
+
+# ========================exam==========================
+class ExamForm(FlaskForm):
+    name = StringField('Exam Name', validators=[DataRequired()])
+    term = StringField('Term (e.g., Term 1)', validators=[Optional()])
+    class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
+    start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
+    end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
+    submit = SubmitField('Create Exam')
+
+
+class SubjectForm(FlaskForm):
+    name = StringField('Subject Name', validators=[DataRequired()])
+    code = StringField('Subject Code', validators=[Optional()])
+    class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Create Subject')
+
+
+class GradingScaleForm(FlaskForm):
+    grade = StringField('Grade (e.g., A, B, C)', validators=[DataRequired()])
+    min_percentage = FloatField('Minimum Percentage', validators=[DataRequired()])
+    max_percentage = FloatField('Maximum Percentage', validators=[DataRequired()])
+    description = StringField('Description', validators=[Optional()])
+    submit = SubmitField('Save Grade')
+class ExamForm(FlaskForm):
+    name = StringField('Exam Name', validators=[DataRequired()])
+    term = StringField('Term (e.g., Term 1)', validators=[Optional()])
+    class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
+    start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
+    end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
+    submit = SubmitField('Create Exam')
+
+
+class SubjectForm(FlaskForm):
+    name = StringField('Subject Name', validators=[DataRequired()])
+    code = StringField('Subject Code', validators=[Optional()])
+    class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Create Subject')
+
+
+class GradingScaleForm(FlaskForm):
+    grade = StringField('Grade (e.g., A, B, C)', validators=[DataRequired()])
+    min_percentage = FloatField('Minimum Percentage', validators=[DataRequired()])
+    max_percentage = FloatField('Maximum Percentage', validators=[DataRequired()])
+    description = StringField('Description', validators=[Optional()])
+    submit = SubmitField('Save Grade')
+# ==================== RESULT MANAGEMENT ROUTES ====================
+
+@app.route('/admin/exams')
+@role_required(['admin'])
+@school_active_required
+def manage_exams():
+    """List all exams for the current session"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    
+    exams = Exam.query.filter_by(
+        session_id=view_session.id
+    ).order_by(Exam.start_date.desc()).all()
+    
+    return render_template('admin_manage_exams.html',
+                         context=context,
+                         exams=exams)
+
+
+@app.route('/admin/exams/create', methods=['GET', 'POST'])
+@role_required(['admin'])
+@school_active_required
+def create_exam():
+    """Create a new exam for a class"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    form = ExamForm()
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    
+    # Populate class choices
+    classes = Class.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=view_session.id,
+        is_active=True
+    ).all()
+    form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
+    
+    if form.validate_on_submit():
+        exam = Exam(
+            name=form.name.data,
+            term=form.term.data,
+            session_id=view_session.id,
+            class_id=form.class_id.data,
+            start_date=form.start_date.data,
+            end_date=form.end_date.data
+        )
+        db.session.add(exam)
+        db.session.commit()
+        flash(f'Exam "{form.name.data}" created successfully.', 'success')
+        return redirect(url_for('manage_exams'))
+    
+    return render_template('admin_create_exam.html',
+                         form=form,
+                         context=context)
+
+
+@app.route('/admin/subjects')
+@role_required(['admin'])
+@school_active_required
+def manage_subjects():
+    """List all subjects (optionally filtered by class)"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    
+    class_id = request.args.get('class_id', type=int)
+    query = Subject.query.filter_by(
+        session_id=view_session.id
+    )
+    if class_id:
+        query = query.filter_by(class_id=class_id)
+    subjects = query.all()
+    
+    classes = Class.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=view_session.id,
+        is_active=True
+    ).all()
+    
+    return render_template('admin_manage_subjects.html',
+                         subjects=subjects,
+                         classes=classes,
+                         selected_class=class_id,
+                         context=context)
+
+
+@app.route('/admin/subjects/create', methods=['GET', 'POST'])
+@role_required(['admin'])
+@school_active_required
+def create_subject():
+    """Create a new subject for a class"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    form = SubjectForm()
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    
+    classes = Class.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=view_session.id,
+        is_active=True
+    ).all()
+    form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
+    
+    if form.validate_on_submit():
+        subject = Subject(
+            name=form.name.data,
+            code=form.code.data,
+            class_id=form.class_id.data,
+            session_id=view_session.id
+        )
+        db.session.add(subject)
+        db.session.commit()
+        flash(f'Subject "{form.name.data}" created.', 'success')
+        return redirect(url_for('manage_subjects'))
+    
+    return render_template('admin_create_subject.html',
+                         form=form,
+                         context=context)
+
+
+@app.route('/admin/exams/<int:exam_id>/marks', methods=['GET', 'POST'])
+@role_required(['admin'])
+@school_active_required
+def enter_marks(exam_id):
+    """Enter marks for all students in a given exam"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    exam = Exam.query.get_or_404(exam_id)
+    # Ensure exam belongs to current school
+    if exam.class_.school_id != current_user.school_id:
+        abort(403)
+    
+    context = get_school_context()
+    
+    # Get all students enrolled in this class for this session
+    enrollments = StudentEnrollment.query.filter_by(
+        class_id=exam.class_id,
+        session_id=exam.session_id,
+        is_active=True
+    ).order_by(StudentEnrollment.roll_number).all()
+    
+    # Get subjects for this class (from the same session)
+    subjects = Subject.query.filter_by(
+        class_id=exam.class_id,
+        session_id=exam.session_id,
+        is_active=True
+    ).all()
+    
+    if not subjects:
+        flash('Please create subjects for this class first.', 'warning')
+        return redirect(url_for('create_subject'))
+    
+    if request.method == 'POST':
+        # Save marks for each student and subject
+        for enrollment in enrollments:
+            student_id = enrollment.student_id
+            for subject in subjects:
+                marks_key = f'marks_{student_id}_{subject.id}'
+                max_marks_key = f'max_{student_id}_{subject.id}'
+                grade_key = f'grade_{student_id}_{subject.id}'
+                if marks_key in request.form:
+                    marks_obtained = request.form.get(marks_key, type=float)
+                    max_marks = request.form.get(max_marks_key, 100, type=float)
+                    grade = request.form.get(grade_key, '')
+                    
+                    if marks_obtained is not None:
+                        # Check if record exists
+                        mark_record = StudentMarks.query.filter_by(
+                            student_id=student_id,
+                            exam_id=exam.id,
+                            subject_id=subject.id
+                        ).first()
+                        
+                        if mark_record:
+                            mark_record.marks_obtained = marks_obtained
+                            mark_record.max_marks = max_marks
+                            mark_record.grade = grade
+                            mark_record.updated_at = datetime.utcnow()
+                        else:
+                            mark_record = StudentMarks(
+                                student_id=student_id,
+                                exam_id=exam.id,
+                                subject_id=subject.id,
+                                marks_obtained=marks_obtained,
+                                max_marks=max_marks,
+                                grade=grade
+                            )
+                            db.session.add(mark_record)
+        db.session.commit()
+        flash('Marks saved successfully.', 'success')
+        return redirect(url_for('view_exam_results', exam_id=exam.id))
+    
+    # GET: pre‑fill existing marks
+    existing_marks = {}
+    for enrollment in enrollments:
+        for subject in subjects:
+            mark = StudentMarks.query.filter_by(
+                student_id=enrollment.student_id,
+                exam_id=exam.id,
+                subject_id=subject.id
+            ).first()
+            if mark:
+                existing_marks[(enrollment.student_id, subject.id)] = mark
+    
+    return render_template('admin_enter_marks.html',
+                         exam=exam,
+                         enrollments=enrollments,
+                         subjects=subjects,
+                         existing_marks=existing_marks,
+                         context=context)
+
+
+@app.route('/admin/exams/<int:exam_id>/results')
+@role_required(['admin'])
+@school_active_required
+def view_exam_results(exam_id):
+    """View results for a specific exam"""
+    exam = Exam.query.get_or_404(exam_id)
+    if exam.class_.school_id != current_user.school_id:
+        abort(403)
+    
+    context = get_school_context()
+    
+    enrollments = StudentEnrollment.query.filter_by(
+        class_id=exam.class_id,
+        session_id=exam.session_id,
+        is_active=True
+    ).order_by(StudentEnrollment.roll_number).all()
+    
+    subjects = Subject.query.filter_by(
+        class_id=exam.class_id,
+        session_id=exam.session_id,
+        is_active=True
+    ).all()
+    
+    # Build marks matrix
+    marks_data = []
+    for enrollment in enrollments:
+        student_marks = {}
+        total_obtained = 0
+        total_max = 0
+        for subject in subjects:
+            mark = StudentMarks.query.filter_by(
+                student_id=enrollment.student_id,
+                exam_id=exam.id,
+                subject_id=subject.id
+            ).first()
+            if mark:
+                student_marks[subject.id] = mark
+                total_obtained += mark.marks_obtained
+                total_max += mark.max_marks
+        percentage = (total_obtained / total_max * 100) if total_max > 0 else 0
+        marks_data.append({
+            'student': enrollment.student,
+            'roll_number': enrollment.roll_number,
+            'marks': student_marks,
+            'total_obtained': total_obtained,
+            'total_max': total_max,
+            'percentage': round(percentage, 2)
+        })
+    
+    return render_template('admin_view_results.html',
+                         exam=exam,
+                         subjects=subjects,
+                         marks_data=marks_data,
+                         context=context)
+
+
+# Optional: grading scale management
+@app.route('/admin/grading-scales', methods=['GET', 'POST'])
+@role_required(['admin'])
+@school_active_required
+def manage_grading_scales():
+    """Manage grading scales for the school"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    form = GradingScaleForm()
+    context = get_school_context()
+    
+    if form.validate_on_submit():
+        scale = GradingScale(
+            school_id=current_user.school_id,
+            grade=form.grade.data,
+            min_percentage=form.min_percentage.data,
+            max_percentage=form.max_percentage.data,
+            description=form.description.data
+        )
+        db.session.add(scale)
+        db.session.commit()
+        flash('Grading scale added.', 'success')
+        return redirect(url_for('manage_grading_scales'))
+    
+    scales = GradingScale.query.filter_by(
+        school_id=current_user.school_id,
+        is_active=True
+    ).all()
+    
+    return render_template('admin_grading_scales.html',
+                         form=form,
+                         scales=scales,
+                         context=context)
+#=======================================================================
 #==================== Time Table ==========================
 # ==================== TIMETABLE MODELS ====================
 
@@ -6782,4 +7141,5 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
