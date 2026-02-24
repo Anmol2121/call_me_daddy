@@ -812,6 +812,22 @@
                         </a>
                     </li>
                     
+                    <!-- NEW RESULTS MENU WITH DROPDOWN -->
+                    <li class="menu-item">
+                        <a class="menu-link" data-bs-toggle="collapse" href="#resultsMenu" role="button" aria-expanded="false">
+                            <i class="fas fa-clipboard-list menu-icon"></i>
+                            <span class="menu-text">Results</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <div class="collapse" id="resultsMenu">
+                            <ul class="list-unstyled ps-4">
+                                <li><a class="menu-link small" href="{{ url_for('manage_exams') }}">Manage Exams</a></li>
+                                <li><a class="menu-link small" href="{{ url_for('manage_subjects') }}">Subjects</a></li>
+                                <li><a class="menu-link small" href="{{ url_for('manage_grading_scales') }}">Grading Scales</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    
                     <div class="menu-divider mx-3 my-2"></div>
                     
                     <li class="menu-item">
