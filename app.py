@@ -307,6 +307,16 @@ def class_report_card(class_id):
                            report_data=report_data,
                            terms=term_order,
                            context=context)
+
+def get_grade_from_percentage(school_id, percentage):
+    """Return grade letter based on school's grading scale."""
+    scale = GradingScale.query.filter(
+        GradingScale.school_id == school_id,
+        GradingScale.is_active == True,
+        GradingScale.min_percentage <= percentage,
+        GradingScale.max_percentage >= percentage
+    ).first()
+    return scale.grade if scale else 'N/A'
 # ==================== RESULT MANAGEMENT ROUTES ====================
 
 @app.route('/admin/exams')
@@ -7338,6 +7348,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
