@@ -178,7 +178,7 @@ class GradingScaleForm(FlaskForm):
 @role_required(['admin', 'teacher'])
 @school_active_required
 def class_report_card(class_id):
-    """Generate final report card for all students in a class."""
+    """Generate professional final report card for all students in a class."""
     if current_user.must_change_password:
         return redirect(url_for('change_password'))
 
@@ -196,16 +196,15 @@ def class_report_card(class_id):
         is_active=True
     ).first_or_404()
 
-    # Get all exams for this class in the current session, ordered by start date (or term)
+    # Get all exams for this class in the current session, ordered by term
     exams = Exam.query.filter_by(
         class_id=class_id,
         session_id=view_session.id
     ).order_by(Exam.start_date).all()
 
-    # Group exams by term (assuming terms like "Term 1", "Term 2", "Final")
-    # We'll use a dictionary mapping term -> exam object
+    # Group exams by term (adjust terms as per your system)
+    term_order = ['Term 1', 'Term 2', 'Final']
     exam_by_term = {}
-    term_order = ['Term 1', 'Term 2', 'Final']  # define expected order
     for exam in exams:
         if exam.term in term_order:
             exam_by_term[exam.term] = exam
@@ -224,7 +223,7 @@ def class_report_card(class_id):
         is_active=True
     ).order_by(StudentEnrollment.roll_number).all()
 
-    # Pre-fetch all marks for efficiency (to avoid N+1 queries)
+    # Pre-fetch all marks for efficiency
     # Build a nested dict: marks[student_id][exam_id][subject_id] = mark object
     marks = {}
     for enrollment in enrollments:
@@ -240,10 +239,30 @@ def class_report_card(class_id):
         for m in student_marks:
             marks[student_id][m.exam_id][m.subject_id] = m
 
-    # Prepare report data for each student
+    # Fetch attendance summaries for all students in one query
+    attendance_summaries = AttendanceSummary.query.filter(
+        AttendanceSummary.student_id.in_([e.student_id for e in enrollments]),
+        AttendanceSummary.session_id == view_session.id
+    ).all()
+    attendance_dict = {s.student_id: s for s in attendance_summaries}
+
+    # Get grading scales for the school
+    grading_scales = GradingScale.query.filter_by(
+        school_id=current_user.school_id,
+        is_active=True
+    ).all()
+
+    def get_grade(percentage):
+        for scale in grading_scales:
+            if scale.min_percentage <= percentage <= scale.max_percentage:
+                return scale.grade
+        return 'N/A'
+
+    # Build report data for each student
     report_data = []
     for enrollment in enrollments:
         student = enrollment.student
+        attendance = attendance_dict.get(student.id)
         student_marks = marks.get(student.id, {})
         subject_rows = []
         total_obtained_all = 0
@@ -263,7 +282,7 @@ def class_report_card(class_id):
                 else:
                     term_marks[term_name] = None
 
-            # Calculate subject total (sum of marks obtained across all exams)
+            # Calculate subject total (sum of marks obtained across all terms)
             subject_total_obtained = sum(
                 m['obtained'] for m in term_marks.values() if m
             )
@@ -271,9 +290,7 @@ def class_report_card(class_id):
                 m['max'] for m in term_marks.values() if m
             )
             subject_percentage = (subject_total_obtained / subject_total_max * 100) if subject_total_max > 0 else 0
-
-            # Determine grade for this subject using grading scale (overall percentage)
-            grade = get_grade_from_percentage(current_user.school_id, subject_percentage)
+            subject_grade = get_grade(subject_percentage)
 
             subject_rows.append({
                 'subject': subject,
@@ -283,14 +300,14 @@ def class_report_card(class_id):
                 'total_obtained': subject_total_obtained,
                 'total_max': subject_total_max,
                 'percentage': round(subject_percentage, 2),
-                'grade': grade
+                'grade': subject_grade
             })
 
             total_obtained_all += subject_total_obtained
             total_max_all += subject_total_max
 
         overall_percentage = (total_obtained_all / total_max_all * 100) if total_max_all > 0 else 0
-        overall_grade = get_grade_from_percentage(current_user.school_id, overall_percentage)
+        overall_grade = get_grade(overall_percentage)
 
         report_data.append({
             'student': student,
@@ -299,14 +316,25 @@ def class_report_card(class_id):
             'total_obtained': total_obtained_all,
             'total_max': total_max_all,
             'overall_percentage': round(overall_percentage, 2),
-            'overall_grade': overall_grade
+            'overall_grade': overall_grade,
+            'attendance': {
+                'total_days': attendance.total_days if attendance else 0,
+                'present_days': attendance.present_days if attendance else 0,
+                'percentage': attendance.attendance_percentage if attendance else 0
+            } if attendance else None
         })
+
+    # Calculate class rank based on overall percentage
+    sorted_report = sorted(report_data, key=lambda x: x['overall_percentage'], reverse=True)
+    for idx, data in enumerate(sorted_report, 1):
+        data['rank'] = idx
 
     return render_template('admin_class_report_card.html',
                            class_obj=class_obj,
-                           report_data=report_data,
+                           report_data=sorted_report,
                            terms=term_order,
-                           context=context)
+                           context=context,
+                           grading_scales=grading_scales)
 
 def get_grade_from_percentage(school_id, percentage):
     """Return grade letter based on school's grading scale."""
@@ -7348,6 +7376,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
