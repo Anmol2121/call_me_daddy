@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Report Card - {{ class_obj.name }}{% endblock %}
+{% block header %}Final Report Card: {{ class_obj.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('manage_classes') }}">Classes</a></li>
+<li class="breadcrumb-item active">Report Card</li>
+{% endblock %}
+
+{% block actions %}
+<button class="btn btn-outline-primary" onclick="window.print()">
+    <i class="fas fa-print me-2"></i>Print
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if report_data %}
+            {% for data in report_data %}
+            <div class="report-card mb-5 p-4 border rounded" style="page-break-after: always;">
+                <div class="row mb-4">
+                    <div class="col-8">
+                        <h3>{{ class_obj.school.name }}</h3>
+                        <h5>Final Report Card - {{ class_obj.name }} ({{ context.view_session.name }})</h5>
+                    </div>
+                    <div class="col-4 text-end">
+                        <h4>{{ data.student.first_name }} {{ data.student.last_name }}</h4>
+                        <p>Roll No: {{ data.roll_number }}</p>
+                    </div>
+                </div>
+
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Term 1 Marks</th>
+                            <th>Term 2 Marks</th>
+                            <th>Final Exam Marks</th>
+                            <th>Total Obtained</th>
+                            <th>Max Marks</th>
+                            <th>Percentage</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in data.subjects %}
+                        <tr>
+                            <td>{{ subject.subject.name }}</td>
+                            <td>
+                                {% if subject.term1 %}
+                                    {{ subject.term1.obtained }} / {{ subject.term1.max }}
+                                    {% if subject.term1.grade %}({{ subject.term1.grade }}){% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subject.term2 %}
+                                    {{ subject.term2.obtained }} / {{ subject.term2.max }}
+                                    {% if subject.term2.grade %}({{ subject.term2.grade }}){% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subject.final %}
+                                    {{ subject.final.obtained }} / {{ subject.final.max }}
+                                    {% if subject.final.grade %}({{ subject.final.grade }}){% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ subject.total_obtained }}</td>
+                            <td>{{ subject.total_max }}</td>
+                            <td>{{ subject.percentage }}%</td>
+                            <td><strong>{{ subject.grade }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-info">
+                            <th colspan="4" class="text-end">Grand Total</th>
+                            <th>{{ data.total_obtained }}</th>
+                            <th>{{ data.total_max }}</th>
+                            <th>{{ data.overall_percentage }}%</th>
+                            <th><strong>{{ data.overall_grade }}</strong></th>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <p><strong>Class Teacher:</strong> _________________________</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <p><strong>Principal:</strong> _________________________</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list fa-4x text-muted opacity-25"></i>
+            <h5>No students enrolled in this class</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+@media print {
+    .navbar, .sidebar-desktop, .bottom-nav, .page-header, .btn, .breadcrumb, footer {
+        display: none !important;
+    }
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .report-card {
+        border: none !important;
+        page-break-after: always;
+    }
+}
+</style>
+{% endblock %}
