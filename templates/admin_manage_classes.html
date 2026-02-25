@@ -65,6 +65,10 @@
                                 <a href="#" class="btn btn-outline-success">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                                <!-- NEW: Report Card Button -->
+                                <a href="{{ url_for('class_report_card', class_id=class.id) }}" class="btn btn-outline-info" title="Final Report Card">
+                                    <i class="bi bi-file-text"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>
