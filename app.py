@@ -66,6 +66,69 @@ def school_active_required(f):
     return decorated_function
 
 # ========================exam==========================
+class Exam(db.Model):
+    __tablename__ = 'exams'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    term = db.Column(db.String(50))
+    session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    session = db.relationship('AcademicSession')
+    class_ = db.relationship('Class', backref='exams')
+    marks = db.relationship('StudentMarks', back_populates='exam', cascade='all, delete-orphan')
+
+
+class Subject(db.Model):
+    __tablename__ = 'subjects'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    code = db.Column(db.String(20))
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    class_ = db.relationship('Class', backref='subjects')
+    session = db.relationship('AcademicSession')
+    marks = db.relationship('StudentMarks', back_populates='subject', cascade='all, delete-orphan')
+
+
+class StudentMarks(db.Model):
+    __tablename__ = 'student_marks'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    exam_id = db.Column(db.Integer, db.ForeignKey('exams.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
+    marks_obtained = db.Column(db.Float, nullable=False)
+    max_marks = db.Column(db.Float, default=100)
+    grade = db.Column(db.String(5))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    student = db.relationship('Student')
+    exam = db.relationship('Exam', back_populates='marks')
+    subject = db.relationship('Subject', back_populates='marks')
+
+
+class GradingScale(db.Model):
+    __tablename__ = 'grading_scales'
+    id = db.Column(db.Integer, primary_key=True)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    grade = db.Column(db.String(5), nullable=False)
+    min_percentage = db.Column(db.Float, nullable=False)
+    max_percentage = db.Column(db.Float, nullable=False)
+    description = db.Column(db.String(200))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    school = db.relationship('School')
+
+
 class ExamForm(FlaskForm):
     name = StringField('Exam Name', validators=[DataRequired()])
     term = StringField('Term (e.g., Term 1)', validators=[Optional()])
@@ -7141,5 +7204,6 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
