@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Report Card - {{ class_obj.name }}{% endblock %}
-{% block header %}Final Report Card: {{ class_obj.name }}{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
@@ -8,120 +7,218 @@
 <li class="breadcrumb-item active">Report Card</li>
 {% endblock %}
 
-{% block actions %}
-<button class="btn btn-outline-primary" onclick="window.print()">
-    <i class="fas fa-print me-2"></i>Print
-</button>
-{% endblock %}
-
 {% block content %}
-<div class="card">
-    <div class="card-body">
-        {% if report_data %}
-            {% for data in report_data %}
-            <div class="report-card mb-5 p-4 border rounded" style="page-break-after: always;">
-                <div class="row mb-4">
-                    <div class="col-8">
-                        <h3>{{ class_obj.school.name }}</h3>
-                        <h5>Final Report Card - {{ class_obj.name }} ({{ context.view_session.name }})</h5>
-                    </div>
-                    <div class="col-4 text-end">
-                        <h4>{{ data.student.first_name }} {{ data.student.last_name }}</h4>
-                        <p>Roll No: {{ data.roll_number }}</p>
-                    </div>
+<div class="d-print-none mb-4 d-flex justify-content-between align-items-center">
+    <h2 class="mb-0">Final Report Cards: {{ class_obj.name }}</h2>
+    <button class="btn btn-primary shadow-sm" onclick="window.print()">
+        <i class="fas fa-print me-2"></i> Print All Report Cards
+    </button>
+</div>
+
+{% if report_data %}
+    {% for data in report_data %}
+    <div class="report-card-wrapper">
+        
+        <div class="text-center report-header border-bottom border-3 border-dark mb-4 pb-3">
+            <h1 class="text-uppercase fw-bold mb-1 school-title">{{ class_obj.school.name | default('YOUR SCHOOL NAME') }}</h1>
+            <p class="mb-1 fw-semibold text-secondary">Affiliated to State/Central Board of Education</p>
+            <h4 class="mt-3 fw-bold bg-dark text-white d-inline-block px-5 py-2 rounded-pill report-badge">
+                ANNUAL PROGRESS REPORT
+            </h4>
+            <p class="mb-0 mt-2 fw-bold fs-5">Academic Session: {{ context.view_session.name | default('2023-2024') }}</p>
+        </div>
+
+        <div class="student-info-box border border-2 border-dark p-3 mb-4 rounded bg-light">
+            <div class="row g-3 fs-6">
+                <div class="col-md-7">
+                    <strong>Student's Name:</strong> <span class="text-uppercase border-bottom border-dark px-2">{{ data.student.first_name }} {{ data.student.last_name }}</span>
                 </div>
+                <div class="col-md-5">
+                    <strong>Class & Section:</strong> <span class="border-bottom border-dark px-2">{{ class_obj.name }}</span>
+                </div>
+                <div class="col-md-7">
+                    <strong>Roll No:</strong> <span class="border-bottom border-dark px-2">{{ data.roll_number }}</span>
+                </div>
+                <div class="col-md-5">
+                    <strong>Admission No:</strong> <span class="border-bottom border-dark px-2">{{ data.student.admission_number | default('_________') }}</span>
+                </div>
+            </div>
+        </div>
 
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Subject</th>
-                            <th>Term 1 Marks</th>
-                            <th>Term 2 Marks</th>
-                            <th>Final Exam Marks</th>
-                            <th>Total Obtained</th>
-                            <th>Max Marks</th>
-                            <th>Percentage</th>
-                            <th>Grade</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for subject in data.subjects %}
-                        <tr>
-                            <td>{{ subject.subject.name }}</td>
-                            <td>
-                                {% if subject.term1 %}
-                                    {{ subject.term1.obtained }} / {{ subject.term1.max }}
-                                    {% if subject.term1.grade %}({{ subject.term1.grade }}){% endif %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if subject.term2 %}
-                                    {{ subject.term2.obtained }} / {{ subject.term2.max }}
-                                    {% if subject.term2.grade %}({{ subject.term2.grade }}){% endif %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if subject.final %}
-                                    {{ subject.final.obtained }} / {{ subject.final.max }}
-                                    {% if subject.final.grade %}({{ subject.final.grade }}){% endif %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>{{ subject.total_obtained }}</td>
-                            <td>{{ subject.total_max }}</td>
-                            <td>{{ subject.percentage }}%</td>
-                            <td><strong>{{ subject.grade }}</strong></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr class="table-info">
-                            <th colspan="4" class="text-end">Grand Total</th>
-                            <th>{{ data.total_obtained }}</th>
-                            <th>{{ data.total_max }}</th>
-                            <th>{{ data.overall_percentage }}%</th>
-                            <th><strong>{{ data.overall_grade }}</strong></th>
-                        </tr>
-                    </tfoot>
-                </table>
+        <h5 class="fw-bold mb-2">Part 1: Academic Performance</h5>
+        <table class="table table-bordered border-dark text-center align-middle report-table mb-4">
+            <thead class="border-dark align-middle">
+                <tr>
+                    <th rowspan="2" class="text-start fs-5 bg-light" style="width: 25%;">Subject Name</th>
+                    <th colspan="3" class="bg-light">Term 1</th>
+                    <th colspan="3" class="bg-light">Term 2</th>
+                    <th colspan="3" class="bg-light">Final Exam</th>
+                    <th colspan="3" class="bg-secondary text-white">Overall Assessment</th>
+                </tr>
+                <tr class="bg-light" style="font-size: 0.9rem;">
+                    <th>Max</th><th>Obt</th><th>Grade</th>
+                    <th>Max</th><th>Obt</th><th>Grade</th>
+                    <th>Max</th><th>Obt</th><th>Grade</th>
+                    <th class="bg-secondary text-white">Max</th>
+                    <th class="bg-secondary text-white">Total</th>
+                    <th class="bg-secondary text-white">Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subject in data.subjects %}
+                <tr>
+                    <td class="text-start fw-bold fs-6">{{ subject.subject.name }}</td>
+                    <td>{{ subject.term1.max if subject.term1 else '-' }}</td>
+                    <td>{{ subject.term1.obtained if subject.term1 else '-' }}</td>
+                    <td><strong>{{ subject.term1.grade if subject.term1 else '-' }}</strong></td>
+                    <td>{{ subject.term2.max if subject.term2 else '-' }}</td>
+                    <td>{{ subject.term2.obtained if subject.term2 else '-' }}</td>
+                    <td><strong>{{ subject.term2.grade if subject.term2 else '-' }}</strong></td>
+                    <td>{{ subject.final.max if subject.final else '-' }}</td>
+                    <td>{{ subject.final.obtained if subject.final else '-' }}</td>
+                    <td><strong>{{ subject.final.grade if subject.final else '-' }}</strong></td>
+                    <td class="fw-bold bg-light">{{ subject.total_max }}</td>
+                    <td class="fw-bold bg-light">{{ subject.total_obtained }}</td>
+                    <td class="fw-bold text-dark fs-5 bg-light">{{ subject.grade }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="border-dark">
+                <tr class="fw-bold bg-light">
+                    <td class="text-start fs-5">GRAND TOTAL</td>
+                    <td colspan="9"></td>
+                    <td class="fs-5">{{ data.total_max }}</td>
+                    <td class="fs-5">{{ data.total_obtained }}</td>
+                    <td class="fs-4">{{ data.overall_grade }}</td>
+                </tr>
+                <tr>
+                    <td colspan="13" class="text-end fs-5 pe-4 py-3">
+                        <span class="me-3"><strong>Overall Percentage:</strong> {{ data.overall_percentage }}%</span>
+                        <span><strong>Final Grade:</strong> <span class="badge bg-dark fs-5 rounded-pill">{{ data.overall_grade }}</span></span>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
 
-                <div class="row mt-4">
-                    <div class="col-6">
-                        <p><strong>Class Teacher:</strong> _________________________</p>
-                    </div>
-                    <div class="col-6 text-end">
-                        <p><strong>Principal:</strong> _________________________</p>
+        <div class="row mt-4 align-items-stretch g-4">
+            <div class="col-8">
+                <div class="remarks-box border border-2 border-dark p-3 h-100 rounded">
+                    <h6 class="fw-bold mb-3 text-uppercase">Class Teacher's Remarks:</h6>
+                    <div class="mt-4 border-bottom border-dark border-dotted w-100"></div>
+                    <div class="mt-4 border-bottom border-dark border-dotted w-100"></div>
+                    <div class="mt-4 pt-2 fw-bold fs-5">
+                        Result: <span class="border-bottom border-dark px-4 pb-1">PASS / PROMOTED</span>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-clipboard-list fa-4x text-muted opacity-25"></i>
-            <h5>No students enrolled in this class</h5>
+            <div class="col-4">
+                <div class="grading-scale-box border border-2 border-dark p-2 rounded text-center h-100 bg-light">
+                    <h6 class="fw-bold border-bottom border-dark pb-2 mb-2 text-uppercase">8-Point Grading Scale</h6>
+                    <table class="table table-sm table-borderless mb-0 align-middle" style="font-size: 0.85rem;">
+                        <tr><td><strong>A1</strong></td><td>91% - 100%</td></tr>
+                        <tr><td><strong>A2</strong></td><td>81% - 90%</td></tr>
+                        <tr><td><strong>B1</strong></td><td>71% - 80%</td></tr>
+                        <tr><td><strong>B2</strong></td><td>61% - 70%</td></tr>
+                        <tr><td><strong>C1</strong></td><td>51% - 60%</td></tr>
+                        <tr><td><strong>C2</strong></td><td>41% - 50%</td></tr>
+                        <tr><td><strong>D</strong></td><td>33% - 40%</td></tr>
+                        <tr><td><strong>E</strong></td><td>Below 33% (Needs Improvement)</td></tr>
+                    </table>
+                </div>
+            </div>
         </div>
-        {% endif %}
+
+        <div class="signature-section mt-5 pt-5 d-flex justify-content-between px-4">
+            <div class="text-center">
+                <div class="border-top border-2 border-dark pt-2 px-3"><strong>Signature of Parent</strong></div>
+            </div>
+            <div class="text-center">
+                <div class="border-top border-2 border-dark pt-2 px-3"><strong>Class Teacher</strong></div>
+            </div>
+            <div class="text-center">
+                <div class="border-top border-2 border-dark pt-2 px-4"><strong>Principal / Head</strong></div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5 text-dark fw-bold pb-2">
+            Date of Issue: ____________________
+        </div>
     </div>
-</div>
+    {% endfor %}
+{% else %}
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-file-invoice fa-4x text-muted opacity-25 mb-3"></i>
+            <h4>No Results Available</h4>
+            <p class="text-muted">There are no students or marks entered for this class yet.</p>
+        </div>
+    </div>
+{% endif %}
 
 <style>
+/* Base Styles for Report Card */
+.border-dotted {
+    border-style: dotted !important;
+}
+.report-card-wrapper {
+    background: #ffffff;
+    padding: 45px;
+    margin-bottom: 50px;
+    border: 3px double #000;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    font-family: 'Georgia', 'Times New Roman', Times, serif; /* Professional serif font */
+    color: #000;
+}
+.school-title {
+    color: #002244; 
+    letter-spacing: 1px;
+}
+.report-badge {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.report-table th, .report-table td {
+    border-color: #222 !important;
+}
+
+/* Print Specific Rules */
 @media print {
-    .navbar, .sidebar-desktop, .bottom-nav, .page-header, .btn, .breadcrumb, footer {
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+    body {
+        background-color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    /* Hide the application UI elements */
+    .navbar, .sidebar, .sidebar-desktop, .bottom-nav, .page-header, .breadcrumb, footer, .d-print-none {
         display: none !important;
     }
     .main-content {
         margin: 0 !important;
         padding: 0 !important;
+        width: 100% !important;
     }
-    .report-card {
-        border: none !important;
-        page-break-after: always;
+    .report-card-wrapper {
+        box-shadow: none !important;
+        border: 2px solid #000 !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        width: 100%;
+        page-break-after: always;      /* Ensures each student starts on a new page */
+        page-break-inside: avoid;      /* Prevents half a table getting cut across pages */
     }
+    .report-card-wrapper:last-child {
+        page-break-after: auto;
+    }
+    
+    /* Force Background colors to print */
+    .bg-dark { background-color: #343a40 !important; color: #fff !important; }
+    .bg-light { background-color: #f8f9fa !important; }
+    .bg-secondary { background-color: #6c757d !important; color: #fff !important; }
+    .badge.bg-dark { background-color: #343a40 !important; color: #fff !important; border: 1px solid #000;}
 }
 </style>
 {% endblock %}
