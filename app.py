@@ -173,6 +173,140 @@ class GradingScaleForm(FlaskForm):
     max_percentage = FloatField('Maximum Percentage', validators=[DataRequired()])
     description = StringField('Description', validators=[Optional()])
     submit = SubmitField('Save Grade')
+
+@app.route('/admin/class/<int:class_id>/report-card')
+@role_required(['admin', 'teacher'])
+@school_active_required
+def class_report_card(class_id):
+    """Generate final report card for all students in a class."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session', 'warning')
+        return redirect(url_for('admin_dashboard'))
+
+    # Verify class belongs to school and session
+    class_obj = Class.query.filter_by(
+        id=class_id,
+        school_id=current_user.school_id,
+        session_id=view_session.id,
+        is_active=True
+    ).first_or_404()
+
+    # Get all exams for this class in the current session, ordered by start date (or term)
+    exams = Exam.query.filter_by(
+        class_id=class_id,
+        session_id=view_session.id
+    ).order_by(Exam.start_date).all()
+
+    # Group exams by term (assuming terms like "Term 1", "Term 2", "Final")
+    # We'll use a dictionary mapping term -> exam object
+    exam_by_term = {}
+    term_order = ['Term 1', 'Term 2', 'Final']  # define expected order
+    for exam in exams:
+        if exam.term in term_order:
+            exam_by_term[exam.term] = exam
+
+    # Get all subjects for this class in this session
+    subjects = Subject.query.filter_by(
+        class_id=class_id,
+        session_id=view_session.id,
+        is_active=True
+    ).order_by(Subject.name).all()
+
+    # Get all students enrolled in this class
+    enrollments = StudentEnrollment.query.filter_by(
+        class_id=class_id,
+        session_id=view_session.id,
+        is_active=True
+    ).order_by(StudentEnrollment.roll_number).all()
+
+    # Pre-fetch all marks for efficiency (to avoid N+1 queries)
+    # Build a nested dict: marks[student_id][exam_id][subject_id] = mark object
+    marks = {}
+    for enrollment in enrollments:
+        student_id = enrollment.student_id
+        marks[student_id] = {}
+        for exam in exams:
+            marks[student_id][exam.id] = {}
+        # Get all marks for this student in this class
+        student_marks = StudentMarks.query.filter(
+            StudentMarks.student_id == student_id,
+            StudentMarks.exam_id.in_([e.id for e in exams])
+        ).all()
+        for m in student_marks:
+            marks[student_id][m.exam_id][m.subject_id] = m
+
+    # Prepare report data for each student
+    report_data = []
+    for enrollment in enrollments:
+        student = enrollment.student
+        student_marks = marks.get(student.id, {})
+        subject_rows = []
+        total_obtained_all = 0
+        total_max_all = 0
+
+        for subject in subjects:
+            # Collect marks for each term
+            term_marks = {}
+            for term_name, exam in exam_by_term.items():
+                mark_obj = student_marks.get(exam.id, {}).get(subject.id)
+                if mark_obj:
+                    term_marks[term_name] = {
+                        'obtained': mark_obj.marks_obtained,
+                        'max': mark_obj.max_marks,
+                        'grade': mark_obj.grade
+                    }
+                else:
+                    term_marks[term_name] = None
+
+            # Calculate subject total (sum of marks obtained across all exams)
+            subject_total_obtained = sum(
+                m['obtained'] for m in term_marks.values() if m
+            )
+            subject_total_max = sum(
+                m['max'] for m in term_marks.values() if m
+            )
+            subject_percentage = (subject_total_obtained / subject_total_max * 100) if subject_total_max > 0 else 0
+
+            # Determine grade for this subject using grading scale (overall percentage)
+            grade = get_grade_from_percentage(current_user.school_id, subject_percentage)
+
+            subject_rows.append({
+                'subject': subject,
+                'term1': term_marks.get('Term 1'),
+                'term2': term_marks.get('Term 2'),
+                'final': term_marks.get('Final'),
+                'total_obtained': subject_total_obtained,
+                'total_max': subject_total_max,
+                'percentage': round(subject_percentage, 2),
+                'grade': grade
+            })
+
+            total_obtained_all += subject_total_obtained
+            total_max_all += subject_total_max
+
+        overall_percentage = (total_obtained_all / total_max_all * 100) if total_max_all > 0 else 0
+        overall_grade = get_grade_from_percentage(current_user.school_id, overall_percentage)
+
+        report_data.append({
+            'student': student,
+            'roll_number': enrollment.roll_number,
+            'subjects': subject_rows,
+            'total_obtained': total_obtained_all,
+            'total_max': total_max_all,
+            'overall_percentage': round(overall_percentage, 2),
+            'overall_grade': overall_grade
+        })
+
+    return render_template('admin_class_report_card.html',
+                           class_obj=class_obj,
+                           report_data=report_data,
+                           terms=term_order,
+                           context=context)
 # ==================== RESULT MANAGEMENT ROUTES ====================
 
 @app.route('/admin/exams')
@@ -7204,6 +7338,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
