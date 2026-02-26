@@ -238,16 +238,24 @@
         </div>
 
         <!-- Report Title -->
-        <div class="report-title">FINAL REPORT CARD - {{ class_obj.name }}</div>
+        <div class="report-title">ANNUAL REPORT CARD - {{ class_obj.name }}</div>
 
         <!-- Student Information -->
         <div class="student-info-panel">
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="info-label">Student Name</div>
                     <div class="info-value">{{ data.student.first_name }} {{ data.student.last_name }}</div>
                 </div>
                 <div class="col-md-2">
+                    <div class="info-label">Father's Name</div>
+                    <div class="info-value">{{ data.student.father_name or '—' }}</div>
+                </div>
+                <div class="col-md-2">
+                    <div class="info-label">Admission No.</div>
+                    <div class="info-value">{{ data.student.student_id }}</div>
+                </div>
+                <div class="col-md-1">
                     <div class="info-label">Roll No.</div>
                     <div class="info-value">{{ data.roll_number }}</div>
                 </div>
@@ -258,10 +266,6 @@
                 <div class="col-md-2">
                     <div class="info-label">Session</div>
                     <div class="info-value">{{ context.view_session.name }}</div>
-                </div>
-                <div class="col-md-2">
-                    <div class="info-label">Issue Date</div>
-                    <div class="info-value">{{ now().strftime('%d %b %Y') }}</div>
                 </div>
             </div>
         </div>
