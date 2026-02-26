@@ -91,6 +91,7 @@ class Subject(db.Model):
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
     session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+    default_max_marks = db.Column(db.Float, default=100.0)   # <-- new field
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     class_ = db.relationship('Class', backref='subjects')
@@ -520,7 +521,7 @@ def teacher_enter_marks(exam_id, subject_id):
             
             if marks_key in request.form:
                 marks_obtained = request.form.get(marks_key, type=float)
-                max_marks = request.form.get(max_marks_key, 100, type=float)
+                max_marks = request.form.get(max_marks_key, type=float)
                 grade = request.form.get(grade_key, '')
                 
                 if marks_obtained is not None:
@@ -562,11 +563,15 @@ def teacher_enter_marks(exam_id, subject_id):
         if mark:
             existing_marks[enrollment.student_id] = mark
     
+    # Get the subject's default max marks
+    default_max = subject.default_max_marks   # <-- new line
+    
     return render_template('teacher_enter_marks.html',
                          exam=exam,
                          subject=subject,
                          enrollments=enrollments,
                          existing_marks=existing_marks,
+                         default_max=default_max,   # <-- pass to template
                          context=context)
 
 
@@ -7540,6 +7545,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
