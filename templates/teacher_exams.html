@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Exams for Marks Entry{% endblock %}
+{% block header %}Exams & Marks Entry{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Exams</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if exam_data %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Exam Name</th>
+                        <th>Term</th>
+                        <th>Subject</th>
+                        <th>Date Range</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in exam_data %}
+                    <tr>
+                        <td>{{ item.class.name }} ({{ item.class.code }})</td>
+                        <td>{{ item.exam.name }}</td>
+                        <td>{{ item.exam.term or '—' }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ item.subject_name }}</span>
+                        </td>
+                        <td>
+                            {% if item.exam.start_date %}
+                                {{ item.exam.start_date.strftime('%d %b') }} – {{ item.exam.end_date.strftime('%d %b') }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('teacher_enter_marks', exam_id=item.exam.id, subject_id=item.subject.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-pen me-1"></i>Enter Marks
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list fa-4x text-muted opacity-25"></i>
+            <h5>No Exams Available</h5>
+            <p>You don't have any exams for your assigned classes yet.</p>
+            <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-primary mt-3">Back to Dashboard</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
