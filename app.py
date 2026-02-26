@@ -405,6 +405,170 @@ def create_exam():
                          form=form,
                          context=context)
 
+@app.route('/teacher/exams')
+@role_required(['teacher'])
+@school_active_required
+def teacher_exams():
+    """List all exams for classes the teacher is assigned to, grouped by class and subject."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session', 'warning')
+        return redirect(url_for('teacher_dashboard'))
+    
+    # Get teacher's assignments for this session
+    assignments = TeacherAssignment.query.filter_by(
+        teacher_id=current_user.id,
+        session_id=view_session.id
+    ).all()
+    
+    if not assignments:
+        flash('You are not assigned to any classes this session.', 'info')
+        return redirect(url_for('teacher_dashboard'))
+    
+    # Collect class ids and subjects the teacher teaches
+    class_ids = [a.class_id for a in assignments]
+    teacher_subjects = {a.class_id: a.subject for a in assignments}
+    
+    # Get all exams for those classes
+    exams = Exam.query.filter(
+        Exam.class_id.in_(class_ids),
+        Exam.session_id == view_session.id
+    ).order_by(Exam.class_id, Exam.start_date).all()
+    
+    # Build a structure: for each exam, list the subjects the teacher can enter
+    exam_data = []
+    for exam in exams:
+        # Find subjects the teacher teaches in this exam's class
+        subject = teacher_subjects.get(exam.class_id)
+        if not subject:
+            continue  # teacher not assigned to any subject in this class? shouldn't happen
+        
+        # Get subject id(s) that match the teacher's subject name (assuming subject names are unique per class)
+        # We need the subject.id to link to the marks entry page.
+        subject_obj = Subject.query.filter_by(
+            class_id=exam.class_id,
+            name=subject,
+            session_id=view_session.id
+        ).first()
+        if not subject_obj:
+            # If no subject record matches the name, skip or use a generic link
+            continue
+        
+        exam_data.append({
+            'exam': exam,
+            'class': exam.class_,
+            'subject': subject_obj,
+            'subject_name': subject
+        })
+    
+    return render_template('teacher_exams.html',
+                         exam_data=exam_data,
+                         context=context)
+
+
+@app.route('/teacher/exams/<int:exam_id>/subject/<int:subject_id>/marks', methods=['GET', 'POST'])
+@role_required(['teacher'])
+@school_active_required
+def teacher_enter_marks(exam_id, subject_id):
+    """Enter marks for one subject in one exam."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session', 'warning')
+        return redirect(url_for('teacher_dashboard'))
+    
+    # Fetch exam and subject
+    exam = Exam.query.get_or_404(exam_id)
+    subject = Subject.query.get_or_404(subject_id)
+    
+    # Verify that the exam and subject belong to the same class and session
+    if exam.class_id != subject.class_id or exam.session_id != subject.session_id:
+        abort(404)
+    
+    # Verify teacher is assigned to this class and subject in this session
+    assignment = TeacherAssignment.query.filter_by(
+        teacher_id=current_user.id,
+        class_id=exam.class_id,
+        session_id=view_session.id,
+        subject=subject.name
+    ).first()
+    if not assignment:
+        flash('You are not authorized to enter marks for this subject.', 'danger')
+        return redirect(url_for('teacher_exams'))
+    
+    # Get all students enrolled in this class for this session
+    enrollments = StudentEnrollment.query.filter_by(
+        class_id=exam.class_id,
+        session_id=exam.session_id,
+        is_active=True
+    ).order_by(StudentEnrollment.roll_number).all()
+    
+    if request.method == 'POST':
+        # Save marks for all students (only this subject)
+        for enrollment in enrollments:
+            student_id = enrollment.student_id
+            marks_key = f'marks_{student_id}'
+            max_marks_key = f'max_{student_id}'
+            grade_key = f'grade_{student_id}'
+            
+            if marks_key in request.form:
+                marks_obtained = request.form.get(marks_key, type=float)
+                max_marks = request.form.get(max_marks_key, 100, type=float)
+                grade = request.form.get(grade_key, '')
+                
+                if marks_obtained is not None:
+                    # Check if record exists
+                    mark_record = StudentMarks.query.filter_by(
+                        student_id=student_id,
+                        exam_id=exam.id,
+                        subject_id=subject.id
+                    ).first()
+                    
+                    if mark_record:
+                        mark_record.marks_obtained = marks_obtained
+                        mark_record.max_marks = max_marks
+                        mark_record.grade = grade
+                        mark_record.updated_at = datetime.utcnow()
+                    else:
+                        mark_record = StudentMarks(
+                            student_id=student_id,
+                            exam_id=exam.id,
+                            subject_id=subject.id,
+                            marks_obtained=marks_obtained,
+                            max_marks=max_marks,
+                            grade=grade
+                        )
+                        db.session.add(mark_record)
+        
+        db.session.commit()
+        flash(f'Marks for {subject.name} saved successfully.', 'success')
+        return redirect(url_for('teacher_exams'))
+    
+    # GET: pre‑fill existing marks
+    existing_marks = {}
+    for enrollment in enrollments:
+        mark = StudentMarks.query.filter_by(
+            student_id=enrollment.student_id,
+            exam_id=exam.id,
+            subject_id=subject.id
+        ).first()
+        if mark:
+            existing_marks[enrollment.student_id] = mark
+    
+    return render_template('teacher_enter_marks.html',
+                         exam=exam,
+                         subject=subject,
+                         enrollments=enrollments,
+                         existing_marks=existing_marks,
+                         context=context)
+
 
 @app.route('/admin/subjects')
 @role_required(['admin'])
@@ -7376,6 +7540,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
