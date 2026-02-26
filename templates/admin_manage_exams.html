@@ -38,9 +38,7 @@
                         <td>{{ exam.start_date.strftime('%d %b %Y') if exam.start_date else '—' }}</td>
                         <td>{{ exam.end_date.strftime('%d %b %Y') if exam.end_date else '—' }}</td>
                         <td>
-                            <a href="{{ url_for('enter_marks', exam_id=exam.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Enter Marks">
-                                <i class="fas fa-pen"></i>
-                            </a>
+                            <!-- Enter Marks button removed – marks are entered by teachers -->
                             <a href="{{ url_for('view_exam_results', exam_id=exam.id) }}" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="View Results">
                                 <i class="fas fa-eye"></i>
                             </a>
