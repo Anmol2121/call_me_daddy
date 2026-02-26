@@ -803,7 +803,7 @@
                         </a>
                     </li>
                     
-                    <!-- NEW TIMETABLE MENU ITEM -->
+                    <!-- TIMETABLE MENU ITEM -->
                     <li class="menu-item">
                         <a class="menu-link {% if request.endpoint == 'admin_timetable' %}active{% endif %}" href="{{ url_for('admin_timetable') }}">
                             <i class="fas fa-calendar-alt menu-icon"></i>
@@ -812,7 +812,7 @@
                         </a>
                     </li>
                     
-                    <!-- NEW RESULTS MENU WITH DROPDOWN -->
+                    <!-- RESULTS MENU WITH DROPDOWN -->
                     <li class="menu-item">
                         <a class="menu-link" data-bs-toggle="collapse" href="#resultsMenu" role="button" aria-expanded="false">
                             <i class="fas fa-clipboard-list menu-icon"></i>
@@ -892,6 +892,15 @@
                             <span class="menu-badge">Manage</span>
                         </a>
                     </li>
+
+                    <!-- NEW: Enter Marks link in sidebar -->
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'teacher_exams' %}active{% endif %}" href="{{ url_for('teacher_exams') }}">
+                            <i class="fas fa-pen menu-icon"></i>
+                            <span class="menu-text">Enter Marks</span>
+                            <span class="menu-badge">Exams</span>
+                        </a>
+                    </li>
                     
                     <li class="menu-item">
                         <a class="menu-link {% if request.endpoint == 'teacher_profile' %}active{% endif %}" href="{{ url_for('teacher_profile') }}">
@@ -926,7 +935,7 @@
                         </a>
                     </li>
 
-                    <!-- NEW TIMETABLE MENU ITEM FOR STUDENT -->
+                    <!-- TIMETABLE MENU ITEM FOR STUDENT -->
                     <li class="menu-item">
                         <a class="menu-link {% if request.endpoint == 'student_timetable' %}active{% endif %}" href="{{ url_for('student_timetable') }}">
                             <i class="fas fa-calendar-alt menu-icon"></i>
@@ -1107,7 +1116,6 @@
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Fees</span>
             </a>
-            <!-- NEW TIMETABLE BOTTOM NAV ITEM -->
             <a class="bottom-nav-item {% if request.endpoint == 'admin_timetable' %}active{% endif %}" href="{{ url_for('admin_timetable') }}">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Timetable</span>
@@ -1125,6 +1133,11 @@
             <a class="bottom-nav-item {% if request.endpoint == 'teacher_attendance_dashboard' %}active{% endif %}" href="{{ url_for('teacher_attendance_dashboard') }}">
                 <i class="fas fa-clipboard-check"></i>
                 <span>Attendance</span>
+            </a>
+            <!-- NEW: Enter Marks bottom nav item -->
+            <a class="bottom-nav-item {% if request.endpoint == 'teacher_exams' %}active{% endif %}" href="{{ url_for('teacher_exams') }}">
+                <i class="fas fa-pen"></i>
+                <span>Marks</span>
             </a>
             <a class="bottom-nav-item" href="{{ url_for('teacher_profile') }}">
                 <i class="fas fa-user"></i>
@@ -1144,7 +1157,6 @@
                 <i class="fas fa-clipboard-check"></i>
                 <span>Attendance</span>
             </a>
-            <!-- NEW TIMETABLE BOTTOM NAV ITEM FOR STUDENT -->
             <a class="bottom-nav-item {% if request.endpoint == 'student_timetable' %}active{% endif %}" href="{{ url_for('student_timetable') }}">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Timetable</span>
