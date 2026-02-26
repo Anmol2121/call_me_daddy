@@ -20,7 +20,7 @@
                             <th>Student Name</th>
                             <th>Marks Obtained</th>
                             <th>Max Marks</th>
-                            <th>Grade</th>
+                            <th>Grade (optional)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -37,12 +37,12 @@
                             <td>
                                 <input type="number" step="0.01" class="form-control form-control-sm"
                                        name="max_{{ enrollment.student_id }}"
-                                       value="{{ mark.max_marks if mark else 100 }}" required>
+                                       value="{{ mark.max_marks if mark else default_max }}" required>
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm"
                                        name="grade_{{ enrollment.student_id }}"
-                                       value="{{ mark.grade if mark else '' }}" placeholder="Optional">
+                                       value="{{ mark.grade if mark else '' }}" placeholder="e.g., A, B+">
                             </td>
                         </tr>
                         {% endfor %}
