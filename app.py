@@ -19,7 +19,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import uuid
 from datetime import datetime, date, timedelta
-from wtforms import StringField, PasswordField, SelectField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
+#from wtforms import StringField, PasswordField, SelectField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
 from wtforms import StringField, PasswordField, SelectField, SelectMultipleField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
 
 
@@ -7559,6 +7559,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
