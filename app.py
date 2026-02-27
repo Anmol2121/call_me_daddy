@@ -20,6 +20,8 @@ from logging.handlers import RotatingFileHandler
 import uuid
 from datetime import datetime, date, timedelta
 from wtforms import StringField, PasswordField, SelectField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
+from wtforms import StringField, PasswordField, SelectField, SelectMultipleField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -133,7 +135,7 @@ class GradingScale(db.Model):
 class ExamForm(FlaskForm):
     name = StringField('Exam Name', validators=[DataRequired()])
     term = StringField('Term (e.g., Term 1)', validators=[Optional()])
-    class_ids = SelectMultipleField('Classes', coerce=int, validators=[DataRequired()])   # changed
+    class_ids = SelectMultipleField('Classes', coerce=int, validators=[DataRequired()])
     start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
     end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
     submit = SubmitField('Create Exam')
@@ -7557,6 +7559,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
