@@ -133,7 +133,7 @@ class GradingScale(db.Model):
 class ExamForm(FlaskForm):
     name = StringField('Exam Name', validators=[DataRequired()])
     term = StringField('Term (e.g., Term 1)', validators=[Optional()])
-    class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
+    class_ids = SelectMultipleField('Classes', coerce=int, validators=[DataRequired()])   # changed
     start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
     end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
     submit = SubmitField('Create Exam')
@@ -372,7 +372,6 @@ def manage_exams():
 @role_required(['admin'])
 @school_active_required
 def create_exam():
-    """Create a new exam for a class"""
     if current_user.must_change_password:
         return redirect(url_for('change_password'))
     
@@ -380,26 +379,39 @@ def create_exam():
     context = get_school_context()
     view_session = context.get('view_session') or context['current_session']
     
-    # Populate class choices
+    # Populate class choices (all active classes in the current session)
     classes = Class.query.filter_by(
         school_id=current_user.school_id,
         session_id=view_session.id,
         is_active=True
     ).all()
-    form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
+    form.class_ids.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
     
     if form.validate_on_submit():
-        exam = Exam(
-            name=form.name.data,
-            term=form.term.data,
-            session_id=view_session.id,
-            class_id=form.class_id.data,
-            start_date=form.start_date.data,
-            end_date=form.end_date.data
-        )
-        db.session.add(exam)
+        created_count = 0
+        for class_id in form.class_ids.data:
+            # Verify that the class belongs to the school and session
+            class_obj = Class.query.filter_by(
+                id=class_id,
+                school_id=current_user.school_id,
+                session_id=view_session.id
+            ).first()
+            if not class_obj:
+                continue   # skip invalid class (shouldn't happen)
+            
+            exam = Exam(
+                name=form.name.data,
+                term=form.term.data,
+                session_id=view_session.id,
+                class_id=class_id,
+                start_date=form.start_date.data,
+                end_date=form.end_date.data
+            )
+            db.session.add(exam)
+            created_count += 1
+        
         db.session.commit()
-        flash(f'Exam "{form.name.data}" created successfully.', 'success')
+        flash(f'Exam "{form.name.data}" created for {created_count} class(es).', 'success')
         return redirect(url_for('manage_exams'))
     
     return render_template('admin_create_exam.html',
@@ -7545,6 +7557,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
