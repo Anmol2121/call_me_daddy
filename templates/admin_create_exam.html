@@ -10,52 +10,130 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0"><i class="fas fa-pen-alt me-2 text-primary"></i>Exam Details</h5>
+            </div>
             <div class="card-body">
                 <form method="POST">
                     {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        {{ form.name.label(class="form-label") }}
-                        {{ form.name(class="form-control") }}
+
+                    <!-- Exam Name -->
+                    <div class="mb-4">
+                        {{ form.name.label(class="form-label fw-semibold") }}
+                        {{ form.name(class="form-control form-control-lg", placeholder="e.g., Half Yearly Examination") }}
                         {% if form.name.errors %}
-                            <div class="text-danger small">{{ form.name.errors[0] }}</div>
+                            <div class="text-danger small mt-1">
+                                {% for error in form.name.errors %}{{ error }}{% endfor %}
+                            </div>
                         {% endif %}
+                        <div class="form-text">A descriptive name for the exam.</div>
                     </div>
-                    
-                    <div class="mb-3">
-                        {{ form.term.label(class="form-label") }}
-                        {{ form.term(class="form-control") }}
-                        <div class="form-text">Optional, e.g., "Term 1"</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.class_id.label(class="form-label") }}
-                        {{ form.class_id(class="form-select") }}
-                        {% if form.class_id.errors %}
-                            <div class="text-danger small">{{ form.class_id.errors[0] }}</div>
+
+                    <!-- Term (optional) -->
+                    <div class="mb-4">
+                        {{ form.term.label(class="form-label fw-semibold") }}
+                        {{ form.term(class="form-control", placeholder="e.g., Term 1, Final") }}
+                        {% if form.term.errors %}
+                            <div class="text-danger small mt-1">{{ form.term.errors[0] }}</div>
                         {% endif %}
+                        <div class="form-text">Optional – you can leave it blank.</div>
                     </div>
-                    
+
+                    <!-- Multiple Classes Selection -->
+                    <div class="mb-4">
+                        {{ form.class_ids.label(class="form-label fw-semibold") }}
+                        {{ form.class_ids(class="form-select", size=6, multiple=True) }}
+                        {% if form.class_ids.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.class_ids.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1 text-info"></i>
+                            Hold <kbd>Ctrl</kbd> (Windows/Linux) or <kbd>⌘ Cmd</kbd> (Mac) to select multiple classes.
+                            A separate exam will be created for each selected class.
+                        </div>
+                    </div>
+
+                    <!-- Dates -->
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.start_date.label(class="form-label") }}
+                        <div class="col-md-6 mb-4">
+                            {{ form.start_date.label(class="form-label fw-semibold") }}
                             {{ form.start_date(class="form-control", type="date") }}
+                            {% if form.start_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.start_date.errors[0] }}</div>
+                            {% endif %}
+                            <div class="form-text">When the exam starts.</div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.end_date.label(class="form-label") }}
+                        <div class="col-md-6 mb-4">
+                            {{ form.end_date.label(class="form-label fw-semibold") }}
                             {{ form.end_date(class="form-control", type="date") }}
+                            {% if form.end_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.end_date.errors[0] }}</div>
+                            {% endif %}
+                            <div class="form-text">When the exam ends.</div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-end gap-2">
-                        <a href="{{ url_for('manage_exams') }}" class="btn btn-outline-secondary">Cancel</a>
-                        {{ form.submit(class="btn btn-primary") }}
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <a href="{{ url_for('manage_exams') }}" class="btn btn-outline-secondary px-4">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-primary px-4") }}
                     </div>
                 </form>
             </div>
         </div>
+
+        <!-- Optional Hint Card -->
+        <div class="card border-0 shadow-sm mt-4 bg-light">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-lightbulb fa-2x text-warning"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="fw-bold mb-2">How it works</h6>
+                        <p class="small text-muted mb-0">
+                            After creating the exam, it will appear in the exam list for each selected class.
+                            Teachers assigned to those classes (by subject) will be able to enter marks for their respective subjects.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Optional: add a small script to improve multi-select usability (e.g., show count)
+    document.addEventListener('DOMContentLoaded', function() {
+        const select = document.querySelector('select[name="class_ids"]');
+        if (select) {
+            const formText = select.nextElementSibling; // the div with form-text
+            const updateSelectedCount = () => {
+                const selected = Array.from(select.selectedOptions).map(opt => opt.text);
+                if (selected.length > 0) {
+                    let countMsg = `${selected.length} class(es) selected.`;
+                    if (selected.length <= 3) {
+                        countMsg += ` (${selected.join(', ')})`;
+                    }
+                    formText.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i> ${countMsg}<br>` +
+                                         `<small class="text-muted">Hold Ctrl/Cmd to select more.</small>`;
+                } else {
+                    formText.innerHTML = `<i class="fas fa-info-circle me-1 text-info"></i>` +
+                                         `Hold <kbd>Ctrl</kbd> (Windows/Linux) or <kbd>⌘ Cmd</kbd> (Mac) to select multiple classes.`;
+                }
+            };
+            select.addEventListener('change', updateSelectedCount);
+            // Initial call
+            updateSelectedCount();
+        }
+    });
+</script>
 {% endblock %}
