@@ -1,49 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Exams for Marks Entry{% endblock %}
+
+{% block title %}Exams & Marks Entry{% endblock %}
 {% block header %}Exams & Marks Entry{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Exams</li>
-{% endblock %}
-
 {% block content %}
-<div class="card">
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-book-open"></i> Assigned Subjects & Exams</h6>
+    </div>
     <div class="card-body">
         {% if exam_data %}
         <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-dark">
                     <tr>
                         <th>Class</th>
                         <th>Exam Name</th>
                         <th>Term</th>
                         <th>Subject</th>
                         <th>Date Range</th>
-                        <th>Actions</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in exam_data %}
                     <tr>
-                        <td>{{ item.class.name }} ({{ item.class.code }})</td>
+                        <td class="font-weight-bold">{{ item.class.name }} ({{ item.class.code }})</td>
                         <td>{{ item.exam.name }}</td>
                         <td>{{ item.exam.term or '—' }}</td>
-                        <td>
-                            <span class="badge bg-info">{{ item.subject_name }}</span>
-                        </td>
+                        <td><span class="badge bg-info text-dark" style="font-size: 14px;">{{ item.subject_name }}</span></td>
                         <td>
                             {% if item.exam.start_date %}
                                 {{ item.exam.start_date.strftime('%d %b') }} – {{ item.exam.end_date.strftime('%d %b') }}
                             {% else %}
-                                Not set
+                                <span class="text-muted">Not set</span>
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('teacher_enter_marks', exam_id=item.exam.id, subject_id=item.subject.id) }}" 
-                               class="btn btn-sm btn-primary">
-                                <i class="fas fa-pen me-1"></i>Enter Marks
-                            </a>
+                            {% if item.exam.marks_entry_open %}
+                                <a href="{{ url_for('teacher_enter_marks', exam_id=item.exam.id, subject_id=item.subject.id) }}" class="btn btn-sm btn-primary shadow-sm">
+                                    <i class="fas fa-edit"></i> Enter Marks
+                                </a>
+                            {% else %}
+                                <button class="btn btn-sm btn-secondary" disabled>
+                                    <i class="fas fa-lock"></i> Locked by Admin
+                                </button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -51,11 +53,10 @@
             </table>
         </div>
         {% else %}
-        <div class="empty-state">
-            <i class="fas fa-clipboard-list fa-4x text-muted opacity-25"></i>
-            <h5>No Exams Available</h5>
-            <p>You don't have any exams for your assigned classes yet.</p>
-            <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-primary mt-3">Back to Dashboard</a>
+        <div class="text-center py-5">
+            <i class="fas fa-folder-open fa-3x text-gray-300 mb-3"></i>
+            <h5 class="text-muted">No Exams Available</h5>
+            <p class="text-muted">You don't have any exams available for your assigned classes yet.</p>
         </div>
         {% endif %}
     </div>
