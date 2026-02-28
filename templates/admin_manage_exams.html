@@ -1,61 +1,77 @@
 {% extends "base.html" %}
+
 {% block title %}Manage Exams{% endblock %}
 {% block header %}Manage Exams{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Exams</li>
-{% endblock %}
-
-{% block actions %}
-<a href="{{ url_for('create_exam') }}" class="btn btn-primary">
-    <i class="fas fa-plus me-2"></i>New Exam
-</a>
-{% endblock %}
-
 {% block content %}
-<div class="card">
+<div class="card shadow mb-4 border-left-primary">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Exam List & Marks Portals</h6>
+        <a href="{{ url_for('create_exam') }}" class="btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Create New Exam
+        </a>
+    </div>
     <div class="card-body">
-        {% if exams %}
         <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
                     <tr>
                         <th>Exam Name</th>
-                        <th>Term</th>
                         <th>Class</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
+                        <th>Term</th>
+                        <th>Dates</th>
+                        <th>Marks Portal Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for exam in exams %}
                     <tr>
-                        <td>{{ exam.name }}</td>
-                        <td>{{ exam.term or '—' }}</td>
+                        <td class="font-weight-bold">{{ exam.name }}</td>
                         <td>{{ exam.class_.name }} ({{ exam.class_.code }})</td>
-                        <td>{{ exam.start_date.strftime('%d %b %Y') if exam.start_date else '—' }}</td>
-                        <td>{{ exam.end_date.strftime('%d %b %Y') if exam.end_date else '—' }}</td>
+                        <td>{{ exam.term or '—' }}</td>
                         <td>
-                            <!-- Enter Marks button removed – marks are entered by teachers -->
-                            <a href="{{ url_for('view_exam_results', exam_id=exam.id) }}" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="View Results">
-                                <i class="fas fa-eye"></i>
+                            {% if exam.start_date %}
+                                {{ exam.start_date.strftime('%d %b %Y') }} - {{ exam.end_date.strftime('%d %b %Y') }}
+                            {% else %}
+                                <span class="text-muted">Not Set</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exam.marks_entry_open %}
+                                <span class="badge bg-success" style="font-size: 14px;"><i class="fas fa-unlock"></i> OPEN</span>
+                            {% else %}
+                                <span class="badge bg-danger" style="font-size: 14px;"><i class="fas fa-lock"></i> CLOSED</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="{{ url_for('toggle_exam_marks_entry', exam_id=exam.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-sm {% if exam.marks_entry_open %}btn-warning{% else %}btn-success{% endif %} shadow-sm">
+                                    {% if exam.marks_entry_open %}
+                                       <i class="fas fa-lock"></i> Close Portal
+                                    {% else %}
+                                       <i class="fas fa-lock-open"></i> Open Portal
+                                    {% endif %}
+                                </button>
+                            </form>
+                            
+                            <a href="{{ url_for('enter_marks', exam_id=exam.id) }}" class="btn btn-sm btn-info shadow-sm">
+                               <i class="fas fa-edit"></i> Admin Edit Marks
+                            </a>
+                            
+                            <a href="{{ url_for('class_report_card', class_id=exam.class_id) }}" class="btn btn-sm btn-secondary shadow-sm">
+                               <i class="fas fa-file-alt"></i> Report Cards
                             </a>
                         </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No exams created for this session yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-clipboard-list fa-4x text-muted opacity-25"></i>
-            <h5>No Exams Created</h5>
-            <p>Create your first exam to get started.</p>
-            <a href="{{ url_for('create_exam') }}" class="btn btn-primary mt-3">Create Exam</a>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
