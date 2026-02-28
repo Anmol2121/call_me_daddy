@@ -77,12 +77,37 @@ class Exam(db.Model):
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
+    
+    # NEW FIELD: Admin permission flag for teachers
+    marks_entry_open = db.Column(db.Boolean, default=False) 
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
     session = db.relationship('AcademicSession')
     class_ = db.relationship('Class', backref='exams')
     marks = db.relationship('StudentMarks', back_populates='exam', cascade='all, delete-orphan')
+
+@app.route('/admin/exams/<int:exam_id>/toggle-marks', methods=['POST'])
+@role_required(['admin'])
+@school_active_required
+def toggle_exam_marks_entry(exam_id):
+    """Admin toggles whether teachers can enter marks for this exam."""
+    exam = Exam.query.get_or_404(exam_id)
+    
+    # Verify the exam belongs to the current admin's school
+    if exam.class_.school_id != current_user.school_id:
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('manage_exams'))
+        
+    # Toggle the boolean
+    exam.marks_entry_open = not exam.marks_entry_open
+    db.session.commit()
+    
+    status = "OPENED" if exam.marks_entry_open else "CLOSED"
+    flash(f'Marks entry portal has been {status} for {exam.name} ({exam.class_.name}).', 'success')
+    
+    return redirect(url_for('manage_exams'))
 
 
 class Subject(db.Model):
@@ -7559,6 +7584,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
