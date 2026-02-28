@@ -1,400 +1,202 @@
 {% extends "base.html" %}
-{% block title %}Final Report Card - {{ class_obj.name }}{% endblock %}
-{% block header %}Final Report Card: {{ class_obj.name }}{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item"><a href="{{ url_for('manage_classes') }}">Classes</a></li>
-<li class="breadcrumb-item active">Report Card</li>
-{% endblock %}
-
-{% block actions %}
-<button class="btn btn-outline-primary" onclick="window.print()">
-    <i class="fas fa-print me-2"></i> Print All
-</button>
-<a href="#" class="btn btn-outline-success" onclick="exportPDF()">
-    <i class="fas fa-file-pdf me-2"></i> Export PDF
-</a>
-{% endblock %}
+{% block title %}Student Report Cards - {{ class_obj.name }}{% endblock %}
 
 {% block content %}
 <style>
-    /* Professional Report Card Styles */
-    .report-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        margin-bottom: 40px;
-        padding: 30px;
-        font-family: 'Inter', 'Segoe UI', sans-serif;
-        page-break-after: always;
-        position: relative;
-        border: 1px solid #e5e7eb;
-    }
-    .report-card:last-child {
-        page-break-after: auto;
-    }
-    .school-header {
-        border-bottom: 3px solid #4f46e5;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .school-logo {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 2rem;
-        box-shadow: 0 4px 12px rgba(79,70,229,0.3);
-    }
-    .school-info {
-        flex-grow: 1;
-        padding-left: 20px;
-    }
-    .school-info h2 {
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 5px;
-        font-size: 1.8rem;
-    }
-    .school-info p {
-        margin: 0;
-        color: #64748b;
-        font-size: 0.95rem;
-    }
-    .report-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        border-left: 4px solid #4f46e5;
-        padding-left: 15px;
-        margin: 20px 0;
-    }
-    .student-info-panel {
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 25px;
-        border: 1px solid #e2e8f0;
-    }
-    .student-info-panel .row {
-        align-items: center;
-    }
-    .info-label {
-        font-weight: 600;
-        color: #475569;
-        margin-bottom: 5px;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .info-value {
-        font-weight: 700;
-        color: #1e293b;
-        font-size: 1.2rem;
-    }
-    .table-marks {
+    /* Professional Report Card CSS */
+    .print-controls { margin-bottom: 20px; text-align: right; }
+    
+    .report-card-container {
+        background: #fff;
         width: 100%;
-        border-collapse: collapse;
-        margin: 20px 0;
-        font-size: 0.95rem;
+        max-width: 900px;
+        margin: 0 auto 40px auto;
+        padding: 40px;
+        border: 2px solid #2c3e50;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        page-break-after: always;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .table-marks th {
-        background: #f1f5f9;
-        color: #334155;
-        font-weight: 600;
-        padding: 12px 8px;
+
+    .rc-header {
         text-align: center;
-        border: 1px solid #cbd5e1;
+        border-bottom: 3px double #2c3e50;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
     }
-    .table-marks td {
-        padding: 10px 8px;
-        border: 1px solid #cbd5e1;
-        text-align: center;
-    }
-    .table-marks tbody tr:hover {
-        background: #fafafa;
-    }
-    .table-marks .subject-name {
-        font-weight: 600;
-        text-align: left;
-    }
-    .grade-badge {
-        background: #e0f2fe;
-        color: #0369a1;
-        font-weight: 700;
-        padding: 4px 8px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-    }
-    .summary-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12px;
+    
+    .rc-header h1 { margin: 0; font-size: 28px; color: #2c3e50; font-weight: 700; text-transform: uppercase; }
+    .rc-header h3 { margin: 5px 0 0 0; font-size: 18px; color: #555; }
+    .rc-header .academic-session { font-weight: bold; color: #7f8c8d; margin-top: 5px; }
+
+    .rc-student-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 30px;
+        background: #f8f9fa;
         padding: 20px;
-        margin: 20px 0;
-        box-shadow: 0 10px 20px rgba(102,126,234,0.3);
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
     }
-    .summary-card .stat {
+
+    .info-group { display: flex; font-size: 15px; }
+    .info-group strong { width: 140px; color: #34495e; }
+    .info-group span { color: #2c3e50; font-weight: 600; border-bottom: 1px dotted #bdc3c7; flex-grow: 1; }
+
+    .rc-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .rc-table th, .rc-table td {
+        border: 1px solid #bdc3c7;
+        padding: 12px;
         text-align: center;
+        font-size: 14px;
     }
-    .summary-card .stat-label {
-        font-size: 0.85rem;
-        opacity: 0.9;
-        margin-bottom: 5px;
-    }
-    .summary-card .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-    .attendance-box {
-        background: #f0fdf4;
-        border: 1px solid #86efac;
-        border-radius: 12px;
-        padding: 15px;
-        margin: 15px 0;
-    }
-    .attendance-box .label {
-        color: #166534;
-        font-weight: 600;
-    }
-    .attendance-box .value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #166534;
-    }
-    .signature-area {
-        margin-top: 40px;
+    .rc-table th { background-color: #2c3e50; color: #ffffff; text-transform: uppercase; }
+    .rc-table td.subject-name { text-align: left; font-weight: bold; color: #2c3e50; }
+
+    .rc-summary {
         display: flex;
         justify-content: space-between;
-        border-top: 2px dashed #cbd5e1;
-        padding-top: 30px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #2c3e50;
     }
-    .signature-box {
-        text-align: center;
+    .summary-box { text-align: center; padding: 15px 30px; background: #ecf0f1; border-radius: 5px; border: 1px solid #bdc3c7; }
+    .summary-box span { display: block; font-size: 13px; color: #7f8c8d; text-transform: uppercase; }
+    .summary-box strong { display: block; font-size: 20px; color: #2c3e50; margin-top: 5px; }
+
+    .rc-signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 60px;
+        padding: 0 20px;
+    }
+    .sig-line {
         width: 200px;
+        border-top: 1px solid #2c3e50;
+        text-align: center;
+        padding-top: 5px;
+        font-weight: bold;
+        color: #2c3e50;
     }
-    .signature-line {
-        border-bottom: 1px solid #64748b;
-        margin: 5px 0 15px;
-        height: 30px;
-    }
-    .grade-reference {
-        background: #f8fafc;
-        border-radius: 8px;
-        padding: 12px;
-        margin-top: 15px;
-        font-size: 0.9rem;
-        border: 1px solid #e2e8f0;
-    }
-    .grade-reference span {
-        display: inline-block;
-        background: white;
-        padding: 4px 10px;
-        margin: 3px;
-        border-radius: 20px;
-        border: 1px solid #d1d5db;
-    }
+
     @media print {
-        .navbar, .sidebar-desktop, .bottom-nav, .page-header, .btn, .breadcrumb, footer {
-            display: none !important;
-        }
-        .main-content {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        .report-card {
-            box-shadow: none;
-            border: 1px solid #ccc;
-            page-break-after: always;
-        }
-        .school-header {
-            border-bottom: 2px solid #000;
-        }
+        body { background: #fff; margin: 0; padding: 0; }
+        .print-controls, .navbar, .sidebar { display: none !important; }
+        .report-card-container { border: none; box-shadow: none; padding: 0; margin: 0; }
     }
 </style>
 
-<div class="container-fluid px-0">
-    {% for data in report_data %}
-    <div class="report-card">
-        <!-- School Header -->
-        <div class="school-header">
-            <div class="school-logo">
-                <i class="fas fa-graduation-cap"></i>
-            </div>
-            <div class="school-info">
-                <h2>{{ class_obj.school.name }}</h2>
-                <p>{{ class_obj.school.address or 'Address not available' }} | {{ class_obj.school.phone or '' }}</p>
-                <p>Email: {{ class_obj.school.email or '' }} | Website: {{ class_obj.school.website or '' }}</p>
-            </div>
-        </div>
-
-        <!-- Report Title -->
-        <div class="report-title">ANNUAL REPORT CARD - {{ class_obj.name }}</div>
-
-        <!-- Student Information -->
-        <div class="student-info-panel">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="info-label">Student Name</div>
-                    <div class="info-value">{{ data.student.first_name }} {{ data.student.last_name }}</div>
-                </div>
-                <div class="col-md-2">
-                    <div class="info-label">Father's Name</div>
-                    <div class="info-value">{{ data.student.father_name or '—' }}</div>
-                </div>
-                <div class="col-md-2">
-                    <div class="info-label">Admission No.</div>
-                    <div class="info-value">{{ data.student.student_id }}</div>
-                </div>
-                <div class="col-md-1">
-                    <div class="info-label">Roll No.</div>
-                    <div class="info-value">{{ data.roll_number }}</div>
-                </div>
-                <div class="col-md-2">
-                    <div class="info-label">Class</div>
-                    <div class="info-value">{{ class_obj.name }}</div>
-                </div>
-                <div class="col-md-2">
-                    <div class="info-label">Session</div>
-                    <div class="info-value">{{ context.view_session.name }}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Marks Table -->
-        <table class="table-marks">
-            <thead>
-                <tr>
-                    <th>Subject</th>
-                    <th>Term 1<br><small>Marks (Grade)</small></th>
-                    <th>Term 2<br><small>Marks (Grade)</small></th>
-                    <th>Final Exam<br><small>Marks (Grade)</small></th>
-                    <th>Total<br><small>Obtained</small></th>
-                    <th>Max<br><small>Marks</small></th>
-                    <th>Percentage</th>
-                    <th>Grade</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for subject in data.subjects %}
-                <tr>
-                    <td class="subject-name">{{ subject.subject.name }}</td>
-                    <td>
-                        {% if subject.term1 %}
-                            {{ subject.term1.obtained }} / {{ subject.term1.max }}
-                            {% if subject.term1.grade %}<br><small>({{ subject.term1.grade }})</small>{% endif %}
-                        {% else %} - {% endif %}
-                    </td>
-                    <td>
-                        {% if subject.term2 %}
-                            {{ subject.term2.obtained }} / {{ subject.term2.max }}
-                            {% if subject.term2.grade %}<br><small>({{ subject.term2.grade }})</small>{% endif %}
-                        {% else %} - {% endif %}
-                    </td>
-                    <td>
-                        {% if subject.final %}
-                            {{ subject.final.obtained }} / {{ subject.final.max }}
-                            {% if subject.final.grade %}<br><small>({{ subject.final.grade }})</small>{% endif %}
-                        {% else %} - {% endif %}
-                    </td>
-                    <td><strong>{{ subject.total_obtained }}</strong></td>
-                    <td>{{ subject.total_max }}</td>
-                    <td>{{ subject.percentage }}%</td>
-                    <td><span class="grade-badge">{{ subject.grade }}</span></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- Consolidated Summary -->
-        <div class="summary-card">
-            <div class="row">
-                <div class="col-3 stat">
-                    <div class="stat-label">Total Marks Obtained</div>
-                    <div class="stat-value">{{ data.total_obtained }}</div>
-                </div>
-                <div class="col-3 stat">
-                    <div class="stat-label">Total Maximum</div>
-                    <div class="stat-value">{{ data.total_max }}</div>
-                </div>
-                <div class="col-3 stat">
-                    <div class="stat-label">Overall Percentage</div>
-                    <div class="stat-value">{{ data.overall_percentage }}%</div>
-                </div>
-                <div class="col-3 stat">
-                    <div class="stat-label">Overall Grade</div>
-                    <div class="stat-value">{{ data.overall_grade }}</div>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-12 text-center">
-                    <span class="badge bg-light text-dark fs-6">Class Rank: #{{ data.rank }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Attendance Summary (if available) -->
-        {% if data.attendance %}
-        <div class="attendance-box">
-            <div class="row align-items-center">
-                <div class="col-auto">
-                    <i class="fas fa-calendar-check fa-3x text-success"></i>
-                </div>
-                <div class="col">
-                    <span class="label">Attendance Summary</span>
-                    <div class="d-flex gap-4 mt-2">
-                        <div><strong>Total Working Days:</strong> {{ data.attendance.total_days }}</div>
-                        <div><strong>Days Present:</strong> {{ data.attendance.present_days }}</div>
-                        <div><strong>Attendance %:</strong> {{ data.attendance.percentage }}%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Grading Scale Reference -->
-        <div class="grade-reference">
-            <strong>Grading Scale:</strong>
-            {% for scale in grading_scales %}
-            <span>{{ scale.grade }}: {{ scale.min_percentage }}% - {{ scale.max_percentage }}%</span>
-            {% endfor %}
-        </div>
-
-        <!-- Remarks & Signatures -->
-        <div class="signature-area">
-            <div class="signature-box">
-                <div class="signature-line"></div>
-                <div><strong>Class Teacher</strong></div>
-                <div class="small text-muted">({{ data.teacher_name if data.teacher_name else '_________________' }})</div>
-            </div>
-            <div class="signature-box">
-                <div class="signature-line"></div>
-                <div><strong>Principal</strong></div>
-                <div class="small text-muted">({{ class_obj.school.principal_name if class_obj.school.principal_name else '_________________' }})</div>
-            </div>
-            <div class="signature-box">
-                <div class="signature-line"></div>
-                <div><strong>Parent/Guardian</strong></div>
-                <div class="small text-muted">(_________________)</div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
+<div class="print-controls">
+    <button onclick="window.print()" class="btn btn-primary btn-lg">
+        <i class="fas fa-print"></i> Print All Report Cards
+    </button>
 </div>
 
-<script>
-function exportPDF() {
-    // Placeholder – in production you'd call a server endpoint to generate PDF
-    alert('PDF export will be available soon. Use Print → Save as PDF for now.');
-}
-</script>
+{% for data in report_data %}
+<div class="report-card-container">
+    
+    <div class="rc-header">
+        <h1>{{ context.school.name|default('School Name') }}</h1>
+        <h3>OFFICIAL STUDENT REPORT CARD</h3>
+        <div class="academic-session">Academic Session: {{ context.current_session.name }}</div>
+    </div>
+
+    <div class="rc-student-info">
+        <div class="info-group">
+            <strong>Student Name:</strong> 
+            <span>{{ data.student.first_name }} {{ data.student.last_name }}</span>
+        </div>
+        <div class="info-group">
+            <strong>Class & Section:</strong> 
+            <span>{{ class_obj.name }} ({{ class_obj.code }}) {% if data.student.section %}- Sec {{ data.student.section }}{% endif %}</span>
+        </div>
+        <div class="info-group">
+            <strong>Father's Name:</strong> 
+            <span>{{ data.student.father_name|default('N/A', true) }}</span>
+        </div>
+        <div class="info-group">
+            <strong>Mother's Name:</strong> 
+            <span>{{ data.student.mother_name|default('N/A', true) }}</span>
+        </div>
+        <div class="info-group">
+            <strong>Unique Student ID:</strong> 
+            <span>STU-{{ "%04d" | format(data.student.id) }}</span>
+        </div>
+        <div class="info-group">
+            <strong>Class Roll No:</strong> 
+            <span>{{ data.roll_number }}</span>
+        </div>
+    </div>
+
+    <table class="rc-table">
+        <thead>
+            <tr>
+                <th style="text-align: left;">Subject</th>
+                {% for term in terms %}
+                    <th>{{ term }}</th>
+                {% endfor %}
+                <th>Total Obtained</th>
+                <th>Max Marks</th>
+                <th>Percentage</th>
+                <th>Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data.subjects %}
+            <tr>
+                <td class="subject-name">{{ row.subject.name }}</td>
+                
+                {% for term in terms %}
+                    {% set term_key = term|lower|replace(' ', '') %}
+                    {% if row[term_key] %}
+                        <td>{{ row[term_key].obtained }}</td>
+                    {% else %}
+                        <td>-</td>
+                    {% endif %}
+                {% endfor %}
+
+                <td><strong>{{ row.total_obtained }}</strong></td>
+                <td>{{ row.total_max }}</td>
+                <td>{{ row.percentage }}%</td>
+                <td><strong>{{ row.grade }}</strong></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="{{ terms|length + 5 }}">No marks uploaded yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="rc-summary">
+        <div class="summary-box">
+            <span>Overall Marks</span>
+            <strong>{{ data.total_obtained }} / {{ data.total_max }}</strong>
+        </div>
+        <div class="summary-box">
+            <span>Final Percentage</span>
+            <strong>{{ data.overall_percentage }}%</strong>
+        </div>
+        <div class="summary-box">
+            <span>Overall Grade</span>
+            <strong>{{ data.overall_grade }}</strong>
+        </div>
+        <div class="summary-box">
+            <span>Class Rank</span>
+            <strong>#{{ data.rank }}</strong>
+        </div>
+    </div>
+
+    <div class="rc-signatures">
+        <div class="sig-line">Class Teacher Signature</div>
+        <div class="sig-line">Parent Signature</div>
+        <div class="sig-line">Principal Signature</div>
+    </div>
+
+</div>
+{% endfor %}
+
 {% endblock %}
