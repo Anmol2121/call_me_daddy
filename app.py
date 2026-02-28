@@ -511,107 +511,109 @@ def teacher_exams():
 
 
 @app.route('/teacher/exams/<int:exam_id>/subject/<int:subject_id>/marks', methods=['GET', 'POST'])
+@login_required
 @role_required(['teacher'])
 @school_active_required
 def teacher_enter_marks(exam_id, subject_id):
     """Enter marks for one subject in one exam."""
     if current_user.must_change_password:
         return redirect(url_for('change_password'))
-    
+
     context = get_school_context()
     view_session = context.get('view_session') or context['current_session']
+
     if not view_session:
         flash('No active session', 'warning')
         return redirect(url_for('teacher_dashboard'))
-    
+
     # Fetch exam and subject
     exam = Exam.query.get_or_404(exam_id)
     subject = Subject.query.get_or_404(subject_id)
-    
-    # Verify that the exam and subject belong to the same class and session
-    if exam.class_id != subject.class_id or exam.session_id != subject.session_id:
-        abort(404)
-    
-    # Verify teacher is assigned to this class and subject in this session
-    assignment = TeacherAssignment.query.filter_by(
-        teacher_id=current_user.id,
-        class_id=exam.class_id,
-        session_id=view_session.id,
-        subject=subject.name
-    ).first()
-    if not assignment:
-        flash('You are not authorized to enter marks for this subject.', 'danger')
+
+    # NEW SECURITY CHECK: Block teacher if admin closed the portal
+    if not exam.marks_entry_open:
+        flash(f'Marks entry for {exam.name} is currently locked by the Admin.', 'danger')
         return redirect(url_for('teacher_exams'))
-    
-    # Get all students enrolled in this class for this session
+
+    # Validate that exam and subject belong to the same class and session
+    if exam.class_id != subject.class_id or exam.session_id != subject.session_id:
+        flash('Invalid exam or subject combination.', 'danger')
+        return redirect(url_for('teacher_exams'))
+
+    # Fetch all students enrolled in this class for the current session
     enrollments = StudentEnrollment.query.filter_by(
         class_id=exam.class_id,
-        session_id=exam.session_id,
-        is_active=True
+        session_id=exam.session_id
     ).order_by(StudentEnrollment.roll_number).all()
-    
+
     if request.method == 'POST':
-        # Save marks for all students (only this subject)
-        for enrollment in enrollments:
-            student_id = enrollment.student_id
-            marks_key = f'marks_{student_id}'
-            max_marks_key = f'max_{student_id}'
-            grade_key = f'grade_{student_id}'
-            
-            if marks_key in request.form:
-                marks_obtained = request.form.get(marks_key, type=float)
-                max_marks = request.form.get(max_marks_key, type=float)
-                grade = request.form.get(grade_key, '')
+        try:
+            for enrollment in enrollments:
+                student_id = enrollment.student_id
                 
-                if marks_obtained is not None:
-                    # Check if record exists
-                    mark_record = StudentMarks.query.filter_by(
+                # Get form data using dynamic field names (e.g., obtained_5, max_5)
+                obtained_str = request.form.get(f'obtained_{student_id}')
+                max_str = request.form.get(f'max_{student_id}')
+                grade_str = request.form.get(f'grade_{student_id}')
+                
+                # Check if we have valid input
+                if obtained_str and max_str:
+                    obtained = float(obtained_str)
+                    max_marks = float(max_str)
+                    grade = grade_str.strip() if grade_str else None
+                    
+                    # Query existing marks for this specific student, exam, and subject
+                    mark = StudentMarks.query.filter_by(
                         student_id=student_id,
-                        exam_id=exam.id,
-                        subject_id=subject.id
+                        exam_id=exam_id,
+                        subject_id=subject_id
                     ).first()
                     
-                    if mark_record:
-                        mark_record.marks_obtained = marks_obtained
-                        mark_record.max_marks = max_marks
-                        mark_record.grade = grade
-                        mark_record.updated_at = datetime.utcnow()
+                    if mark:
+                        # Update existing record
+                        mark.obtained_marks = obtained
+                        mark.max_marks = max_marks
+                        mark.grade = grade
                     else:
-                        mark_record = StudentMarks(
+                        # Create new record
+                        new_mark = StudentMarks(
                             student_id=student_id,
-                            exam_id=exam.id,
-                            subject_id=subject.id,
-                            marks_obtained=marks_obtained,
+                            exam_id=exam_id,
+                            subject_id=subject_id,
+                            obtained_marks=obtained,
                             max_marks=max_marks,
                             grade=grade
                         )
-                        db.session.add(mark_record)
-        
-        db.session.commit()
-        flash(f'Marks for {subject.name} saved successfully.', 'success')
-        return redirect(url_for('teacher_exams'))
+                        db.session.add(new_mark)
+                        
+            db.session.commit()
+            flash('Marks successfully saved!', 'success')
+            return redirect(url_for('teacher_exams'))
+            
+        except ValueError:
+            db.session.rollback()
+            flash('Invalid input. Marks must be numeric values.', 'danger')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred while saving marks: {str(e)}', 'danger')
+
+    # For GET request: Fetch existing marks to prepopulate the form
+    existing_marks = StudentMarks.query.filter_by(
+        exam_id=exam_id,
+        subject_id=subject_id
+    ).all()
     
-    # GET: pre‑fill existing marks
-    existing_marks = {}
-    for enrollment in enrollments:
-        mark = StudentMarks.query.filter_by(
-            student_id=enrollment.student_id,
-            exam_id=exam.id,
-            subject_id=subject.id
-        ).first()
-        if mark:
-            existing_marks[enrollment.student_id] = mark
-    
-    # Get the subject's default max marks
-    default_max = subject.default_max_marks   # <-- new line
-    
-    return render_template('teacher_enter_marks.html',
-                         exam=exam,
-                         subject=subject,
-                         enrollments=enrollments,
-                         existing_marks=existing_marks,
-                         default_max=default_max,   # <-- pass to template
-                         context=context)
+    # Create a dictionary for easy template lookup {student_id: mark_object}
+    marks_dict = {m.student_id: m for m in existing_marks}
+
+    return render_template(
+        'teacher_enter_marks.html',
+        exam=exam,
+        subject=subject,
+        enrollments=enrollments,
+        marks_dict=marks_dict,
+        context=context
+    )
 
 
 @app.route('/admin/subjects')
@@ -7584,6 +7586,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
