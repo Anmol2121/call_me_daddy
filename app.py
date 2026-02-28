@@ -7580,12 +7580,14 @@ class ForgotPasswordForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Reset Password')
 
+
 # ==================== MAIN APPLICATION ====================
 setup_logging()
 with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
