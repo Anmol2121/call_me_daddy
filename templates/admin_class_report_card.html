@@ -28,7 +28,7 @@
     }
     
     .rc-header h1 { margin: 0; font-size: 28px; color: #2c3e50; font-weight: 700; text-transform: uppercase; }
-    .rc-header h3 { margin: 5px 0 0 0; font-size: 18px; color: #555; }
+    .rc-header h3 { margin: 5px 0 0 0; font-size: 18px; color: #555; letter-spacing: 2px; }
     .rc-header .academic-session { font-weight: bold; color: #7f8c8d; margin-top: 5px; }
 
     .rc-student-info {
@@ -53,7 +53,7 @@
         text-align: center;
         font-size: 14px;
     }
-    .rc-table th { background-color: #2c3e50; color: #ffffff; text-transform: uppercase; }
+    .rc-table th { background-color: #2c3e50; color: #ffffff; text-transform: uppercase; font-weight: 600; }
     .rc-table td.subject-name { text-align: left; font-weight: bold; color: #2c3e50; }
 
     .rc-summary {
@@ -63,14 +63,14 @@
         padding-top: 20px;
         border-top: 2px solid #2c3e50;
     }
-    .summary-box { text-align: center; padding: 15px 30px; background: #ecf0f1; border-radius: 5px; border: 1px solid #bdc3c7; }
-    .summary-box span { display: block; font-size: 13px; color: #7f8c8d; text-transform: uppercase; }
-    .summary-box strong { display: block; font-size: 20px; color: #2c3e50; margin-top: 5px; }
+    .summary-box { text-align: center; padding: 15px 30px; background: #ecf0f1; border-radius: 5px; border: 1px solid #bdc3c7; min-width: 150px; }
+    .summary-box span { display: block; font-size: 13px; color: #7f8c8d; text-transform: uppercase; font-weight: bold;}
+    .summary-box strong { display: block; font-size: 22px; color: #2c3e50; margin-top: 5px; }
 
     .rc-signatures {
         display: flex;
         justify-content: space-between;
-        margin-top: 60px;
+        margin-top: 70px;
         padding: 0 20px;
     }
     .sig-line {
@@ -84,13 +84,16 @@
 
     @media print {
         body { background: #fff; margin: 0; padding: 0; }
-        .print-controls, .navbar, .sidebar { display: none !important; }
-        .report-card-container { border: none; box-shadow: none; padding: 0; margin: 0; }
+        .print-controls, .navbar, .sidebar, footer { display: none !important; }
+        .report-card-container { border: none; box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
+        /* Forces background colors to print */
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
 </style>
 
 <div class="print-controls">
-    <button onclick="window.print()" class="btn btn-primary btn-lg">
+    <a href="{{ url_for('manage_classes') }}" class="btn btn-secondary mr-2"><i class="fas fa-arrow-left"></i> Back</a>
+    <button onclick="window.print()" class="btn btn-primary btn-lg shadow-sm">
         <i class="fas fa-print"></i> Print All Report Cards
     </button>
 </div>
@@ -138,7 +141,7 @@
                 {% for term in terms %}
                     <th>{{ term }}</th>
                 {% endfor %}
-                <th>Total Obtained</th>
+                <th>Total Marks</th>
                 <th>Max Marks</th>
                 <th>Percentage</th>
                 <th>Grade</th>
@@ -165,7 +168,9 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="{{ terms|length + 5 }}">No marks uploaded yet.</td>
+                <td colspan="{{ terms|length + 5 }}" style="padding: 30px; font-style: italic; color: #7f8c8d;">
+                    Marks have not been uploaded for this student yet.
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -173,7 +178,7 @@
 
     <div class="rc-summary">
         <div class="summary-box">
-            <span>Overall Marks</span>
+            <span>Overall Score</span>
             <strong>{{ data.total_obtained }} / {{ data.total_max }}</strong>
         </div>
         <div class="summary-box">
@@ -192,7 +197,7 @@
 
     <div class="rc-signatures">
         <div class="sig-line">Class Teacher Signature</div>
-        <div class="sig-line">Parent Signature</div>
+        <div class="sig-line">Parent / Guardian Signature</div>
         <div class="sig-line">Principal Signature</div>
     </div>
 
