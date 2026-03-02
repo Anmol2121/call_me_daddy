@@ -179,13 +179,13 @@ class GradingScaleForm(FlaskForm):
     max_percentage = FloatField('Maximum Percentage', validators=[DataRequired()])
     description = StringField('Description', validators=[Optional()])
     submit = SubmitField('Save Grade')
-class ExamForm(FlaskForm):
+"""class ExamForm(FlaskForm):
     name = StringField('Exam Name', validators=[DataRequired()])
     term = StringField('Term (e.g., Term 1)', validators=[Optional()])
     class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
     start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
     end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
-    submit = SubmitField('Create Exam')
+    submit = SubmitField('Create Exam')"""
 
 
 class SubjectForm(FlaskForm):
@@ -7587,6 +7587,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
