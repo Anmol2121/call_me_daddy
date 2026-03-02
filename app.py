@@ -78,8 +78,8 @@ class Exam(db.Model):
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
     
-    # NEW FIELD: Admin permission flag for teachers
-    marks_entry_open = db.Column(db.Boolean, default=False) 
+    # 🔁 Change default to True if you want all new exams open automatically
+    marks_entry_open = db.Column(db.Boolean, default=False)   # or default=True
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -485,17 +485,15 @@ def teacher_exams():
         # Find subjects the teacher teaches in this exam's class
         subject = teacher_subjects.get(exam.class_id)
         if not subject:
-            continue  # teacher not assigned to any subject in this class? shouldn't happen
+            continue
         
-        # Get subject id(s) that match the teacher's subject name (assuming subject names are unique per class)
-        # We need the subject.id to link to the marks entry page.
+        # Get subject id(s) that match the teacher's subject name (case‑sensitive!)
         subject_obj = Subject.query.filter_by(
             class_id=exam.class_id,
-            name=subject,
+            name=subject,                # must exactly match Subject.name
             session_id=view_session.id
         ).first()
         if not subject_obj:
-            # If no subject record matches the name, skip or use a generic link
             continue
         
         exam_data.append({
@@ -505,9 +503,7 @@ def teacher_exams():
             'subject_name': subject
         })
     
-    return render_template('teacher_exams.html',
-                         exam_data=exam_data,
-                         context=context)
+    return render_template('teacher_exams.html', exam_data=exam_data, context=context)
 
 
 @app.route('/teacher/exams/<int:exam_id>/subject/<int:subject_id>/marks', methods=['GET', 'POST'])
@@ -530,7 +526,7 @@ def teacher_enter_marks(exam_id, subject_id):
     exam = Exam.query.get_or_404(exam_id)
     subject = Subject.query.get_or_404(subject_id)
 
-    # NEW SECURITY CHECK: Block teacher if admin closed the portal
+    # 🔒 SECURITY: Block teacher if admin closed the portal
     if not exam.marks_entry_open:
         flash(f'Marks entry for {exam.name} is currently locked by the Admin.', 'danger')
         return redirect(url_for('teacher_exams'))
@@ -550,19 +546,15 @@ def teacher_enter_marks(exam_id, subject_id):
         try:
             for enrollment in enrollments:
                 student_id = enrollment.student_id
-                
-                # Get form data using dynamic field names (e.g., obtained_5, max_5)
                 obtained_str = request.form.get(f'obtained_{student_id}')
                 max_str = request.form.get(f'max_{student_id}')
                 grade_str = request.form.get(f'grade_{student_id}')
                 
-                # Check if we have valid input
                 if obtained_str and max_str:
                     obtained = float(obtained_str)
                     max_marks = float(max_str)
                     grade = grade_str.strip() if grade_str else None
                     
-                    # Query existing marks for this specific student, exam, and subject
                     mark = StudentMarks.query.filter_by(
                         student_id=student_id,
                         exam_id=exam_id,
@@ -570,17 +562,15 @@ def teacher_enter_marks(exam_id, subject_id):
                     ).first()
                     
                     if mark:
-                        # Update existing record
-                        mark.obtained_marks = obtained
+                        mark.marks_obtained = obtained
                         mark.max_marks = max_marks
                         mark.grade = grade
                     else:
-                        # Create new record
                         new_mark = StudentMarks(
                             student_id=student_id,
                             exam_id=exam_id,
                             subject_id=subject_id,
-                            obtained_marks=obtained,
+                            marks_obtained=obtained,
                             max_marks=max_marks,
                             grade=grade
                         )
@@ -597,14 +587,15 @@ def teacher_enter_marks(exam_id, subject_id):
             db.session.rollback()
             flash(f'An error occurred while saving marks: {str(e)}', 'danger')
 
-    # For GET request: Fetch existing marks to prepopulate the form
+    # GET: pre‑fill existing marks
     existing_marks = StudentMarks.query.filter_by(
         exam_id=exam_id,
         subject_id=subject_id
     ).all()
-    
-    # Create a dictionary for easy template lookup {student_id: mark_object}
     marks_dict = {m.student_id: m for m in existing_marks}
+
+    # Default max marks (fallback)
+    default_max = subject.default_max_marks if subject.default_max_marks else 100
 
     return render_template(
         'teacher_enter_marks.html',
@@ -612,6 +603,7 @@ def teacher_enter_marks(exam_id, subject_id):
         subject=subject,
         enrollments=enrollments,
         marks_dict=marks_dict,
+        default_max=default_max,
         context=context
     )
 
@@ -7587,6 +7579,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
