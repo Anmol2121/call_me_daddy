@@ -6558,7 +6558,7 @@ def assign_teacher():
         flash('No active session', 'warning')
         return redirect(url_for('admin_dashboard'))
     
-    # Populate form choices
+    # Populate teacher choices
     form.teacher_id.choices = [(t.id, t.full_name) 
                               for t in User.query.filter_by(
                                   school_id=current_user.school_id,
@@ -6566,52 +6566,78 @@ def assign_teacher():
                                   is_active=True
                               ).all()]
     
-    form.class_id.choices = [(c.id, f"{c.name} ({c.code})") 
-                            for c in Class.query.filter_by(
-                                school_id=current_user.school_id,
-                                session_id=context['current_session'].id,
-                                is_active=True
-                            ).all()]
+    # Populate class choices (only classes in current session)
+    classes = Class.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=context['current_session'].id,
+        is_active=True
+    ).all()
+    form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
+    
+    # Get all subject names for the current session (to populate datalist)
+    subjects = Subject.query.filter_by(
+        school_id=current_user.school_id,
+        session_id=context['current_session'].id,
+        is_active=True
+    ).all()
+    subject_names = sorted(set([s.name for s in subjects]))   # unique, sorted
     
     if form.validate_on_submit():
-        try:
-            # Check if teacher is already assigned to this class for same subject
-            existing = TeacherAssignment.query.filter_by(
+        # --- Subject existence check ---
+        subject_exists = Subject.query.filter_by(
+            school_id=current_user.school_id,
+            session_id=context['current_session'].id,
+            class_id=form.class_id.data,
+            name=form.subject.data,
+            is_active=True
+        ).first()
+        
+        if not subject_exists:
+            # Show a warning, but still allow assignment (admin can create subject later)
+            flash('Warning: The subject you entered does not exist in the Subjects list. '
+                  'Marks entry may not work correctly until you create it in Subjects.', 'warning')
+            # If you want to block assignment, uncomment the next lines:
+            # flash('Subject must be created first via Subjects page.', 'danger')
+            # return render_template('admin_assign_teacher.html', form=form, context=context,
+            #                        subject_names=subject_names, classes=classes)
+        
+        # --- Check duplicate assignment ---
+        existing = TeacherAssignment.query.filter_by(
+            teacher_id=form.teacher_id.data,
+            class_id=form.class_id.data,
+            session_id=context['current_session'].id,
+            subject=form.subject.data
+        ).first()
+        
+        if existing:
+            flash('Teacher is already assigned to this class for this subject', 'danger')
+        else:
+            # If setting as class teacher, remove any existing class teacher for that class
+            if form.is_class_teacher.data:
+                TeacherAssignment.query.filter_by(
+                    class_id=form.class_id.data,
+                    session_id=context['current_session'].id,
+                    is_class_teacher=True
+                ).update({'is_class_teacher': False})
+            
+            assignment = TeacherAssignment(
                 teacher_id=form.teacher_id.data,
                 class_id=form.class_id.data,
                 session_id=context['current_session'].id,
-                subject=form.subject.data
-            ).first()
+                subject=form.subject.data,
+                is_class_teacher=form.is_class_teacher.data
+            )
+            db.session.add(assignment)
+            db.session.commit()
             
-            if existing:
-                flash('Teacher is already assigned to this class for this subject', 'danger')
-            else:
-                # If setting as class teacher, remove existing class teacher
-                if form.is_class_teacher.data:
-                    TeacherAssignment.query.filter_by(
-                        class_id=form.class_id.data,
-                        session_id=context['current_session'].id,
-                        is_class_teacher=True
-                    ).update({'is_class_teacher': False})
-                
-                assignment = TeacherAssignment(
-                    teacher_id=form.teacher_id.data,
-                    class_id=form.class_id.data,
-                    session_id=context['current_session'].id,
-                    subject=form.subject.data,
-                    is_class_teacher=form.is_class_teacher.data
-                )
-                db.session.add(assignment)
-                db.session.commit()
-                
-                flash('Teacher assigned successfully!', 'success')
-                return redirect(url_for('manage_teachers'))
-                
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error assigning teacher: {str(e)}', 'danger')
+            flash('Teacher assigned successfully!', 'success')
+            return redirect(url_for('manage_teachers'))
     
-    return render_template('admin_assign_teacher.html', form=form, context=context)
+    return render_template('admin_assign_teacher.html',
+                         form=form,
+                         context=context,
+                         subject_names=subject_names,
+                         classes=classes)   # classes needed for the lower table
 
 # ==================== TEACHER ROUTES ====================
 
@@ -7579,6 +7605,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
