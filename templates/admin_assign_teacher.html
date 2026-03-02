@@ -30,10 +30,27 @@
                     
                     <div class="mb-3">
                         <label class="form-label">Subject *</label>
-                        {{ form.subject(class="form-control" + (" is-invalid" if form.subject.errors else ""), placeholder="e.g., Mathematics, Physics, etc.") }}
+                        <!-- Input with datalist for suggestions -->
+                        <input class="form-control {{ 'is-invalid' if form.subject.errors else '' }}"
+                               list="subject-list"
+                               name="subject"
+                               id="subject"
+                               value="{{ form.subject.data or '' }}"
+                               placeholder="e.g., Mathematics, Physics, etc."
+                               autocomplete="off">
+                        <datalist id="subject-list">
+                            {% for name in subject_names %}
+                                <option value="{{ name }}">
+                            {% endfor %}
+                        </datalist>
                         {% for error in form.subject.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Start typing to see existing subjects from the current session.
+                            If you type a new name, make sure it exactly matches the subject name used in exams.
+                        </small>
                     </div>
                     
                     <div class="mb-4 form-check">
@@ -122,4 +139,13 @@
     </div>
 </div>
 
+<!-- Optional: quick note about subject creation -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="alert alert-warning small">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Important:</strong> To ensure teachers can see exams correctly, the subject name must exactly match the one used in the <strong>Subjects</strong> page for the same class and session. The dropdown shows existing subjects.
+        </div>
+    </div>
+</div>
 {% endblock %}
