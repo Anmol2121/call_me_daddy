@@ -6574,18 +6574,17 @@ def assign_teacher():
     ).all()
     form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
     
-    # Get all subject names for the current session (to populate datalist)
-    subjects = Subject.query.filter_by(
-        school_id=current_user.school_id,
-        session_id=context['current_session'].id,
-        is_active=True
+    # Get all subject names for the current session (via Class, because Subject lacks school_id)
+    subjects = Subject.query.join(Class).filter(
+        Class.school_id == current_user.school_id,
+        Subject.session_id == context['current_session'].id,
+        Subject.is_active == True
     ).all()
     subject_names = sorted(set([s.name for s in subjects]))   # unique, sorted
     
     if form.validate_on_submit():
-        # --- Subject existence check ---
+        # --- Subject existence check (no school_id needed) ---
         subject_exists = Subject.query.filter_by(
-            school_id=current_user.school_id,
             session_id=context['current_session'].id,
             class_id=form.class_id.data,
             name=form.subject.data,
@@ -6593,13 +6592,8 @@ def assign_teacher():
         ).first()
         
         if not subject_exists:
-            # Show a warning, but still allow assignment (admin can create subject later)
             flash('Warning: The subject you entered does not exist in the Subjects list. '
                   'Marks entry may not work correctly until you create it in Subjects.', 'warning')
-            # If you want to block assignment, uncomment the next lines:
-            # flash('Subject must be created first via Subjects page.', 'danger')
-            # return render_template('admin_assign_teacher.html', form=form, context=context,
-            #                        subject_names=subject_names, classes=classes)
         
         # --- Check duplicate assignment ---
         existing = TeacherAssignment.query.filter_by(
@@ -7605,6 +7599,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
