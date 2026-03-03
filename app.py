@@ -1,6 +1,7 @@
 # app.py - Complete School ERP System
 import os
 import secrets
+from sqlalchemy import and_, or_, func
 import json
 from datetime import datetime, date, timedelta  # ADD timedelta here
 from functools import wraps
@@ -7619,6 +7620,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
