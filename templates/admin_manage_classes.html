@@ -59,13 +59,14 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="#" class="btn btn-outline-primary">
+                                <!-- Fixed: View Students link -->
+                                <a href="{{ url_for('manage_students', class_id=class.id) }}" class="btn btn-outline-primary" title="View Students">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="#" class="btn btn-outline-success">
+                                <a href="#" class="btn btn-outline-success" title="Edit Class (Not Implemented)">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <!-- NEW: Report Card Button -->
+                                <!-- Report Card Button (existing) -->
                                 <a href="{{ url_for('class_report_card', class_id=class.id) }}" class="btn btn-outline-info" title="Final Report Card">
                                     <i class="bi bi-file-text"></i>
                                 </a>
