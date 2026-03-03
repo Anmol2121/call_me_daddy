@@ -26,35 +26,37 @@
 {% set classes_taken = assigned_classes|selectattr('attendance_taken')|list|length %}
 {% set avg_attendance = (assigned_classes|sum(attribute='stats.attendance_rate') / total_classes) if total_classes > 0 else 0 %}
 
-<!-- Welcome Banner -->
+<!-- Welcome Banner – responsive -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <div class="card-body text-white p-5">
-                <div class="row align-items-center">
+            <div class="card-body text-white p-4 p-md-5">
+                <div class="row align-items-center g-4">
                     <div class="col-md-8">
-                        <h1 class="display-6 fw-bold mb-3">Welcome back, {{ current_user.full_name.split(' ')[0] }}!</h1>
-                        <p class="lead mb-4 opacity-75">
+                        <h1 class="fw-bold mb-2" style="font-size: clamp(1.5rem, 5vw, 2.5rem);">
+                            Welcome back, {{ current_user.full_name.split(' ')[0] }}!
+                        </h1>
+                        <p class="opacity-75 mb-3" style="font-size: clamp(0.9rem, 3vw, 1.25rem);">
                             {{ context.school.name }} · {{ context.current_session.name }}
                         </p>
-                        <div class="d-flex gap-4">
+                        <div class="d-flex flex-wrap gap-3 gap-md-4">
                             <div class="text-center">
-                                <div class="display-5 fw-bold">{{ total_classes }}</div>
+                                <div class="fw-bold" style="font-size: clamp(1.5rem, 4vw, 2rem);">{{ total_classes }}</div>
                                 <div class="small opacity-75">Classes</div>
                             </div>
                             <div class="text-center">
-                                <div class="display-5 fw-bold">{{ total_students }}</div>
+                                <div class="fw-bold" style="font-size: clamp(1.5rem, 4vw, 2rem);">{{ total_students }}</div>
                                 <div class="small opacity-75">Students</div>
                             </div>
                             <div class="text-center">
-                                <div class="display-5 fw-bold">{{ classes_taken }}/{{ total_classes }}</div>
+                                <div class="fw-bold" style="font-size: clamp(1.5rem, 4vw, 2rem);">{{ classes_taken }}/{{ total_classes }}</div>
                                 <div class="small opacity-75">Today's Attendance</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4 text-center">
-                        <div class="rounded-circle bg-white bg-opacity-10 d-inline-flex align-items-center justify-content-center p-4">
-                            <i class="fas fa-chalkboard-teacher fa-4x"></i>
+                        <div class="rounded-circle bg-white bg-opacity-10 d-inline-flex align-items-center justify-content-center p-3 p-md-4">
+                            <i class="fas fa-chalkboard-teacher fa-3x fa-md-4x"></i>
                         </div>
                     </div>
                 </div>
@@ -63,17 +65,17 @@
     </div>
 </div>
 
-<!-- Metric Cards -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover">
-            <div class="metric-icon bg-primary-light">
+<!-- Metric Cards – responsive stacking -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-6 col-xl-3">
+        <div class="metric-card card-hover p-3 p-md-4">
+            <div class="metric-icon bg-primary-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
                 <i class="fas fa-chalkboard text-primary"></i>
             </div>
             <div class="metric-content">
-                <h3>{{ total_classes }}</h3>
-                <p>Total Classes</p>
-                <div class="metric-trend">
+                <h3 class="fs-2 fw-bold text-dark mb-0">{{ total_classes }}</h3>
+                <p class="text-muted small mb-1">Total Classes</p>
+                <div class="metric-trend small">
                     <i class="fas fa-check-circle text-success"></i>
                     <span class="text-success">{{ classes_taken }} taken today</span>
                 </div>
@@ -81,15 +83,15 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover">
-            <div class="metric-icon bg-success-light">
+    <div class="col-6 col-md-6 col-xl-3">
+        <div class="metric-card card-hover p-3 p-md-4">
+            <div class="metric-icon bg-success-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
                 <i class="fas fa-users text-success"></i>
             </div>
             <div class="metric-content">
-                <h3>{{ total_students }}</h3>
-                <p>Total Students</p>
-                <div class="metric-trend">
+                <h3 class="fs-2 fw-bold text-dark mb-0">{{ total_students }}</h3>
+                <p class="text-muted small mb-1">Total Students</p>
+                <div class="metric-trend small">
                     <i class="fas fa-user-graduate text-info"></i>
                     <span class="text-info">across all classes</span>
                 </div>
@@ -97,15 +99,15 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover">
-            <div class="metric-icon bg-warning-light">
+    <div class="col-6 col-md-6 col-xl-3">
+        <div class="metric-card card-hover p-3 p-md-4">
+            <div class="metric-icon bg-warning-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
                 <i class="fas fa-clock text-warning"></i>
             </div>
             <div class="metric-content">
-                <h3>{{ avg_attendance|round|int }}%</h3>
-                <p>Avg Attendance</p>
-                <div class="metric-trend">
+                <h3 class="fs-2 fw-bold text-dark mb-0">{{ avg_attendance|round|int }}%</h3>
+                <p class="text-muted small mb-1">Avg Attendance</p>
+                <div class="metric-trend small">
                     <span class="{{ 'text-success' if avg_attendance >= 80 else 'text-warning' if avg_attendance >= 60 else 'text-danger' }}">
                         {{ avg_attendance|round(1) }}% this month
                     </span>
@@ -114,15 +116,15 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="metric-card card-hover">
-            <div class="metric-icon bg-info-light">
+    <div class="col-6 col-md-6 col-xl-3">
+        <div class="metric-card card-hover p-3 p-md-4">
+            <div class="metric-icon bg-info-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
                 <i class="fas fa-calendar-check text-info"></i>
             </div>
             <div class="metric-content">
-                <h3>{{ classes_taken }}</h3>
-                <p>Classes Marked</p>
-                <div class="metric-trend">
+                <h3 class="fs-2 fw-bold text-dark mb-0">{{ classes_taken }}</h3>
+                <p class="text-muted small mb-1">Classes Marked</p>
+                <div class="metric-trend small">
                     <span class="text-success">{{ ((classes_taken/total_classes)*100)|round|int if total_classes>0 else 0 }}% complete</span>
                 </div>
             </div>
@@ -131,12 +133,12 @@
 </div>
 
 <!-- Main Row: Classes + Chart + Activity -->
-<div class="row">
+<div class="row g-4">
     <!-- Left Column: My Classes -->
-    <div class="col-lg-8 mb-4">
+    <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-4">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white border-0 py-3 py-md-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <h5 class="mb-0 fw-bold text-dark">
                         <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
                         My Classes
@@ -148,15 +150,15 @@
             </div>
             <div class="card-body">
                 {% if assigned_classes %}
-                <div class="row g-4">
+                <div class="row g-3">
                     {% for class in assigned_classes %}
                     <div class="col-md-6">
                         <div class="card border-light h-100 hover-lift">
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="card-body p-3 p-md-4">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
                                     <div>
-                                        <h5 class="card-title fw-bold text-dark mb-2">{{ class.class.name }}</h5>
-                                        <h6 class="card-subtitle mb-3 text-muted">{{ class.subject }}</h6>
+                                        <h5 class="card-title fw-bold text-dark mb-1">{{ class.class.name }}</h5>
+                                        <h6 class="card-subtitle text-muted small">{{ class.subject }}</h6>
                                     </div>
                                     {% if class.is_class_teacher %}
                                     <span class="badge bg-primary">
@@ -165,35 +167,35 @@
                                     {% endif %}
                                 </div>
 
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between mb-2">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
                                         <span class="small text-muted">Students</span>
                                         <span class="small fw-bold">{{ class.student_count }}/{{ class.class.capacity }}</span>
                                     </div>
-                                    <div class="progress" style="height: 8px;">
+                                    <div class="progress" style="height: 6px;">
                                         <div class="progress-bar" 
                                              style="width: {{ (class.student_count / class.class.capacity * 100)|round|int }}%">
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="row text-center mb-4">
+                                <div class="row text-center g-2 mb-3">
                                     <div class="col-4">
                                         <div class="text-muted small">Room</div>
-                                        <div class="fw-bold text-dark">{{ class.class.room_number or 'N/A' }}</div>
+                                        <div class="fw-bold text-dark small">{{ class.class.room_number or 'N/A' }}</div>
                                     </div>
                                     <div class="col-4">
                                         <div class="text-muted small">Code</div>
-                                        <div class="fw-bold text-dark">{{ class.class.code }}</div>
+                                        <div class="fw-bold text-dark small">{{ class.class.code }}</div>
                                     </div>
                                     <div class="col-4">
                                         <div class="text-muted small">Roll Nos</div>
-                                        <div class="fw-bold text-dark">1-{{ class.student_count }}</div>
+                                        <div class="fw-bold text-dark small">1-{{ class.student_count }}</div>
                                     </div>
                                 </div>
 
                                 <!-- Attendance progress for this class -->
-                                <div class="mb-4">
+                                <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-1">
                                         <span class="small text-muted">Attendance Rate</span>
                                         <span class="small fw-bold {% if class.stats.attendance_rate >= 80 %}text-success{% elif class.stats.attendance_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
@@ -209,18 +211,18 @@
 
                                 <div class="d-grid gap-2">
                                     <a href="{{ url_for('take_attendance', class_id=class.class.id) }}" 
-                                       class="btn {% if class.attendance_taken %}btn-outline-warning{% else %}btn-primary{% endif %}">
+                                       class="btn {% if class.attendance_taken %}btn-outline-warning{% else %}btn-primary{% endif %} btn-sm">
                                         <i class="fas fa-{% if class.attendance_taken %}edit{% else %}clipboard-check{% endif %} me-2"></i>
                                         {% if class.attendance_taken %}Update{% else %}Take{% endif %} Attendance
                                     </a>
-                                    <div class="btn-group" role="group">
+                                    <div class="d-flex gap-2">
                                         <a href="{{ url_for('view_class', class_id=class.class.id) }}" 
-                                           class="btn btn-outline-dark">
-                                            <i class="fas fa-eye me-2"></i>View Class
+                                           class="btn btn-outline-dark btn-sm flex-fill">
+                                            <i class="fas fa-eye me-1"></i>View
                                         </a>
                                         <a href="{{ url_for('view_class_attendance', class_id=class.class.id) }}" 
-                                           class="btn btn-outline-dark">
-                                            <i class="fas fa-chart-bar me-2"></i>Reports
+                                           class="btn btn-outline-dark btn-sm flex-fill">
+                                            <i class="fas fa-chart-bar me-1"></i>Reports
                                         </a>
                                     </div>
                                 </div>
@@ -242,7 +244,7 @@
 
         <!-- Attendance Trend Chart -->
         <div class="card border-0 shadow-sm mt-4">
-            <div class="card-header bg-white border-0 py-4">
+            <div class="card-header bg-white border-0 py-3 py-md-4">
                 <h5 class="mb-0 fw-bold text-dark">
                     <i class="fas fa-chart-line text-primary me-2"></i>
                     Attendance Trend (Last 7 Days)
@@ -263,22 +265,22 @@
     <div class="col-lg-4">
         <!-- Today's Schedule -->
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white border-0 py-4">
+            <div class="card-header bg-white border-0 py-3 py-md-4">
                 <h5 class="mb-0 fw-bold text-dark">
                     <i class="fas fa-calendar-day text-primary me-2"></i>
                     Today's Schedule
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="list-group list-group-flush">
                     {% for class in assigned_classes %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-3">
                         <div>
                             <div class="fw-bold text-dark">{{ class.class.name }}</div>
                             <div class="small text-muted">{{ class.subject }}</div>
                         </div>
                         <div class="text-end">
-                            <div class="text-dark fw-bold">{{ class.student_count }} students</div>
+                            <div class="text-dark fw-bold small">{{ class.student_count }} students</div>
                             <div class="small">
                                 <span class="badge bg-{% if class.attendance_taken %}success{% else %}warning{% endif %}">
                                     {% if class.attendance_taken %}
@@ -304,18 +306,17 @@
 
         <!-- Quick Links -->
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white border-0 py-4">
+            <div class="card-header bg-white border-0 py-3 py-md-4">
                 <h5 class="mb-0 fw-bold text-dark">
                     <i class="fas fa-bolt text-warning me-2"></i>
                     Quick Links
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-3">
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-outline-primary text-start">
                         <i class="fas fa-clipboard-check me-3"></i>Attendance Dashboard
                     </a>
-                    <!-- NEW: Enter Marks Link -->
                     <a href="{{ url_for('teacher_exams') }}" class="btn btn-outline-success text-start">
                         <i class="fas fa-pen me-3"></i>Enter Marks
                     </a>
@@ -334,13 +335,13 @@
 
         <!-- School Information (condensed) -->
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-4">
+            <div class="card-header bg-white border-0 py-3 py-md-4">
                 <h5 class="mb-0 fw-bold text-dark">
                     <i class="fas fa-school text-primary me-2"></i>
                     School Info
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-3">
                 <div class="text-center mb-3">
                     <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
                         <i class="fas fa-school fa-2x"></i>
@@ -370,13 +371,13 @@
 <!-- Recent Activity Timeline -->
 {% if recent_activities %}
 <div class="card border-0 shadow-sm mt-4">
-    <div class="card-header bg-white border-0 py-4">
+    <div class="card-header bg-white border-0 py-3 py-md-4">
         <h5 class="mb-0 fw-bold text-dark">
             <i class="fas fa-history text-primary me-2"></i>
             Recent Activity
         </h5>
     </div>
-    <div class="card-body">
+    <div class="card-body p-3">
         <div class="timeline-steps">
             {% for activity in recent_activities|slice(0, 5) %}
             <div class="timeline-step mb-4">
@@ -384,7 +385,7 @@
                     <i class="fas fa-{{ activity.icon }}"></i>
                 </div>
                 <div class="timeline-step-content">
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                         <div>
                             <h6 class="fw-bold text-dark mb-1">{{ activity.title }}</h6>
                             <p class="text-muted small mb-0">{{ activity.description }}</p>
@@ -402,11 +403,10 @@
 {% endif %}
 
 <style>
-/* Metric Cards */
+/* Metric Cards – compact on mobile */
 .metric-card {
     background: white;
     border-radius: 12px;
-    padding: 1.5rem;
     border: 1px solid rgba(226, 232, 240, 0.6);
     box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     transition: all 0.3s ease;
@@ -418,24 +418,19 @@
     box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 .metric-icon {
-    width: 56px;
-    height: 56px;
     border-radius: 12px;
     background: rgba(67,97,238,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: #4361ee;
-    margin-bottom: 1rem;
 }
 .metric-icon.bg-primary-light { background: rgba(67,97,238,0.1); color: #4361ee; }
 .metric-icon.bg-success-light { background: rgba(16,185,129,0.1); color: #10b981; }
 .metric-icon.bg-warning-light { background: rgba(245,158,11,0.1); color: #f59e0b; }
 .metric-icon.bg-info-light    { background: rgba(14,165,233,0.1); color: #0ea5e9; }
-.metric-content h3 { font-size: 2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.25rem; }
-.metric-content p  { color: #64748b; font-weight: 500; margin-bottom: 0.5rem; }
-.metric-trend      { font-size: 0.875rem; color: #64748b; }
+.metric-content h3 { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; color: #1e293b; }
+.metric-content p  { color: #64748b; font-weight: 500; margin-bottom: 0.25rem; }
+.metric-trend      { font-size: 0.75rem; color: #64748b; }
 
 /* Timeline */
 .timeline-steps {
@@ -478,12 +473,16 @@
 
 /* Chart container */
 .chart-container { width: 100%; }
+
+/* Ensure touch targets are at least 44px */
+.btn, .bottom-nav-item, .list-group-item, .dropdown-item {
+    min-height: 44px;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Attendance trend chart (sample data – replace with real data from backend)
     const ctx = document.getElementById('attendanceTrendChart').getContext('2d');
     new Chart(ctx, {
         type: 'line',
@@ -491,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             datasets: [{
                 label: 'Attendance %',
-                data: [85, 88, 82, 90, 87, 0, 0], // weekend zeros or actual
+                data: [85, 88, 82, 90, 87, 0, 0],
                 borderColor: '#4361ee',
                 backgroundColor: 'rgba(67,97,238,0.1)',
                 borderWidth: 2,
