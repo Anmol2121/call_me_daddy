@@ -652,6 +652,11 @@ def create_subject():
     context = get_school_context()
     view_session = context.get('view_session') or context['current_session']
     
+    # 🛡️ Safety check – ensure a session exists
+    if not view_session:
+        flash('No active session found. Please create a session first.', 'warning')
+        return redirect(url_for('create_session'))
+    
     classes = Class.query.filter_by(
         school_id=current_user.school_id,
         session_id=view_session.id,
@@ -664,7 +669,7 @@ def create_subject():
         existing = Subject.query.filter(
             Subject.class_id == form.class_id.data,
             Subject.session_id == view_session.id,
-            func.lower(Subject.name) == func.lower(form.name.data)
+            func.lower(Subject.name) == func.lower(form.name.data)   # now works
         ).first()
         
         if existing:
@@ -7620,6 +7625,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
