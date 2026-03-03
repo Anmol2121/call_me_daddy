@@ -6589,7 +6589,7 @@ def assign_teacher():
         flash('No active session', 'warning')
         return redirect(url_for('admin_dashboard'))
     
-    # Populate teacher choices
+    # Populate teacher choices (static)
     form.teacher_id.choices = [(t.id, t.full_name) 
                               for t in User.query.filter_by(
                                   school_id=current_user.school_id,
@@ -6597,7 +6597,7 @@ def assign_teacher():
                                   is_active=True
                               ).all()]
     
-    # Populate class choices (only classes in current session)
+    # Populate class choices (static)
     classes = Class.query.filter_by(
         school_id=current_user.school_id,
         session_id=context['current_session'].id,
@@ -6605,25 +6605,23 @@ def assign_teacher():
     ).all()
     form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
     
-    # Initially, subject dropdown is empty – it will be filled via AJAX
-    form.subject.choices = []   # No subjects initially
+    # --- Dynamic subject choices based on selected class ---
+    if request.method == 'POST':
+        # Get the class_id from form data
+        selected_class_id = request.form.get('class_id')
+        if selected_class_id:
+            # Fetch subjects for that class in the current session
+            subjects = Subject.query.filter_by(
+                class_id=selected_class_id,
+                session_id=context['current_session'].id,
+                is_active=True
+            ).all()
+            # Set the choices for the subject field (value = subject name, label = subject name)
+            form.subject.choices = [(s.name, s.name) for s in subjects]
+        else:
+            form.subject.choices = []  # fallback
     
     if form.validate_on_submit():
-        # Verify that the chosen subject actually exists for the selected class
-        subject_exists = Subject.query.filter_by(
-            session_id=context['current_session'].id,
-            class_id=form.class_id.data,
-            name=form.subject.data,
-            is_active=True
-        ).first()
-        
-        if not subject_exists:
-            flash('The selected subject does not exist for this class. Please choose a valid subject.', 'danger')
-            return render_template('admin_assign_teacher.html',
-                                 form=form,
-                                 context=context,
-                                 classes=classes)
-        
         # Check duplicate assignment
         existing = TeacherAssignment.query.filter_by(
             teacher_id=form.teacher_id.data,
@@ -6635,6 +6633,7 @@ def assign_teacher():
         if existing:
             flash('Teacher is already assigned to this class for this subject', 'danger')
         else:
+            # If setting as class teacher, unset any existing class teacher for this class
             if form.is_class_teacher.data:
                 TeacherAssignment.query.filter_by(
                     class_id=form.class_id.data,
@@ -6654,10 +6653,11 @@ def assign_teacher():
             flash('Teacher assigned successfully!', 'success')
             return redirect(url_for('manage_teachers'))
     
+    # If validation fails, re-render the form with current choices
     return render_template('admin_assign_teacher.html',
                          form=form,
                          context=context,
-                         classes=classes)   # classes needed for the lower table
+                         classes=classes)
 
 # ==================== TEACHER ROUTES ====================
 
@@ -7625,6 +7625,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
