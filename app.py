@@ -644,7 +644,6 @@ def manage_subjects():
 @role_required(['admin'])
 @school_active_required
 def create_subject():
-    """Create a new subject for a class"""
     if current_user.must_change_password:
         return redirect(url_for('change_password'))
     
@@ -660,20 +659,46 @@ def create_subject():
     form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
     
     if form.validate_on_submit():
-        subject = Subject(
-            name=form.name.data,
-            code=form.code.data,
-            class_id=form.class_id.data,
-            session_id=view_session.id
-        )
-        db.session.add(subject)
-        db.session.commit()
-        flash(f'Subject "{form.name.data}" created.', 'success')
-        return redirect(url_for('manage_subjects'))
+        # Check for duplicate subject name (case‑insensitive) for the same class & session
+        existing = Subject.query.filter(
+            Subject.class_id == form.class_id.data,
+            Subject.session_id == view_session.id,
+            func.lower(Subject.name) == func.lower(form.name.data)
+        ).first()
+        
+        if existing:
+            flash(f'A subject with the name "{form.name.data}" already exists for this class.', 'danger')
+        else:
+            subject = Subject(
+                name=form.name.data,
+                code=form.code.data,
+                class_id=form.class_id.data,
+                session_id=view_session.id
+            )
+            db.session.add(subject)
+            db.session.commit()
+            flash(f'Subject "{form.name.data}" created.', 'success')
+            return redirect(url_for('manage_subjects'))
     
     return render_template('admin_create_subject.html',
                          form=form,
                          context=context)
+
+@app.route('/api/subjects-by-class/<int:class_id>')
+@role_required(['admin'])
+@school_active_required
+def api_subjects_by_class(class_id):
+    """Return JSON list of subject names for a class (in the current session)"""
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    
+    subjects = Subject.query.filter_by(
+        class_id=class_id,
+        session_id=view_session.id,
+        is_active=True
+    ).order_by(Subject.name).all()
+    
+    return jsonify([subject.name for subject in subjects])
 
 
 @app.route('/admin/exams/<int:exam_id>/marks', methods=['GET', 'POST'])
@@ -4221,7 +4246,7 @@ class EnrollStudentForm(FlaskForm):
 class AssignTeacherForm(FlaskForm):
     teacher_id = SelectField('Teacher', coerce=int, validators=[DataRequired()])
     class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
-    subject = StringField('Subject', validators=[DataRequired()])
+    subject = SelectField('Subject', coerce=str, validators=[DataRequired()])   # now a SelectField
     is_class_teacher = BooleanField('Set as Class Teacher')
     submit = SubmitField('Assign Teacher')
 
@@ -7599,6 +7624,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
