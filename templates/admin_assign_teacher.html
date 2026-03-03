@@ -11,6 +11,7 @@
                 <form method="POST" action="{{ url_for('assign_teacher') }}">
                     {{ form.hidden_tag() }}
                     
+                    <!-- Teacher Select -->
                     <div class="mb-3">
                         <label class="form-label">Select Teacher *</label>
                         {{ form.teacher_id(class="form-select" + (" is-invalid" if form.teacher_id.errors else "")) }}
@@ -19,46 +20,36 @@
                         {% endfor %}
                     </div>
                     
+                    <!-- Class Select -->
                     <div class="mb-3">
                         <label class="form-label">Select Class *</label>
-                        {{ form.class_id(class="form-select" + (" is-invalid" if form.class_id.errors else "")) }}
+                        {{ form.class_id(class="form-select", id="class_id") }}
                         {% for error in form.class_id.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                         <small class="text-muted">Classes available in current session: {{ context.current_session.name }}</small>
                     </div>
                     
+                    <!-- Subject Dropdown (dynamic) -->
                     <div class="mb-3">
                         <label class="form-label">Subject *</label>
-                        <!-- Input with datalist for suggestions -->
-                        <input class="form-control {{ 'is-invalid' if form.subject.errors else '' }}"
-                               list="subject-list"
-                               name="subject"
-                               id="subject"
-                               value="{{ form.subject.data or '' }}"
-                               placeholder="e.g., Mathematics, Physics, etc."
-                               autocomplete="off">
-                        <datalist id="subject-list">
-                            {% for name in subject_names %}
-                                <option value="{{ name }}">
-                            {% endfor %}
-                        </datalist>
+                        {{ form.subject(class="form-select", id="subjectSelect") }}
                         {% for error in form.subject.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
+                            <div class="invalid-feedback d-block">{{ error }}</div>
                         {% endfor %}
-                        <small class="text-muted">
+                        <div class="form-text">
                             <i class="fas fa-info-circle"></i> 
-                            Start typing to see existing subjects from the current session.
-                            If you type a new name, make sure it exactly matches the subject name used in exams.
-                        </small>
+                            Subjects are loaded automatically when you select a class. If no subjects appear, create them first in the <a href="{{ url_for('manage_subjects') }}">Subjects</a> page.
+                        </div>
                     </div>
                     
+                    <!-- Class Teacher Checkbox -->
                     <div class="mb-4 form-check">
                         {{ form.is_class_teacher(class="form-check-input") }}
                         <label class="form-check-label" for="is_class_teacher">
                             Set as Class Teacher
                         </label>
-                        <small class="text-muted d-block">Only one teacher can be class teacher per class</small>
+                        <small class="text-muted d-block">Only one teacher can be class teacher per class.</small>
                     </div>
                     
                     <div class="alert alert-info">
@@ -76,7 +67,7 @@
     </div>
 </div>
 
-<!-- Current Assignments -->
+<!-- Current Assignments Table -->
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -139,13 +130,60 @@
     </div>
 </div>
 
-<!-- Optional: quick note about subject creation -->
+<!-- Important Note -->
 <div class="row mt-3">
     <div class="col-12">
         <div class="alert alert-warning small">
             <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>Important:</strong> To ensure teachers can see exams correctly, the subject name must exactly match the one used in the <strong>Subjects</strong> page for the same class and session. The dropdown shows existing subjects.
+            <strong>Important:</strong> Subjects are pulled from the existing subject list for the selected class. 
+            To ensure teachers can see exams correctly, the subject name must exactly match the one used in the 
+            <strong>Subjects</strong> page for the same class and session.
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classSelect = document.getElementById('class_id');
+    const subjectSelect = document.getElementById('subjectSelect');
+
+    function loadSubjects(classId) {
+        if (!classId) {
+            subjectSelect.innerHTML = '<option value="">-- Select Class First --</option>';
+            return;
+        }
+        fetch(`/api/subjects-by-class/${classId}`)
+            .then(response => response.json())
+            .then(subjects => {
+                subjectSelect.innerHTML = '';  // clear current options
+                if (subjects.length === 0) {
+                    subjectSelect.innerHTML = '<option value="">-- No subjects found --</option>';
+                } else {
+                    subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject;
+                        option.textContent = subject;
+                        subjectSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading subjects:', error);
+                subjectSelect.innerHTML = '<option value="">-- Error loading subjects --</option>';
+            });
+    }
+
+    // Load subjects when class changes
+    classSelect.addEventListener('change', function() {
+        loadSubjects(this.value);
+    });
+
+    // If there is a pre-selected class (e.g., after form validation error), load its subjects
+    if (classSelect.value) {
+        loadSubjects(classSelect.value);
+    }
+});
+</script>
 {% endblock %}
