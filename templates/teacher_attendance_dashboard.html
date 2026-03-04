@@ -9,11 +9,11 @@
 
 {% block actions %}
 <div class="d-flex gap-2">
-    <button onclick="exportAttendanceReport()" class="btn btn-outline-dark btn-sm px-3 shadow-sm text-sm" title="Export Report">
-        <i class="fas fa-file-export me-1"></i> Export
+    <button onclick="exportAttendanceReport()" class="btn btn-outline-dark btn-sm px-3 shadow-sm text-xs fw-medium" title="Export Report">
+        <i class="fas fa-file-export me-1"></i> EXPORT
     </button>
-    <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-primary btn-sm px-3 shadow-sm text-sm">
-        <i class="fas fa-arrow-left me-1"></i> Dashboard
+    <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-primary btn-sm px-3 shadow-sm text-xs fw-medium">
+        <i class="fas fa-arrow-left me-1"></i> DASHBOARD
     </a>
 </div>
 {% endblock %}
@@ -22,115 +22,115 @@
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm h-100 p-3 hover-lift d-flex flex-row align-items-center gap-3">
-            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 48px; height: 48px;">
-                <i class="fas fa-chalkboard fa-lg"></i>
+            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-chalkboard text-sm"></i>
             </div>
             <div>
-                <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Total Classes</p>
-                <h4 class="fw-bold text-dark mb-0">{{ class_stats|length }}</h4>
+                <div class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Total Classes</div>
+                <div class="fs-5 fw-bold text-dark mb-0 lh-1">{{ class_stats|length }}</div>
             </div>
         </div>
     </div>
     
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm h-100 p-3 hover-lift d-flex flex-row align-items-center gap-3">
-            <div class="icon-box bg-success bg-opacity-10 text-success rounded-circle" style="width: 48px; height: 48px;">
-                <i class="fas fa-check-double fa-lg"></i>
+            <div class="icon-box bg-success bg-opacity-10 text-success rounded-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-check-double text-sm"></i>
             </div>
             <div>
-                <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Today's Progress</p>
+                <div class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Progress</div>
                 {% set total_taken = class_stats|selectattr('attendance_taken')|list|length %}
-                <h4 class="fw-bold text-dark mb-0">
-                    {{ total_taken }}<span class="text-muted text-sm fw-normal">/{{ class_stats|length }}</span>
-                </h4>
+                <div class="fs-5 fw-bold text-dark mb-0 lh-1">
+                    {{ total_taken }}<span class="text-muted text-xs fw-normal ms-1">/ {{ class_stats|length }}</span>
+                </div>
             </div>
         </div>
     </div>
     
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm h-100 p-3 hover-lift d-flex flex-row align-items-center gap-3">
-            <div class="icon-box bg-info bg-opacity-10 text-info rounded-circle" style="width: 48px; height: 48px;">
-                <i class="fas fa-users fa-lg"></i>
+            <div class="icon-box bg-info bg-opacity-10 text-info rounded-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-users text-sm"></i>
             </div>
             <div>
-                <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Total Students</p>
+                <div class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Students</div>
                 {% set total_students = class_stats|sum(attribute='total_students') %}
-                <h4 class="fw-bold text-dark mb-0">{{ total_students }}</h4>
+                <div class="fs-5 fw-bold text-dark mb-0 lh-1">{{ total_students }}</div>
             </div>
         </div>
     </div>
     
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm h-100 p-3 hover-lift d-flex flex-row align-items-center gap-3">
-            <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle" style="width: 48px; height: 48px;">
-                <i class="fas fa-chart-line fa-lg"></i>
+            <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-chart-line text-sm"></i>
             </div>
             <div>
-                <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Avg Rate</p>
+                <div class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Avg Rate</div>
                 {% set avg_rate = class_stats|sum(attribute='stats.avg_attendance')/class_stats|length if class_stats|length > 0 else 0 %}
-                <h4 class="fw-bold text-dark mb-0">{{ avg_rate|round|int }}%</h4>
+                <div class="fs-5 fw-bold text-dark mb-0 lh-1">{{ avg_rate|round|int }}%</div>
             </div>
         </div>
     </div>
 </div>
 
 <div class="mb-4">
-    <h6 class="fw-bold text-dark text-uppercase tracking-wide mb-3 px-1">
+    <div class="text-muted text-xs fw-bold text-uppercase tracking-wide mb-3 px-1">
         <i class="fas fa-layer-group text-primary me-2"></i>My Classes
-    </h6>
-    <div class="row g-4">
+    </div>
+    <div class="row g-3">
         {% for stat in class_stats %}
         <div class="col-md-6 col-xl-4">
             <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body p-4">
+                <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <h6 class="fw-bold text-dark mb-1">{{ stat.class.name }}</h6>
-                            <p class="text-muted text-sm mb-0"><i class="fas fa-book-open me-1"></i>{{ stat.assignment.subject }}</p>
+                            <div class="fw-bold text-dark text-sm mb-1">{{ stat.class.name }}</div>
+                            <div class="text-muted text-xs"><i class="fas fa-book-open me-1"></i>{{ stat.assignment.subject }}</div>
                         </div>
-                        <span class="badge bg-{% if stat.attendance_taken %}success{% else %}warning{% endif %} bg-opacity-10 text-{% if stat.attendance_taken %}success{% else %}warning{% endif %} border border-{% if stat.attendance_taken %}success{% else %}warning{% endif %} border-opacity-25 px-2 py-1 text-xs">
+                        <span class="badge bg-{% if stat.attendance_taken %}success{% else %}warning{% endif %} bg-opacity-10 text-{% if stat.attendance_taken %}success{% else %}warning{% endif %} border border-{% if stat.attendance_taken %}success{% else %}warning{% endif %} border-opacity-25 px-2 py-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">
                             {% if stat.attendance_taken %}
-                                <i class="fas fa-check-circle me-1"></i>Taken
+                                <i class="fas fa-check-circle me-1"></i>TAKEN
                             {% else %}
-                                <i class="fas fa-clock me-1"></i>Pending
+                                <i class="fas fa-clock me-1"></i>PENDING
                             {% endif %}
                         </span>
                     </div>
                     
-                    <div class="mb-4 bg-light rounded p-3">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-xs fw-bold text-muted text-uppercase tracking-wide">Attendance Rate</span>
-                            <span class="text-xs fw-bold {% if stat.stats.attendance_rate >= 80 %}text-success{% elif stat.stats.attendance_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                    <div class="mb-3 bg-light rounded p-2">
+                        <div class="d-flex justify-content-between align-items-end mb-1">
+                            <span class="text-xs fw-bold text-muted text-uppercase tracking-wide" style="font-size: 0.65rem;">Attendance Rate</span>
+                            <span class="text-xs fw-bold {% if stat.stats.attendance_rate >= 80 %}text-success{% elif stat.stats.attendance_rate >= 60 %}text-warning{% else %}text-danger{% endif %} lh-1">
                                 {{ stat.stats.attendance_rate|round|int }}%
                             </span>
                         </div>
-                        <div class="progress mb-3" style="height: 6px; border-radius: 4px;">
+                        <div class="progress mb-2 bg-white" style="height: 4px; border-radius: 2px;">
                             <div class="progress-bar {% if stat.stats.attendance_rate >= 80 %}bg-success{% elif stat.stats.attendance_rate >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                 style="width: {{ stat.stats.attendance_rate }}%; border-radius: 4px;">
+                                 style="width: {{ stat.stats.attendance_rate }}%; border-radius: 2px;">
                             </div>
                         </div>
                         
-                        <div class="row text-center border-top pt-2 mt-2 border-secondary border-opacity-10">
+                        <div class="row text-center mt-2 pt-2 border-top border-secondary border-opacity-10">
                             <div class="col-6 border-end border-secondary border-opacity-10">
-                                <div class="text-muted text-xs tracking-wide text-uppercase mb-1">Total</div>
-                                <div class="fw-bold text-dark text-sm">{{ stat.total_students }}</div>
+                                <div class="text-muted tracking-wide text-uppercase mb-1" style="font-size: 0.65rem;">Total</div>
+                                <div class="fw-bold text-dark text-xs lh-1">{{ stat.total_students }}</div>
                             </div>
                             <div class="col-6">
-                                <div class="text-muted text-xs tracking-wide text-uppercase mb-1">Present Today</div>
-                                <div class="fw-bold text-dark text-sm">{{ stat.stats.present_today }}</div>
+                                <div class="text-muted tracking-wide text-uppercase mb-1" style="font-size: 0.65rem;">Present</div>
+                                <div class="fw-bold text-dark text-xs lh-1">{{ stat.stats.present_today }}</div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="d-flex gap-2 mt-auto">
                         <a href="{{ url_for('take_attendance', class_id=stat.class.id) }}" 
-                           class="btn {% if stat.attendance_taken %}btn-outline-dark{% else %}btn-primary{% endif %} btn-sm flex-grow-1">
+                           class="btn {% if stat.attendance_taken %}btn-outline-dark{% else %}btn-primary{% endif %} btn-sm flex-grow-1 text-xs fw-medium">
                             <i class="fas fa-{% if stat.attendance_taken %}edit{% else %}clipboard-check{% endif %} me-1"></i>
                             {% if stat.attendance_taken %}Edit{% else %}Take{% endif %}
                         </a>
                         <a href="{{ url_for('view_class_attendance', class_id=stat.class.id) }}" 
-                           class="btn btn-light border btn-sm" title="View Reports">
-                            <i class="fas fa-chart-bar text-muted"></i>
+                           class="btn btn-light border btn-sm px-3" title="View Reports">
+                            <i class="fas fa-chart-bar text-muted text-xs"></i>
                         </a>
                     </div>
                 </div>
@@ -143,38 +143,38 @@
 <div class="row g-4">
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
-                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-2 px-4">
+                <div class="text-muted text-xs fw-bold text-uppercase tracking-wide">
                     <i class="fas fa-history text-primary me-2"></i>Activity Log
-                </h6>
+                </div>
             </div>
-            <div class="card-body px-4 pt-2">
+            <div class="card-body px-4 pt-0 pb-3">
                 {% if recent_activities %}
-                <div class="timeline-modern mt-3">
+                <div class="timeline-modern mt-2">
                     {% for activity in recent_activities %}
                     <div class="timeline-item">
                         <div class="timeline-marker bg-{{ activity.color }} shadow-sm">
-                            <i class="fas fa-{{ activity.icon }} text-white text-xs"></i>
+                            <i class="fas fa-{{ activity.icon }} text-white" style="font-size: 0.55rem;"></i>
                         </div>
                         <div class="timeline-content">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <h6 class="fw-bold text-dark mb-1 text-sm">{{ activity.class }} &bull; {{ activity.subject }}</h6>
-                                    <p class="text-muted text-xs mb-0">{{ activity.status }}</p>
+                                    <div class="fw-bold text-dark text-sm lh-1 mb-1">{{ activity.class }} <span class="text-muted fw-normal mx-1">&bull;</span> {{ activity.subject }}</div>
+                                    <div class="text-muted text-xs">{{ activity.status }}</div>
                                 </div>
-                                <span class="text-muted text-xs bg-light px-2 py-1 rounded">{{ activity.date }}</span>
+                                <div class="text-muted text-xs bg-light px-2 py-1 rounded border border-light">{{ activity.date }}</div>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="text-center py-5">
-                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
-                        <i class="fas fa-clipboard-list fa-2x text-muted"></i>
+                <div class="text-center py-4">
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
+                        <i class="fas fa-clipboard-list text-muted text-sm"></i>
                     </div>
-                    <h6 class="fw-bold text-dark">No Recent Activities</h6>
-                    <p class="text-muted text-sm mb-0">Your attendance logs will appear here.</p>
+                    <div class="fw-bold text-dark text-sm">No Recent Activities</div>
+                    <div class="text-muted text-xs mt-1">Your attendance logs will appear here.</div>
                 </div>
                 {% endif %}
             </div>
@@ -182,27 +182,27 @@
     </div>
     
     <div class="col-lg-5">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
-                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-2 px-3">
+                <div class="text-muted text-xs fw-bold text-uppercase tracking-wide">
                     <i class="fas fa-calendar-day text-info me-2"></i>Today's Roster
-                </h6>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
                     {% for stat in class_stats %}
-                    <div class="list-group-item border-light py-3 px-4 d-flex justify-content-between align-items-center bg-transparent">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="icon-box {% if stat.attendance_taken %}bg-success text-success{% else %}bg-warning text-warning{% endif %} bg-opacity-10 rounded" style="width: 36px; height: 36px;">
-                                <i class="fas fa-{% if stat.attendance_taken %}check{% else %}clock{% endif %}"></i>
+                    <div class="list-group-item border-light py-2 px-3 d-flex justify-content-between align-items-center bg-transparent">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="icon-box {% if stat.attendance_taken %}bg-success text-success{% else %}bg-warning text-warning{% endif %} bg-opacity-10 rounded" style="width: 28px; height: 28px;">
+                                <i class="fas fa-{% if stat.attendance_taken %}check{% else %}clock{% endif %}" style="font-size: 0.65rem;"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold text-dark mb-0 text-sm">{{ stat.class.name }}</h6>
-                                <span class="text-xs text-muted">{{ stat.assignment.subject }}</span>
+                                <div class="fw-bold text-dark text-sm lh-1 mb-1">{{ stat.class.name }}</div>
+                                <div class="text-xs text-muted lh-1">{{ stat.assignment.subject }}</div>
                             </div>
                         </div>
                         <div class="text-end">
-                            <div class="text-dark fw-bold text-sm">{{ stat.stats.present_today }} <span class="text-muted fw-normal text-xs">/ {{ stat.total_students }}</span></div>
+                            <div class="text-dark fw-bold text-sm lh-1">{{ stat.stats.present_today }} <span class="text-muted fw-normal text-xs">/ {{ stat.total_students }}</span></div>
                         </div>
                     </div>
                     {% endfor %}
@@ -211,12 +211,12 @@
         </div>
         
         <div class="card border-0 bg-primary bg-opacity-10 shadow-none">
-            <div class="card-body p-4">
-                <div class="d-flex gap-3">
-                    <i class="fas fa-lightbulb text-primary fa-lg mt-1"></i>
+            <div class="card-body p-3">
+                <div class="d-flex gap-2">
+                    <i class="fas fa-lightbulb text-primary mt-1 text-sm"></i>
                     <div>
-                        <h6 class="fw-bold text-primary mb-1 text-sm">Best Practices</h6>
-                        <p class="text-primary text-opacity-75 text-xs mb-2">Take attendance within the first 15 minutes of class for highest accuracy. Monthly reports are auto-generated.</p>
+                        <div class="fw-bold text-primary text-sm lh-1 mb-1">Best Practices</div>
+                        <div class="text-primary text-opacity-75" style="font-size: 0.7rem; line-height: 1.4;">Take attendance within the first 15 minutes of class for highest accuracy. Monthly reports are auto-generated.</div>
                     </div>
                 </div>
             </div>
@@ -227,23 +227,23 @@
 <style>
 /* --- Text & Layout Utility Overrides --- */
 .text-xs { font-size: 0.75rem !important; }
-.text-sm { font-size: 0.875rem !important; }
+.text-sm { font-size: 0.85rem !important; }
 .tracking-wide { letter-spacing: 0.05em; }
 
 /* --- Interaction Styles --- */
-.hover-lift { transition: all 0.2s ease; border-radius: 10px; }
-.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important; }
+.hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; border-radius: 8px; }
+.hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05) !important; }
 .icon-box { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
 /* --- Modern Timeline --- */
 .timeline-modern {
     position: relative;
-    padding-left: 1.5rem;
+    padding-left: 1.25rem;
 }
 .timeline-modern::before {
     content: '';
     position: absolute;
-    left: 0.45rem;
+    left: 0.35rem;
     top: 0.5rem;
     bottom: 0;
     width: 2px;
@@ -252,30 +252,29 @@
 }
 .timeline-item {
     position: relative;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 .timeline-item:last-child {
     margin-bottom: 0;
 }
 .timeline-item:last-child::before {
-    display: none; /* Cuts off the line at the last item */
+    display: none;
 }
 .timeline-marker {
     position: absolute;
-    left: -1.5rem;
-    top: 0;
-    width: 20px;
-    height: 20px;
+    left: -1.25rem;
+    top: 0.1rem;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 3px solid #fff;
+    border: 2px solid #fff;
     z-index: 2;
 }
 .timeline-content {
-    padding-left: 1rem;
-    padding-top: 0.1rem;
+    padding-left: 0.75rem;
 }
 </style>
 
