@@ -9,11 +9,11 @@
 
 {% block actions %}
 <div class="d-flex gap-2">
-    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-primary btn-sm px-4">
-        <i class="fas fa-clipboard-check me-2"></i>Attendance
+    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="fas fa-clipboard-check me-1"></i>Attendance
     </a>
-    <a href="{{ url_for('teacher_profile') }}" class="btn btn-outline-dark btn-sm px-4">
-        <i class="fas fa-user-circle me-2"></i>Profile
+    <a href="{{ url_for('teacher_profile') }}" class="btn btn-outline-dark btn-sm px-3 shadow-sm">
+        <i class="fas fa-user-circle me-1"></i>Profile
     </a>
 </div>
 {% endblock %}
@@ -24,31 +24,31 @@
 {% set classes_taken = assigned_classes|selectattr('attendance_taken')|list|length %}
 {% set avg_attendance = (assigned_classes|sum(attribute='stats.attendance_rate') / total_classes) if total_classes > 0 else 0 %}
 
-<div class="row mb-4">
+<div class="row mb-3">
     <div class="col-12">
         <div class="welcome-banner card border-0 shadow-sm overflow-hidden text-white rounded-4">
             <div class="banner-shape shape-1"></div>
             <div class="banner-shape shape-2"></div>
             <div class="banner-shape shape-3"></div>
 
-            <div class="card-body p-3 p-md-4 position-relative z-1">
+            <div class="card-body p-3 position-relative z-1">
                 <div class="row align-items-center g-3">
                     
                     <div class="col-md-7 col-lg-8">
                         <div class="d-flex align-items-center gap-3">
                             <div class="avatar-circle shadow-sm">
-                                <i class="fas fa-chalkboard-teacher fa-lg"></i>
+                                <i class="fas fa-chalkboard-teacher fa-sm"></i>
                             </div>
                             <div>
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h3 class="fw-bolder mb-0 text-white text-shadow">
+                                    <h5 class="fw-bold mb-0 text-white text-shadow">
                                         Welcome, {{ current_user.full_name.split(' ')[0] }}! <span class="wave">👋</span>
-                                    </h3>
-                                    <span class="badge bg-white bg-opacity-25 text-white px-2 py-1 rounded-pill" style="font-size: 0.65rem; border: 1px solid rgba(255,255,255,0.2);">TEACHER</span>
+                                    </h5>
+                                    <span class="badge bg-white bg-opacity-25 text-white px-2 py-1 rounded-pill text-xs border border-white border-opacity-25 shadow-sm">TEACHER</span>
                                 </div>
-                                <p class="mb-0 small text-white-50">
+                                <p class="mb-0 text-xs text-white-50">
                                     <i class="fas fa-school me-1"></i>{{ context.school.name }}
-                                    <span class="mx-2" style="color: rgba(255,255,255,0.2);">|</span>
+                                    <span class="mx-2 text-white-25">|</span>
                                     <i class="fas fa-calendar-alt me-1"></i>{{ context.current_session.name }}
                                 </p>
                             </div>
@@ -57,16 +57,16 @@
 
                     <div class="col-md-5 col-lg-4">
                         <div class="d-flex justify-content-md-end align-items-center">
-                            <div class="glass-stat-card p-3 w-100 rounded-4 shadow-sm" style="max-width: 320px;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="small text-uppercase fw-bold text-white-50 tracking-wide" style="font-size: 0.7rem;">Today's Attendance</span>
-                                    <span class="badge bg-success bg-opacity-25 text-white px-2 py-1 rounded-pill" style="font-size: 0.7rem; border: 1px solid rgba(25, 135, 84, 0.4);">
+                            <div class="glass-stat-card p-2 px-3 w-100 rounded-3 shadow-sm" style="max-width: 280px;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-xs text-uppercase fw-bold text-white-50 tracking-wide">Today's Attendance</span>
+                                    <span class="badge bg-success bg-opacity-25 text-white px-2 py-0 rounded-pill text-xs border border-success border-opacity-50">
                                         <i class="fas fa-arrow-up me-1"></i>{{ ((classes_taken/total_classes)*100)|round|int if total_classes>0 else 0 }}%
                                     </span>
                                 </div>
                                 <div class="d-flex align-items-center gap-3">
-                                    <h4 class="fw-bold text-white mb-0 m-0">{{ classes_taken }}<span class="text-white-50 fs-6">/{{ total_classes }}</span></h4>
-                                    <div class="progress flex-grow-1 bg-white bg-opacity-25" style="height: 6px; border-radius: 4px;">
+                                    <h5 class="fw-bold text-white mb-0">{{ classes_taken }}<span class="text-white-50 text-sm fw-normal">/{{ total_classes }}</span></h5>
+                                    <div class="progress flex-grow-1 bg-white bg-opacity-25" style="height: 4px; border-radius: 4px;">
                                         <div class="progress-bar bg-success" style="width: {{ ((classes_taken/total_classes)*100)|round|int if total_classes>0 else 0 }}%; border-radius: 4px;"></div>
                                     </div>
                                 </div>
@@ -82,45 +82,51 @@
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4">
-        <div class="metric-card p-3 p-md-4">
-            <div class="metric-icon bg-primary-light mb-2">
-                <i class="fas fa-chalkboard text-primary"></i>
-            </div>
-            <div class="metric-content">
-                <h3 class="fw-bold text-dark mb-0">{{ total_classes }}</h3>
-                <p class="text-muted small mb-1">Classes</p>
-                <div class="metric-trend small text-success">
-                    <i class="fas fa-check-circle"></i> {{ classes_taken }} taken today
+        <div class="metric-card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="metric-icon bg-primary-light">
+                    <i class="fas fa-chalkboard text-primary fa-sm"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-0">Classes</p>
+                    <h4 class="fw-bold text-dark mb-0">{{ total_classes }}</h4>
+                    <div class="metric-trend text-xs text-success mt-1">
+                        <i class="fas fa-check-circle me-1"></i>{{ classes_taken }} taken today
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="col-6 col-md-4">
-        <div class="metric-card p-3 p-md-4">
-            <div class="metric-icon bg-success-light mb-2">
-                <i class="fas fa-users text-success"></i>
-            </div>
-            <div class="metric-content">
-                <h3 class="fw-bold text-dark mb-0">{{ total_students }}</h3>
-                <p class="text-muted small mb-1">Students</p>
-                <div class="metric-trend small text-info">
-                    <i class="fas fa-user-graduate"></i> across all classes
+        <div class="metric-card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="metric-icon bg-success-light">
+                    <i class="fas fa-users text-success fa-sm"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-0">Students</p>
+                    <h4 class="fw-bold text-dark mb-0">{{ total_students }}</h4>
+                    <div class="metric-trend text-xs text-info mt-1">
+                        <i class="fas fa-user-graduate me-1"></i>across classes
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="col-6 col-md-4">
-        <div class="metric-card p-3 p-md-4">
-            <div class="metric-icon bg-warning-light mb-2">
-                <i class="fas fa-clock text-warning"></i>
-            </div>
-            <div class="metric-content">
-                <h3 class="fw-bold text-dark mb-0">{{ avg_attendance|round|int }}%</h3>
-                <p class="text-muted small mb-1">Avg Attendance</p>
-                <div class="metric-trend small {{ 'text-success' if avg_attendance >= 80 else 'text-warning' if avg_attendance >= 60 else 'text-danger' }}">
-                    <i class="fas fa-chart-line"></i> {{ avg_attendance|round(1) }}% this month
+        <div class="metric-card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="metric-icon bg-warning-light">
+                    <i class="fas fa-clock text-warning fa-sm"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-0">Avg Attd.</p>
+                    <h4 class="fw-bold text-dark mb-0">{{ avg_attendance|round|int }}%</h4>
+                    <div class="metric-trend text-xs {{ 'text-success' if avg_attendance >= 80 else 'text-warning' if avg_attendance >= 60 else 'text-danger' }} mt-1">
+                        <i class="fas fa-chart-line me-1"></i>{{ avg_attendance|round(1) }}% month
+                    </div>
                 </div>
             </div>
         </div>
@@ -129,91 +135,76 @@
 
 <div class="row g-4">
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-3 py-md-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <h5 class="mb-0 fw-bold text-dark">
-                        <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
-                        My Classes
-                    </h5>
-                    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-clipboard-check me-1"></i>Attendance Dashboard
+                    <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+                        <i class="fas fa-chalkboard-teacher text-primary me-2"></i>My Classes
+                    </h6>
+                    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-sm btn-outline-primary text-xs px-3 shadow-sm">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
                     </a>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-0">
                 {% if assigned_classes %}
                 <div class="row g-3">
                     {% for class in assigned_classes %}
                     <div class="col-md-6">
                         <div class="card border-light h-100 hover-lift">
-                            <div class="card-body p-3 p-md-4">
-                                <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+                            <div class="card-body p-3">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start mb-2">
                                     <div>
-                                        <h5 class="card-title fw-bold text-dark mb-1">{{ class.class.name }}</h5>
-                                        <h6 class="card-subtitle text-muted small">{{ class.subject }}</h6>
+                                        <h6 class="card-title fw-bold text-dark mb-0">{{ class.class.name }}</h6>
+                                        <span class="text-muted text-xs">{{ class.subject }}</span>
                                     </div>
                                     {% if class.is_class_teacher %}
-                                    <span class="badge bg-primary">
-                                        <i class="fas fa-crown me-1"></i>Class Teacher
+                                    <span class="badge bg-primary text-xs shadow-sm">
+                                        <i class="fas fa-crown me-1"></i>Class Tr.
                                     </span>
                                     {% endif %}
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="mb-3 mt-2">
                                     <div class="d-flex justify-content-between mb-1">
-                                        <span class="small text-muted">Students</span>
-                                        <span class="small fw-bold">{{ class.student_count }}/{{ class.class.capacity }}</span>
+                                        <span class="text-xs text-muted">Capacity</span>
+                                        <span class="text-xs fw-bold">{{ class.student_count }}/{{ class.class.capacity }}</span>
                                     </div>
-                                    <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar" 
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-secondary" 
                                              style="width: {{ (class.student_count / class.class.capacity * 100)|round|int }}%">
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="row text-center g-2 mb-3">
-                                    <div class="col-4">
-                                        <div class="text-muted small">Room</div>
-                                        <div class="fw-bold text-dark small">{{ class.class.room_number or 'N/A' }}</div>
+                                <div class="row text-center border-top border-bottom py-2 mb-3 mx-0">
+                                    <div class="col-4 px-1 border-end">
+                                        <div class="text-muted text-xs">Room</div>
+                                        <div class="fw-bold text-dark text-sm">{{ class.class.room_number or 'N/A' }}</div>
                                     </div>
-                                    <div class="col-4">
-                                        <div class="text-muted small">Code</div>
-                                        <div class="fw-bold text-dark small">{{ class.class.code }}</div>
+                                    <div class="col-4 px-1 border-end">
+                                        <div class="text-muted text-xs">Code</div>
+                                        <div class="fw-bold text-dark text-sm">{{ class.class.code }}</div>
                                     </div>
-                                    <div class="col-4">
-                                        <div class="text-muted small">Roll Nos</div>
-                                        <div class="fw-bold text-dark small">1-{{ class.student_count }}</div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span class="small text-muted">Attendance Rate</span>
-                                        <span class="small fw-bold {% if class.stats.attendance_rate >= 80 %}text-success{% elif class.stats.attendance_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
-                                            {{ class.stats.attendance_rate|round|int }}%
-                                        </span>
-                                    </div>
-                                    <div class="progress" style="height: 4px;">
-                                        <div class="progress-bar {% if class.stats.attendance_rate >= 80 %}bg-success{% elif class.stats.attendance_rate >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                             style="width: {{ class.stats.attendance_rate }}%">
-                                        </div>
+                                    <div class="col-4 px-1">
+                                        <div class="text-muted text-xs">Rolls</div>
+                                        <div class="fw-bold text-dark text-sm">1-{{ class.student_count }}</div>
                                     </div>
                                 </div>
 
                                 <div class="d-grid gap-2">
                                     <a href="{{ url_for('take_attendance', class_id=class.class.id) }}" 
-                                       class="btn {% if class.attendance_taken %}btn-outline-warning{% else %}btn-primary{% endif %} btn-sm">
-                                        <i class="fas fa-{% if class.attendance_taken %}edit{% else %}clipboard-check{% endif %} me-2"></i>
+                                       class="btn {% if class.attendance_taken %}btn-outline-warning{% else %}btn-primary{% endif %} btn-sm text-sm shadow-sm">
+                                        <i class="fas fa-{% if class.attendance_taken %}edit{% else %}clipboard-check{% endif %} me-1"></i>
                                         {% if class.attendance_taken %}Update{% else %}Take{% endif %} Attendance
                                     </a>
                                     <div class="d-flex gap-2">
                                         <a href="{{ url_for('view_class', class_id=class.class.id) }}" 
-                                           class="btn btn-outline-dark btn-sm flex-fill">
+                                           class="btn btn-light border btn-sm flex-fill text-xs text-dark shadow-sm">
                                             <i class="fas fa-eye me-1"></i>View
                                         </a>
                                         <a href="{{ url_for('view_class_attendance', class_id=class.class.id) }}" 
-                                           class="btn btn-outline-dark btn-sm flex-fill">
+                                           class="btn btn-light border btn-sm flex-fill text-xs text-dark shadow-sm">
                                             <i class="fas fa-chart-bar me-1"></i>Reports
                                         </a>
                                     </div>
@@ -224,56 +215,49 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-chalkboard-teacher fa-4x text-muted mb-4"></i>
-                    <h4 class="mb-3 fw-bold text-dark">No Classes Assigned</h4>
-                    <p class="text-muted mb-4">You haven't been assigned to any classes for the current session.</p>
-                    <p class="text-muted small">Please contact the school administrator for class assignments.</p>
+                <div class="text-center py-4">
+                    <i class="fas fa-chalkboard-teacher fa-2x text-muted mb-3"></i>
+                    <h6 class="mb-2 fw-bold text-dark">No Classes Assigned</h6>
+                    <p class="text-muted text-sm mb-0">Please contact the administrator for class assignments.</p>
                 </div>
                 {% endif %}
             </div>
         </div>
 
         <div class="card border-0 shadow-sm mt-4">
-            <div class="card-header bg-white border-0 py-3 py-md-4">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="fas fa-chart-line text-primary me-2"></i>
-                    Attendance Trend (Last 7 Days)
-                </h5>
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+                    <i class="fas fa-chart-line text-primary me-2"></i>Attendance Trend
+                </h6>
             </div>
-            <div class="card-body">
-                <div class="chart-container" style="position: relative; height: 250px;">
+            <div class="card-body pt-0">
+                <div class="chart-container" style="position: relative; height: 200px;">
                     <canvas id="attendanceTrendChart"></canvas>
                 </div>
-                <p class="text-muted small text-center mt-3">
-                    * Data will be populated from real attendance records.
-                </p>
             </div>
         </div>
     </div>
 
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white border-0 py-3 py-md-4">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="fas fa-calendar-day text-primary me-2"></i>
-                    Today's Schedule
-                </h5>
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+                    <i class="fas fa-calendar-day text-primary me-2"></i>Today's Schedule
+                </h6>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
                     {% for class in assigned_classes %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-3">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
                         <div>
-                            <div class="fw-bold text-dark">{{ class.class.name }}</div>
-                            <div class="small text-muted">{{ class.subject }}</div>
+                            <div class="fw-bold text-dark text-sm">{{ class.class.name }}</div>
+                            <div class="text-xs text-muted">{{ class.subject }}</div>
                         </div>
                         <div class="text-end">
-                            <div class="text-dark fw-bold small">{{ class.student_count }} students</div>
-                            <div class="small">
-                                <span class="badge bg-{% if class.attendance_taken %}success{% else %}warning{% endif %}">
+                            <div class="text-xs">
+                                <span class="badge bg-{% if class.attendance_taken %}success{% else %}warning{% endif %} bg-opacity-10 text-{% if class.attendance_taken %}success{% else %}warning{% endif %} border border-{% if class.attendance_taken %}success{% else %}warning{% endif %}">
                                     {% if class.attendance_taken %}
-                                    <i class="fas fa-check-circle"></i> Marked
+                                    <i class="fas fa-check"></i> Marked
                                     {% else %}
                                     <i class="fas fa-clock"></i> Pending
                                     {% endif %}
@@ -286,112 +270,65 @@
 
                 {% if not assigned_classes %}
                 <div class="text-center py-4">
-                    <i class="fas fa-calendar-times fa-2x text-muted mb-3"></i>
-                    <p class="text-muted mb-0">No schedule for today</p>
+                    <p class="text-muted text-sm mb-0">No schedule for today</p>
                 </div>
                 {% endif %}
             </div>
         </div>
 
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white border-0 py-3 py-md-4">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="fas fa-bolt text-warning me-2"></i>
-                    Quick Links
-                </h5>
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+                    <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                </h6>
             </div>
-            <div class="card-body p-3">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-outline-primary text-start">
-                        <i class="fas fa-clipboard-check me-3"></i>Attendance Dashboard
+            <div class="card-body p-2">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="list-group-item list-group-item-action border-0 text-sm py-2">
+                        <i class="fas fa-clipboard-check text-primary me-2 w-15px"></i> Attendance Dashboard
                     </a>
-                    <a href="{{ url_for('teacher_exams') }}" class="btn btn-outline-success text-start">
-                        <i class="fas fa-pen me-3"></i>Enter Marks
+                    <a href="{{ url_for('teacher_exams') }}" class="list-group-item list-group-item-action border-0 text-sm py-2">
+                        <i class="fas fa-pen text-success me-2 w-15px"></i> Enter Marks
                     </a>
-                    <a href="{{ url_for('teacher_profile') }}" class="btn btn-outline-dark text-start">
-                        <i class="fas fa-user-circle me-3"></i>My Profile
+                    <a href="{{ url_for('teacher_profile') }}" class="list-group-item list-group-item-action border-0 text-sm py-2">
+                        <i class="fas fa-user-circle text-secondary me-2 w-15px"></i> My Profile
                     </a>
-                    <button class="btn btn-outline-dark text-start" onclick="alert('Timetable feature coming soon.')">
-                        <i class="fas fa-calendar-alt me-3"></i>View Timetable
-                    </button>
-                    <button class="btn btn-outline-dark text-start" onclick="alert('Report generation coming soon.')">
-                        <i class="fas fa-chart-bar me-3"></i>Generate Reports
+                    <button class="list-group-item list-group-item-action border-0 text-sm py-2" onclick="alert('Timetable feature coming soon.')">
+                        <i class="fas fa-calendar-alt text-secondary me-2 w-15px"></i> View Timetable
                     </button>
                 </div>
             </div>
         </div>
 
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-3 py-md-4">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="fas fa-school text-primary me-2"></i>
-                    School Info
-                </h5>
-            </div>
             <div class="card-body p-3">
-                <div class="text-center mb-3">
-                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                        <i class="fas fa-school fa-2x"></i>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded bg-light text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="fas fa-school"></i>
                     </div>
-                    <h6 class="fw-bold text-dark mb-1">{{ context.school.name }}</h6>
-                    <p class="text-muted small">{{ context.school.code }}</p>
-                </div>
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item d-flex align-items-center px-0">
-                        <i class="fas fa-calendar-alt text-muted me-3"></i>
-                        <div>
-                            <div class="small text-muted">Current Session</div>
-                            <div class="fw-bold text-dark">{{ context.current_session.name }}</div>
-                        </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 text-sm">{{ context.school.name }}</h6>
+                        <div class="text-xs text-muted">Session: {{ context.current_session.name }}</div>
                     </div>
                 </div>
-                <div class="mt-3">
-                    <a href="{{ url_for('change_password', force=true) }}" class="btn btn-outline-warning w-100">
-                        <i class="fas fa-key me-2"></i> Change Password
-                    </a>
-                </div>
+                <a href="{{ url_for('change_password', force=true) }}" class="btn btn-light border btn-sm w-100 text-xs text-dark shadow-sm">
+                    <i class="fas fa-key me-1 text-warning"></i> Change Password
+                </a>
             </div>
         </div>
     </div>
 </div>
-
-{% if recent_activities %}
-<div class="card border-0 shadow-sm mt-4">
-    <div class="card-header bg-white border-0 py-3 py-md-4">
-        <h5 class="mb-0 fw-bold text-dark">
-            <i class="fas fa-history text-primary me-2"></i>
-            Recent Activity
-        </h5>
-    </div>
-    <div class="card-body p-3">
-        <div class="timeline-steps">
-            {% for activity in recent_activities|slice(0, 5) %}
-            <div class="timeline-step mb-4">
-                <div class="timeline-step-number bg-{{ activity.color }} text-white">
-                    <i class="fas fa-{{ activity.icon }}"></i>
-                </div>
-                <div class="timeline-step-content">
-                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                        <div>
-                            <h6 class="fw-bold text-dark mb-1">{{ activity.title }}</h6>
-                            <p class="text-muted small mb-0">{{ activity.description }}</p>
-                        </div>
-                        <div class="text-end">
-                            <div class="text-muted small">{{ activity.time }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
 
 <style>
+/* --- Text & Layout Utility Overrides for Professional Dashboard --- */
+.text-xs { font-size: 0.7rem !important; }
+.text-sm { font-size: 0.85rem !important; }
+.tracking-wide { letter-spacing: 0.05em; }
+.w-15px { width: 15px; text-align: center; }
+
 /* --- Premium Welcome Banner Styles --- */
 .welcome-banner {
-    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+    background: linear-gradient(135deg, #4F46E5 0%, #6D28D9 100%);
     position: relative;
     z-index: 0;
 }
@@ -400,153 +337,66 @@
 .banner-shape {
     position: absolute;
     border-radius: 50%;
-    filter: blur(50px);
+    filter: blur(40px);
     z-index: -1;
-    opacity: 0.7;
-    animation: float 8s infinite alternate ease-in-out;
+    opacity: 0.5;
+    animation: float 10s infinite alternate ease-in-out;
 }
-.shape-1 {
-    width: 300px; height: 300px;
-    background: rgba(236, 72, 153, 0.5); /* Pink pop */
-    top: -100px; right: -50px;
-    animation-delay: 0s;
-}
-.shape-2 {
-    width: 250px; height: 250px;
-    background: rgba(56, 189, 248, 0.5); /* Light blue pop */
-    bottom: -80px; left: 5%;
-    animation-delay: -2s;
-}
-.shape-3 {
-    width: 200px; height: 200px;
-    background: rgba(250, 204, 21, 0.3); /* Warm yellow pop */
-    top: 30%; right: 35%;
-    animation-delay: -4s;
-}
+.shape-1 { width: 250px; height: 250px; background: rgba(236, 72, 153, 0.4); top: -100px; right: -50px; }
+.shape-2 { width: 200px; height: 200px; background: rgba(56, 189, 248, 0.4); bottom: -80px; left: 5%; animation-delay: -3s; }
+.shape-3 { width: 150px; height: 150px; background: rgba(250, 204, 21, 0.2); top: 20%; right: 30%; animation-delay: -5s; }
 
 /* Glassmorphism elements */
 .glass-stat-card {
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 .avatar-circle {
-    width: 56px; height: 56px;
+    width: 48px; height: 48px;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: white; flex-shrink: 0;
 }
 
-/* Text enhancements */
-.text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-.tracking-wide { letter-spacing: 0.08em; }
+.text-shadow { text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+.text-white-25 { color: rgba(255, 255, 255, 0.25); }
 
 /* Animations */
-.wave {
-    display: inline-block;
-    animation: wave-animation 2.5s infinite;
-    transform-origin: 70% 70%;
-}
-@keyframes float {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(30px, -30px) scale(1.1); }
-}
+.wave { display: inline-block; animation: wave-animation 2.5s infinite; transform-origin: 70% 70%; }
+@keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(20px, -20px); } }
 @keyframes wave-animation {
-    0% { transform: rotate( 0.0deg) }
-    10% { transform: rotate(14.0deg) }
-    20% { transform: rotate(-8.0deg) }
-    30% { transform: rotate(14.0deg) }
-    40% { transform: rotate(-4.0deg) }
-    50% { transform: rotate(10.0deg) }
-    60% { transform: rotate( 0.0deg) }
-    100% { transform: rotate( 0.0deg) }
+    0% { transform: rotate(0deg) } 10% { transform: rotate(14deg) } 20% { transform: rotate(-8deg) }
+    30% { transform: rotate(14deg) } 40% { transform: rotate(-4deg) } 50% { transform: rotate(10deg) }
+    60% { transform: rotate(0deg) } 100% { transform: rotate(0deg) }
 }
 
 /* Metric Cards */
 .metric-card {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    background: white; border-radius: 10px; border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.2s ease;
 }
-.metric-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-}
+.metric-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 .metric-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .metric-icon.bg-primary-light { background: rgba(67,97,238,0.1); color: #4361ee; }
 .metric-icon.bg-success-light { background: rgba(16,185,129,0.1); color: #10b981; }
 .metric-icon.bg-warning-light { background: rgba(245,158,11,0.1); color: #f59e0b; }
-.metric-icon.bg-info-light    { background: rgba(14,165,233,0.1); color: #0ea5e9; }
-.metric-content h3 { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; color: #1e293b; }
-.metric-content p  { color: #64748b; font-weight: 500; margin-bottom: 0.25rem; }
-.metric-trend      { font-size: 0.75rem; color: #64748b; }
 
-/* Timeline */
-.timeline-steps {
-    position: relative;
-    padding-left: 40px;
-}
-.timeline-steps::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e2e8f0;
-}
-.timeline-step { position: relative; }
-.timeline-step-number {
-    position: absolute;
-    left: -48px;
-    top: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    z-index: 2;
-}
-.timeline-step-content { padding-left: 20px; }
+/* Class Cards */
+.hover-lift { transition: all 0.2s ease; border-radius: 8px; }
+.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.06) !important; border-color: rgba(67,97,238,0.2) !important; }
 
-/* Hover lift */
-.hover-lift {
-    transition: all 0.3s ease;
-}
-.hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
-}
-
-/* Chart container */
-.chart-container { width: 100%; }
-
-/* Ensure touch targets are at least 44px */
-.btn, .bottom-nav-item, .list-group-item, .dropdown-item {
-    min-height: 44px;
-}
+/* Ensure touch targets aren't too small on mobile despite small text */
+.btn-sm { padding: 0.35rem 0.75rem; }
+.list-group-item-action { transition: background-color 0.15s ease; }
+.list-group-item-action:hover { background-color: #f8fafc; border-radius: 6px; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -561,16 +411,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Attendance %',
                     data: [85, 88, 82, 90, 87, 0, 0],
-                    borderColor: '#4361ee',
-                    backgroundColor: 'rgba(67,97,238,0.1)',
+                    borderColor: '#4F46E5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.05)',
                     borderWidth: 2,
-                    tension: 0.4,
+                    tension: 0.3,
                     fill: true,
-                    pointBackgroundColor: '#4361ee',
+                    pointBackgroundColor: '#4F46E5',
                     pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
+                    pointBorderWidth: 1.5,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }]
             },
             options: {
@@ -578,15 +428,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    tooltip: { enabled: true }
+                    tooltip: { 
+                        enabled: true, 
+                        titleFont: { size: 11, family: "'Inter', sans-serif" }, 
+                        bodyFont: { size: 12, family: "'Inter', sans-serif" }, 
+                        padding: 10,
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        cornerRadius: 6
+                    }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: { callback: (v) => v + '%' }
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { font: { size: 10, family: "'Inter', sans-serif" }, color: '#64748b' },
+                        border: { display: false }
+                    },
+                    y: { 
+                        beginAtZero: true, 
+                        max: 100, 
+                        grid: { color: 'rgba(226, 232, 240, 0.5)', drawBorder: false },
+                        ticks: { 
+                            font: { size: 10, family: "'Inter', sans-serif" }, 
+                            color: '#64748b',
+                            callback: (v) => v + '%', 
+                            stepSize: 25,
+                            padding: 8
+                        },
+                        border: { display: false }
                     }
-                }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
             }
         });
     }
