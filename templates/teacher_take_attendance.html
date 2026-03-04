@@ -1,7 +1,6 @@
-<!-- templates/teacher_take_attendance.html -->
 {% extends "base.html" %}
 {% block title %}Take Attendance · {{ class_obj.name }}{% endblock %}
-{% block header %}Take Attendance · {{ class_obj.name }}{% endblock %}
+{% block header %}Take Attendance{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
@@ -11,166 +10,149 @@
 
 {% block actions %}
 <div class="d-flex gap-2">
-    <a href="{{ url_for('view_class_attendance', class_id=class_obj.id) }}" class="btn btn-outline-dark btn-sm px-4">
-        <i class="fas fa-chart-bar me-2"></i>View Reports
+    <a href="{{ url_for('view_class_attendance', class_id=class_obj.id) }}" class="btn btn-outline-dark btn-sm px-3 text-xs fw-medium shadow-sm">
+        <i class="fas fa-chart-bar me-1"></i> REPORTS
     </a>
-    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-outline-primary btn-sm px-4">
-        <i class="fas fa-arrow-left me-2"></i>Back
+    <a href="{{ url_for('teacher_attendance_dashboard') }}" class="btn btn-primary btn-sm px-3 text-xs fw-medium shadow-sm">
+        <i class="fas fa-arrow-left me-1"></i> BACK
     </a>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Left Column: Class Info & Date Picker -->
-    <div class="col-lg-4 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-4">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="fas fa-info-circle text-primary me-2"></i>
-                    Class Information
-                </h5>
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-1 px-3">
+                <div class="text-muted text-xs fw-bold text-uppercase tracking-wide">
+                    <i class="fas fa-info-circle text-primary me-2"></i>Class Details
+                </div>
             </div>
-            <div class="card-body">
-                <div class="text-center mb-4">
-                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="fas fa-chalkboard-teacher fa-2x"></i>
+            <div class="card-body px-3 pt-2 pb-3">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">
+                        <i class="fas fa-chalkboard-teacher text-lg"></i>
                     </div>
-                    <h4 class="fw-bold text-dark mb-1">{{ class_obj.name }}</h4>
-                    <p class="text-muted mb-3">{{ assignment.subject }}</p>
-                    <div class="d-flex justify-content-center gap-2">
-                        <span class="badge bg-primary">{{ class_obj.code }}</span>
-                        <span class="badge bg-secondary">{{ enrollments|length }} Students</span>
-                        {% if assignment.is_class_teacher %}
-                        <span class="badge bg-success">Class Teacher</span>
-                        {% endif %}
+                    <div>
+                        <div class="fw-bold text-dark lh-1 mb-1" style="font-size: 1.1rem;">{{ class_obj.name }}</div>
+                        <div class="text-muted text-xs lh-1">{{ assignment.subject }}</div>
                     </div>
                 </div>
 
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <div><i class="fas fa-door-open text-muted me-2"></i>Room Number</div>
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                    <span class="badge bg-light text-dark border px-2 py-1 text-xs fw-medium">{{ class_obj.code }}</span>
+                    <span class="badge bg-light text-dark border px-2 py-1 text-xs fw-medium">{{ enrollments|length }} Students</span>
+                    {% if assignment.is_class_teacher %}
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 text-xs fw-medium">Class Teacher</span>
+                    {% endif %}
+                </div>
+
+                <div class="list-group list-group-flush border-top border-bottom mb-3">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-light bg-transparent text-sm">
+                        <div class="text-muted"><i class="fas fa-door-open me-2" style="font-size: 0.75rem;"></i>Room</div>
                         <span class="fw-bold text-dark">{{ class_obj.room_number or 'N/A' }}</span>
                     </div>
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <div><i class="fas fa-users text-muted me-2"></i>Capacity</div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-light bg-transparent text-sm">
+                        <div class="text-muted"><i class="fas fa-users me-2" style="font-size: 0.75rem;"></i>Capacity</div>
                         <span class="fw-bold text-dark">{{ enrollments|length }}/{{ class_obj.capacity }}</span>
                     </div>
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <div><i class="fas fa-calendar-alt text-muted me-2"></i>Session</div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-light bg-transparent text-sm">
+                        <div class="text-muted"><i class="fas fa-calendar-alt me-2" style="font-size: 0.75rem;"></i>Session</div>
                         <span class="fw-bold text-dark">{{ context.current_session.name }}</span>
                     </div>
                 </div>
 
-                <div class="mt-4 pt-3 border-top">
-                    <h6 class="fw-bold text-dark mb-3">Attendance Legend</h6>
-                    <div class="d-flex flex-wrap gap-2">
-                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Present</span>
-                        <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Absent</span>
-                        <span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Late</span>
-                        <span class="badge bg-info"><i class="fas fa-hourglass-half me-1"></i>Half Day</span>
+                <div>
+                    <div class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-2">Legend</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-success px-2 py-1" style="font-size: 0.65rem;"><i class="fas fa-check me-1"></i>Present</span>
+                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.65rem;"><i class="fas fa-times me-1"></i>Absent</span>
+                        <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.65rem;"><i class="fas fa-clock me-1"></i>Late</span>
+                        <span class="badge bg-info text-dark px-2 py-1" style="font-size: 0.65rem;"><i class="fas fa-star-half-alt me-1"></i>Half Day</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Date Selection Card -->
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-header bg-white border-0 py-4">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="fas fa-calendar-day text-primary me-2"></i>
-                    Select Date
-                </h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-1 px-3">
+                <div class="text-muted text-xs fw-bold text-uppercase tracking-wide">
+                    <i class="fas fa-calendar-day text-info me-2"></i>Date & Stats
+                </div>
             </div>
-            <div class="card-body">
-                <form method="GET" action="{{ url_for('take_attendance', class_id=class_obj.id) }}">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Attendance Date</label>
-                        <input type="date" class="form-control" name="date" 
+            <div class="card-body px-3 pt-2 pb-3">
+                <form method="GET" action="{{ url_for('take_attendance', class_id=class_obj.id) }}" class="mb-3">
+                    <div class="mb-2">
+                        <label class="form-label text-xs fw-bold text-muted mb-1">Select Date</label>
+                        <input type="date" class="form-control form-control-sm text-sm" name="date" 
                                value="{{ form.date.data.strftime('%Y-%m-%d') if form.date.data else date.today().strftime('%Y-%m-%d') }}"
                                max="{{ date.today().strftime('%Y-%m-%d') }}">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-search me-2"></i>Load Attendance
+                    <button type="submit" class="btn btn-light border btn-sm w-100 text-xs fw-medium">
+                        <i class="fas fa-sync-alt me-1 text-muted"></i> Load Roster
                     </button>
                 </form>
 
-                <div class="mt-4 pt-3 border-top">
-                    <h6 class="fw-bold text-dark mb-3">Quick Stats</h6>
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <div class="display-6 fw-bold text-dark">{{ enrollments|length }}</div>
-                            <div class="text-muted small">Total Students</div>
-                        </div>
-                        <div class="col-6">
-                            {% set present_count = existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length %}
-                            <div class="display-6 fw-bold text-success">{{ present_count }}</div>
-                            <div class="text-muted small">Present Today</div>
-                        </div>
+                <div class="row text-center g-2 border-top pt-3">
+                    <div class="col-6 border-end border-light">
+                        <div class="text-dark fw-bold fs-5 lh-1 mb-1">{{ enrollments|length }}</div>
+                        <div class="text-muted text-uppercase tracking-wide" style="font-size: 0.65rem;">Total</div>
+                    </div>
+                    <div class="col-6">
+                        {% set present_count = existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length %}
+                        <div class="text-success fw-bold fs-5 lh-1 mb-1" id="summaryPresentLeft">{{ present_count }}</div>
+                        <div class="text-muted text-uppercase tracking-wide" style="font-size: 0.65rem;">Present</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Right Column: Attendance Table -->
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-4">
+        <div class="card border-0 shadow-sm h-100 d-flex flex-column">
+            <div class="card-header bg-white border-bottom-0 py-3 px-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-0 fw-bold text-dark">
-                            <i class="fas fa-clipboard-check text-primary me-2"></i>
-                            Mark Attendance
-                        </h5>
-                        <small class="text-muted">Date: {{ attendance_date.strftime('%B %d, %Y') }}</small>
+                        <div class="text-dark fw-bold text-sm mb-1">
+                            <i class="fas fa-clipboard-check text-primary me-2"></i>Roster: {{ attendance_date.strftime('%b %d, %Y') }}
+                        </div>
                     </div>
-                    <div>
-                        <span class="badge bg-{% if existing_attendance %}success{% else %}warning{% endif %}">
-                            <i class="fas fa-{% if existing_attendance %}check-circle{% else %}clock{% endif %} me-1"></i>
-                            {% if existing_attendance %}Already Marked{% else %}Not Marked{% endif %}
-                        </span>
-                    </div>
+                    <span class="badge bg-{% if existing_attendance %}success{% else %}warning{% endif %} bg-opacity-10 text-{% if existing_attendance %}success{% else %}warning{% endif %} border border-{% if existing_attendance %}success{% else %}warning{% endif %} border-opacity-25 px-2 py-1 flex-shrink-0" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                        {% if existing_attendance %}
+                            <i class="fas fa-check-circle me-1"></i>MARKED
+                        {% else %}
+                            <i class="fas fa-clock me-1"></i>PENDING
+                        {% endif %}
+                    </span>
                 </div>
             </div>
 
-            <form method="POST" action="{{ url_for('take_attendance', class_id=class_obj.id) }}">
+            <form method="POST" action="{{ url_for('take_attendance', class_id=class_obj.id) }}" class="d-flex flex-column flex-grow-1">
                 {{ form.hidden_tag() }}
                 <input type="hidden" name="date" value="{{ attendance_date.strftime('%Y-%m-%d') }}">
 
-                <div class="card-body p-0">
+                <div class="card-body p-0 flex-grow-1 overflow-auto">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
+                        <table class="table table-sm table-hover align-middle mb-0 text-sm">
+                            <thead class="bg-light text-muted text-xs text-uppercase tracking-wide">
                                 <tr>
-                                    <th class="ps-4" style="width: 10%;">Roll No.</th>
-                                    <th style="width: 30%;">Student Details</th>
-                                    <th style="width: 25%;">Status</th>
-                                    <th style="width: 25%;">Notes</th>
-                                    <th class="pe-4" style="width: 10%;">Actions</th>
+                                    <th class="ps-3 fw-bold py-2" style="width: 8%;">#</th>
+                                    <th class="fw-bold py-2" style="width: 25%;">Student</th>
+                                    <th class="fw-bold py-2" style="width: 22%;">Status</th>
+                                    <th class="fw-bold py-2" style="width: 30%;">Notes</th>
+                                    <th class="pe-3 fw-bold py-2 text-end" style="width: 15%;">Quick</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="border-top-0">
                                 {% for enrollment in enrollments %}
                                 <tr>
-                                    <td class="ps-4">
-                                        <span class="badge bg-primary rounded-pill">{{ enrollment.roll_number }}</span>
+                                    <td class="ps-3 text-muted fw-medium">{{ enrollment.roll_number }}</td>
+                                    <td>
+                                        <div class="fw-bold text-dark lh-1 mb-1">{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">{{ enrollment.student.student_id }}</div>
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                                    <i class="fas fa-user text-muted"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <div class="fw-bold text-dark mb-1">{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</div>
-                                                <div class="text-muted small">{{ enrollment.student.student_id }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <select class="form-select attendance-status" 
+                                        <select class="form-select form-select-sm text-xs attendance-status py-1 shadow-none" 
                                                 name="status_{{ enrollment.student_id }}" 
                                                 data-student-id="{{ enrollment.student_id }}">
                                             <option value="present" {% if existing_attendance.get(enrollment.student_id, {}).status == 'present' %}selected{% endif %}>✅ Present</option>
@@ -181,20 +163,20 @@
                                     </td>
                                     <td>
                                         <input type="text" 
-                                               class="form-control attendance-notes" 
+                                               class="form-control form-control-sm text-xs attendance-notes py-1 shadow-none" 
                                                name="notes_{{ enrollment.student_id }}"
-                                               placeholder="Optional notes..."
+                                               placeholder="Add note..."
                                                value="{{ existing_attendance.get(enrollment.student_id, {}).notes or '' }}">
                                     </td>
-                                    <td class="pe-4">
-                                        <button type="button" class="btn btn-outline-primary btn-sm mark-present" 
-                                                data-student-id="{{ enrollment.student_id }}" title="Mark Present">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger btn-sm mark-absent" 
-                                                data-student-id="{{ enrollment.student_id }}" title="Mark Absent">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                    <td class="pe-3 text-end">
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-outline-success btn-sm mark-present px-2 py-0" style="font-size: 0.75rem;" data-student-id="{{ enrollment.student_id }}" title="Present">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm mark-absent px-2 py-0" style="font-size: 0.75rem;" data-student-id="{{ enrollment.student_id }}" title="Absent">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -203,96 +185,57 @@
                     </div>
                 </div>
 
-                <div class="card-footer bg-white border-0 py-4 px-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted">
-                            <span id="presentCount">{{ existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length }}</span> present, 
-                            <span id="absentCount">{{ existing_attendance.values()|selectattr('status', 'equalto', 'absent')|list|length }}</span> absent of {{ enrollments|length }} students
+                <div class="card-footer bg-light border-top py-2 px-3 mt-auto">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                        
+                        <div class="d-flex align-items-center gap-3 flex-grow-1" style="max-width: 300px;">
+                            <div class="text-xs fw-medium text-dark">
+                                <span class="text-success fw-bold" id="presentCount">{{ existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length }}</span> P 
+                                <span class="text-muted mx-1">|</span>
+                                <span class="text-danger fw-bold" id="absentCount">{{ existing_attendance.values()|selectattr('status', 'equalto', 'absent')|list|length }}</span> A
+                            </div>
+                            <div class="progress flex-grow-1 bg-white border" style="height: 6px;">
+                                <div class="progress-bar bg-success" id="attendanceBar" 
+                                     style="width: {{ (existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100) if enrollments|length > 0 else 0 }}%">
+                                </div>
+                            </div>
+                            <div class="text-xs text-muted fw-bold" id="attendancePercentage">
+                                {{ ((existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100)|round(1) if enrollments|length > 0 else 0) }}%
+                            </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-secondary" onclick="markAll('present')">
-                                <i class="fas fa-check-double me-2"></i>Mark All Present
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-white border shadow-sm btn-sm text-xs fw-medium px-2 py-1" onclick="markAll('present')">
+                                <i class="fas fa-check text-success me-1"></i> All Present
                             </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="markAll('absent')">
-                                <i class="fas fa-times-circle me-2"></i>Mark All Absent
+                            <button type="button" class="btn btn-white border shadow-sm btn-sm text-xs fw-medium px-2 py-1" onclick="markAll('absent')">
+                                <i class="fas fa-times text-danger me-1"></i> All Absent
                             </button>
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="fas fa-save me-2"></i>Save Attendance
+                            <button type="submit" class="btn btn-primary shadow-sm btn-sm text-xs fw-medium px-3 py-1 ms-1">
+                                <i class="fas fa-save me-1"></i> SAVE
                             </button>
                         </div>
+
                     </div>
                 </div>
             </form>
         </div>
-
-        <!-- Attendance Summary -->
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-header bg-white border-0 py-4">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="fas fa-chart-pie text-primary me-2"></i>
-                    Attendance Summary
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="flex-shrink-0">
-                                <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                                    <i class="fas fa-check-circle fa-2x"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="text-muted">Present Students</div>
-                                <h3 class="mb-0 fw-bold text-dark" id="summaryPresent">
-                                    {{ existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length }}
-                                </h3>
-                                <small class="text-success">
-                                    {{ ((existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100)|round(1) if enrollments|length > 0 else 0) }}%
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="flex-shrink-0">
-                                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                                    <i class="fas fa-times-circle fa-2x"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="text-muted">Absent Students</div>
-                                <h3 class="mb-0 fw-bold text-dark" id="summaryAbsent">
-                                    {{ existing_attendance.values()|selectattr('status', 'equalto', 'absent')|list|length }}
-                                </h3>
-                                <small class="text-danger">
-                                    {{ ((existing_attendance.values()|selectattr('status', 'equalto', 'absent')|list|length / enrollments|length * 100)|round(1) if enrollments|length > 0 else 0) }}%
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Attendance Distribution</span>
-                        <span class="text-muted" id="attendancePercentage">
-                            {{ ((existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100)|round(1) if enrollments|length > 0 else 0) }}%
-                        </span>
-                    </div>
-                    <div class="progress" style="height: 12px;">
-                        <div class="progress-bar bg-success" id="attendanceBar" 
-                             style="width: {{ (existing_attendance.values()|selectattr('status', 'equalto', 'present')|list|length / enrollments|length * 100) if enrollments|length > 0 else 0 }}%">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
+<style>
+/* Utility Overrides for Dashboard Feel */
+.text-xs { font-size: 0.75rem !important; }
+.text-sm { font-size: 0.85rem !important; }
+.tracking-wide { letter-spacing: 0.05em; }
+.btn-white { background-color: #fff; color: #333; }
+.btn-white:hover { background-color: #f8f9fa; }
+.table-hover tbody tr:hover { background-color: rgba(0, 0, 0, 0.015); }
+select.form-select-sm { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+input.form-control-sm { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+</style>
+
 <script>
-// Update summary when attendance changes
 function updateSummary() {
     const presentCount = document.querySelectorAll('select.attendance-status option:checked[value="present"]').length;
     const absentCount = document.querySelectorAll('select.attendance-status option:checked[value="absent"]').length;
@@ -300,10 +243,12 @@ function updateSummary() {
 
     document.getElementById('presentCount').textContent = presentCount;
     document.getElementById('absentCount').textContent = absentCount;
-    document.getElementById('summaryPresent').textContent = presentCount;
-    document.getElementById('summaryAbsent').textContent = absentCount;
+    
+    // Also update the left panel counter
+    const leftPanelPresent = document.getElementById('summaryPresentLeft');
+    if(leftPanelPresent) leftPanelPresent.textContent = presentCount;
 
-    const attendancePercentage = totalStudents > 0 ? ((presentCount / totalStudents) * 100).toFixed(1) : 0;
+    const attendancePercentage = totalStudents > 0 ? ((presentCount / totalStudents) * 100).toFixed(0) : 0;
     document.getElementById('attendancePercentage').textContent = attendancePercentage + '%';
     document.getElementById('attendanceBar').style.width = attendancePercentage + '%';
 }
