@@ -26,37 +26,28 @@
 {% set classes_taken = assigned_classes|selectattr('attendance_taken')|list|length %}
 {% set avg_attendance = (assigned_classes|sum(attribute='stats.attendance_rate') / total_classes) if total_classes > 0 else 0 %}
 
-<!-- Welcome Banner – responsive -->
+<!-- Professional Welcome Banner – compact and clean -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <div class="card-body text-white p-4 p-md-5">
-                <div class="row align-items-center g-4">
-                    <div class="col-md-8">
-                        <h1 class="fw-bold mb-2" style="font-size: clamp(1.5rem, 5vw, 2.5rem);">
-                            Welcome back, {{ current_user.full_name.split(' ')[0] }}!
-                        </h1>
-                        <p class="opacity-75 mb-3" style="font-size: clamp(0.9rem, 3vw, 1.25rem);">
-                            {{ context.school.name }} · {{ context.current_session.name }}
-                        </p>
-                        <div class="d-flex flex-wrap gap-3 gap-md-4">
-                            <div class="text-center">
-                                <div class="fw-bold" style="font-size: clamp(1.5rem, 4vw, 2rem);">{{ total_classes }}</div>
-                                <div class="small opacity-75">Classes</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="fw-bold" style="font-size: clamp(1.5rem, 4vw, 2rem);">{{ total_students }}</div>
-                                <div class="small opacity-75">Students</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="fw-bold" style="font-size: clamp(1.5rem, 4vw, 2rem);">{{ classes_taken }}/{{ total_classes }}</div>
-                                <div class="small opacity-75">Today's Attendance</div>
-                            </div>
+        <div class="card border-0 shadow-sm bg-white">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-chalkboard-teacher fa-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Welcome back, {{ current_user.full_name.split(' ')[0] }}!</h4>
+                            <p class="text-muted mb-0 small">
+                                <i class="fas fa-school me-1"></i>{{ context.school.name }} · 
+                                <i class="fas fa-calendar-alt me-1 ms-2"></i>{{ context.current_session.name }}
+                            </p>
                         </div>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <div class="rounded-circle bg-white bg-opacity-10 d-inline-flex align-items-center justify-content-center p-3 p-md-4">
-                            <i class="fas fa-chalkboard-teacher fa-3x fa-md-4x"></i>
+                    <div class="d-flex gap-4">
+                        <div class="text-center">
+                            <div class="fw-bold text-dark">{{ classes_taken }}/{{ total_classes }}</div>
+                            <div class="small text-muted">Today's Attendance</div>
                         </div>
                     </div>
                 </div>
@@ -65,67 +56,48 @@
     </div>
 </div>
 
-<!-- Metric Cards – responsive stacking -->
+<!-- Metric Cards – now the primary place for key numbers -->
 <div class="row g-3 mb-4">
-    <div class="col-6 col-md-6 col-xl-3">
-        <div class="metric-card card-hover p-3 p-md-4">
-            <div class="metric-icon bg-primary-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
+    <div class="col-6 col-md-4">
+        <div class="metric-card p-3 p-md-4">
+            <div class="metric-icon bg-primary-light mb-2">
                 <i class="fas fa-chalkboard text-primary"></i>
             </div>
             <div class="metric-content">
-                <h3 class="fs-2 fw-bold text-dark mb-0">{{ total_classes }}</h3>
-                <p class="text-muted small mb-1">Total Classes</p>
-                <div class="metric-trend small">
-                    <i class="fas fa-check-circle text-success"></i>
-                    <span class="text-success">{{ classes_taken }} taken today</span>
+                <h3 class="fw-bold text-dark mb-0">{{ total_classes }}</h3>
+                <p class="text-muted small mb-1">Classes</p>
+                <div class="metric-trend small text-success">
+                    <i class="fas fa-check-circle"></i> {{ classes_taken }} taken today
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-6 col-md-6 col-xl-3">
-        <div class="metric-card card-hover p-3 p-md-4">
-            <div class="metric-icon bg-success-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
+    <div class="col-6 col-md-4">
+        <div class="metric-card p-3 p-md-4">
+            <div class="metric-icon bg-success-light mb-2">
                 <i class="fas fa-users text-success"></i>
             </div>
             <div class="metric-content">
-                <h3 class="fs-2 fw-bold text-dark mb-0">{{ total_students }}</h3>
-                <p class="text-muted small mb-1">Total Students</p>
-                <div class="metric-trend small">
-                    <i class="fas fa-user-graduate text-info"></i>
-                    <span class="text-info">across all classes</span>
+                <h3 class="fw-bold text-dark mb-0">{{ total_students }}</h3>
+                <p class="text-muted small mb-1">Students</p>
+                <div class="metric-trend small text-info">
+                    <i class="fas fa-user-graduate"></i> across all classes
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-6 col-md-6 col-xl-3">
-        <div class="metric-card card-hover p-3 p-md-4">
-            <div class="metric-icon bg-warning-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
+    <div class="col-6 col-md-4">
+        <div class="metric-card p-3 p-md-4">
+            <div class="metric-icon bg-warning-light mb-2">
                 <i class="fas fa-clock text-warning"></i>
             </div>
             <div class="metric-content">
-                <h3 class="fs-2 fw-bold text-dark mb-0">{{ avg_attendance|round|int }}%</h3>
+                <h3 class="fw-bold text-dark mb-0">{{ avg_attendance|round|int }}%</h3>
                 <p class="text-muted small mb-1">Avg Attendance</p>
-                <div class="metric-trend small">
-                    <span class="{{ 'text-success' if avg_attendance >= 80 else 'text-warning' if avg_attendance >= 60 else 'text-danger' }}">
-                        {{ avg_attendance|round(1) }}% this month
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-6 col-md-6 col-xl-3">
-        <div class="metric-card card-hover p-3 p-md-4">
-            <div class="metric-icon bg-info-light mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
-                <i class="fas fa-calendar-check text-info"></i>
-            </div>
-            <div class="metric-content">
-                <h3 class="fs-2 fw-bold text-dark mb-0">{{ classes_taken }}</h3>
-                <p class="text-muted small mb-1">Classes Marked</p>
-                <div class="metric-trend small">
-                    <span class="text-success">{{ ((classes_taken/total_classes)*100)|round|int if total_classes>0 else 0 }}% complete</span>
+                <div class="metric-trend small {{ 'text-success' if avg_attendance >= 80 else 'text-warning' if avg_attendance >= 60 else 'text-danger' }}">
+                    <i class="fas fa-chart-line"></i> {{ avg_attendance|round(1) }}% this month
                 </div>
             </div>
         </div>
@@ -418,11 +390,13 @@
     box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 .metric-icon {
+    width: 48px;
+    height: 48px;
     border-radius: 12px;
-    background: rgba(67,97,238,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.25rem;
 }
 .metric-icon.bg-primary-light { background: rgba(67,97,238,0.1); color: #4361ee; }
 .metric-icon.bg-success-light { background: rgba(16,185,129,0.1); color: #10b981; }
