@@ -1,95 +1,117 @@
-<!-- templates/teacher_view_class.html -->
 {% extends "base.html" %}
 {% block title %}{{ class_obj.name }} - {{ subject }}{% endblock %}
-{% block header %}{{ class_obj.name }} - {{ subject }}{% endblock %}
+{% block header %}Class Details{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">{{ class_obj.name }}</li>
+{% endblock %}
 
 {% block actions %}
-{% if is_class_teacher %}
-<span class="badge bg-primary">Class Teacher</span>
-{% endif %}
+<div class="d-flex gap-2 align-items-center">
+    {% if is_class_teacher %}
+    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 shadow-sm px-3 py-2 text-xs tracking-wide">
+        <i class="fas fa-crown me-1"></i> CLASS TEACHER
+    </span>
+    {% endif %}
+    <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-outline-dark btn-sm px-3 shadow-sm text-sm">
+        <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Class Details</h5>
-                <div>
-                    <span class="badge bg-secondary">{{ class_obj.code }}</span>
-                    <span class="badge bg-info">{{ students|length }} students</span>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3 hover-lift">
+            <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Class</p>
+            <h5 class="fw-bold text-dark mb-0">{{ class_obj.name }}</h5>
+            <div class="text-xs text-muted mt-1"><i class="fas fa-tag me-1"></i>{{ class_obj.code }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3 hover-lift">
+            <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Subject</p>
+            <h5 class="fw-bold text-dark mb-0">{{ subject }}</h5>
+            <div class="text-xs text-info mt-1"><i class="fas fa-book-open me-1"></i>Current Term</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3 hover-lift">
+            <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Room</p>
+            <h5 class="fw-bold text-dark mb-0">{{ class_obj.room_number or 'N/A' }}</h5>
+            <div class="text-xs text-muted mt-1"><i class="fas fa-door-open me-1"></i>Assigned</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3 hover-lift">
+            <p class="text-muted text-xs text-uppercase tracking-wide fw-bold mb-1">Students</p>
+            <h5 class="fw-bold text-dark mb-0">{{ students|length }}<span class="text-muted text-sm fw-normal">/{{ class_obj.capacity }}</span></h5>
+            <div class="progress mt-2 bg-light" style="height: 4px;">
+                <div class="progress-bar {% if students|length >= class_obj.capacity %}bg-danger{% elif students|length >= class_obj.capacity * 0.8 %}bg-warning{% else %}bg-success{% endif %}" 
+                     style="width: {{ ((students|length / class_obj.capacity) * 100)|round|int }}%">
                 </div>
             </div>
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <div class="text-muted small">Subject</div>
-                                <div class="h5">{{ subject }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <div class="text-muted small">Room</div>
-                                <div class="h5">{{ class_obj.room_number or 'N/A' }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <div class="text-muted small">Capacity</div>
-                                <div class="h5">{{ students|length }}/{{ class_obj.capacity }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm print-card">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+                    <i class="fas fa-users text-primary me-2"></i>Student Roster
+                </h6>
+                <span class="badge bg-light text-dark border text-xs">{{ students|length }} Enrolled</span>
+            </div>
+            
+            <div class="card-body p-0">
                 {% if students %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover table-custom mb-0 align-middle">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Roll No.</th>
-                                <th>Student ID</th>
-                                <th>Name</th>
-                                <th>Gender</th>
-                                <th>Contact</th>
-                                <th>Actions</th>
+                                <th class="text-muted text-xs text-uppercase tracking-wide fw-bold ps-4">Roll</th>
+                                <th class="text-muted text-xs text-uppercase tracking-wide fw-bold">Student</th>
+                                <th class="text-muted text-xs text-uppercase tracking-wide fw-bold">Gender</th>
+                                <th class="text-muted text-xs text-uppercase tracking-wide fw-bold">Contact</th>
+                                <th class="text-muted text-xs text-uppercase tracking-wide fw-bold text-end pe-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for enrollment in students %}
                             <tr>
-                                <td>
-                                    <span class="badge bg-primary">{{ enrollment.roll_number }}</span>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-dark text-sm">{{ enrollment.roll_number }}</span>
                                 </td>
                                 <td>
-                                    <strong>{{ enrollment.student.student_id }}</strong>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="student-avatar bg-primary text-white">
+                                            {{ enrollment.student.first_name[0] }}{{ enrollment.student.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark text-sm">{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</div>
+                                            <div class="text-xs text-muted">ID: {{ enrollment.student.student_id }} &bull; DOB: {{ enrollment.student.date_of_birth.strftime('%Y-%m-%d') }}</div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
-                                    <strong>{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</strong><br>
-                                    <small class="text-muted">
-                                        DOB: {{ enrollment.student.date_of_birth.strftime('%Y-%m-%d') }}
-                                    </small>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 text-xs">
+                                        {{ enrollment.student.gender|title }}
+                                    </span>
                                 </td>
                                 <td>
-                                    {{ enrollment.student.gender|title }}
+                                    <div class="text-sm text-dark">{{ enrollment.student.phone or 'N/A' }}</div>
+                                    <div class="text-xs text-muted">{{ enrollment.student.email or 'No email' }}</div>
                                 </td>
-                                <td>
-                                    <div class="small">{{ enrollment.student.phone or 'No phone' }}</div>
-                                    <div class="small text-muted">{{ enrollment.student.email or 'No email' }}</div>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary" onclick="viewStudent({{ enrollment.student.id }})">
-                                            <i class="bi bi-eye"></i>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group">
+                                        <button class="btn btn-light border btn-sm text-xs text-dark hover-bg-gray" onclick="viewStudent({{ enrollment.student.id }})" title="View Details">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-outline-success" onclick="editStudent({{ enrollment.student.id }})">
-                                            <i class="bi bi-pencil"></i>
+                                        <button class="btn btn-light border btn-sm text-xs text-dark hover-bg-gray" onclick="editStudent({{ enrollment.student.id }})" title="Edit Student">
+                                            <i class="fas fa-pen"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -100,72 +122,76 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <i class="bi bi-people display-1 text-muted"></i>
-                    <h4 class="mt-3">No Students Enrolled</h4>
-                    <p class="text-muted">No students have been enrolled in this class yet.</p>
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user-graduate fa-2x text-muted"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark">No Students Enrolled</h6>
+                    <p class="text-muted text-sm mb-0">No students have been assigned to this class yet.</p>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Quick Actions</h5>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+                    <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                </h6>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary" onclick="printClassList()">
-                        <i class="bi bi-printer me-2"></i> Print Class List
-                    </button>
-                    <button class="btn btn-outline-success" onclick="exportClassData()">
-                        <i class="bi bi-download me-2"></i> Export to Excel
-                    </button>
+            <div class="card-body p-2">
+                <div class="list-group list-group-flush">
                     {% if is_class_teacher %}
-                    <button class="btn btn-outline-warning" onclick="manageAttendance()">
-                        <i class="bi bi-clipboard-check me-2"></i> Take Attendance
+                    <button class="list-group-item list-group-item-action border-0 text-sm py-2 d-flex align-items-center" onclick="manageAttendance()">
+                        <div class="icon-box bg-success bg-opacity-10 text-success me-3"><i class="fas fa-clipboard-check"></i></div>
+                        <span class="fw-medium">Take Attendance</span>
                     </button>
-                    <button class="btn btn-outline-info" onclick="manageGrades()">
-                        <i class="bi bi-journal-text me-2"></i> Enter Grades
+                    <button class="list-group-item list-group-item-action border-0 text-sm py-2 d-flex align-items-center" onclick="manageGrades()">
+                        <div class="icon-box bg-info bg-opacity-10 text-info me-3"><i class="fas fa-book"></i></div>
+                        <span class="fw-medium">Enter Grades</span>
                     </button>
                     {% endif %}
+                    <button class="list-group-item list-group-item-action border-0 text-sm py-2 d-flex align-items-center" onclick="printClassList()">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary me-3"><i class="fas fa-print"></i></div>
+                        <span class="fw-medium">Print Class List</span>
+                    </button>
+                    <button class="list-group-item list-group-item-action border-0 text-sm py-2 d-flex align-items-center" onclick="exportClassData()">
+                        <div class="icon-box bg-secondary bg-opacity-10 text-secondary me-3"><i class="fas fa-file-excel"></i></div>
+                        <span class="fw-medium">Export to Excel</span>
+                    </button>
                 </div>
-                
-                <hr>
-                
-                <div class="card bg-light">
-                    <div class="card-body">
-                        <h6>Class Statistics</h6>
-                        <div class="row text-center">
-                            <div class="col-6">
-                                <div class="display-6">{{ students|length }}</div>
-                                <div class="text-muted small">Total Students</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="display-6">{{ class_obj.capacity - students|length }}</div>
-                                <div class="text-muted small">Available Seats</div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="small">Capacity Usage</span>
-                                <span class="small">{{ ((students|length / class_obj.capacity) * 100)|round|int }}%</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar {% if students|length >= class_obj.capacity %}bg-danger{% elif students|length >= class_obj.capacity * 0.8 %}bg-warning{% else %}bg-success{% endif %}" 
-                                     style="width: {{ ((students|length / class_obj.capacity) * 100)|round|int }}%">
-                                </div>
-                            </div>
-                        </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark text-uppercase tracking-wide">
+                    <i class="fas fa-chart-pie text-primary me-2"></i>Capacity Stats
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-center flex-fill border-end">
+                        <div class="text-muted text-xs text-uppercase tracking-wide mb-1">Enrolled</div>
+                        <h4 class="fw-bold text-dark mb-0">{{ students|length }}</h4>
+                    </div>
+                    <div class="text-center flex-fill">
+                        <div class="text-muted text-xs text-uppercase tracking-wide mb-1">Available</div>
+                        <h4 class="fw-bold text-dark mb-0">{{ class_obj.capacity - students|length }}</h4>
                     </div>
                 </div>
                 
-                <div class="mt-3">
-                    <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary w-100">
-                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
-                    </a>
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-xs fw-bold text-muted">Total Capacity Usage</span>
+                        <span class="text-xs fw-bold">{{ ((students|length / class_obj.capacity) * 100)|round|int }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px; border-radius: 4px;">
+                        <div class="progress-bar {% if students|length >= class_obj.capacity %}bg-danger{% elif students|length >= class_obj.capacity * 0.8 %}bg-warning{% else %}bg-success{% endif %}" 
+                             style="width: {{ ((students|length / class_obj.capacity) * 100)|round|int }}%; border-radius: 4px;">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -199,14 +225,70 @@
 </script>
 
 <style>
-    @media print {
-        .sidebar, .navbar, .actions, .card-header .btn, .card:not(.print-card) {
-            display: none !important;
-        }
-        .main-content {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+/* --- Text & Layout Utility Overrides --- */
+.text-xs { font-size: 0.7rem !important; }
+.text-sm { font-size: 0.85rem !important; }
+.tracking-wide { letter-spacing: 0.05em; }
+
+/* --- Table Customization --- */
+.table-custom th {
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    font-weight: 600;
+}
+.table-custom td {
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    padding: 1rem 0.5rem;
+}
+.table-custom tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Student Avatar --- */
+.student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+/* --- Card & Interaction Styles --- */
+.hover-lift { transition: all 0.2s ease; border-radius: 8px; }
+.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.06) !important; }
+
+.hover-bg-gray:hover { background-color: #f1f5f9 !important; }
+
+.icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.list-group-item-action { transition: background-color 0.15s ease; border-radius: 6px !important; margin-bottom: 2px;}
+.list-group-item-action:hover { background-color: #f8fafc; }
+
+/* --- Print Styles --- */
+@media print {
+    body { background-color: #fff !important; }
+    .sidebar, .navbar, .actions, .breadcrumb, .btn, .col-lg-4, .card-header .badge {
+        display: none !important;
     }
+    .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    .col-lg-8 { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; }
+    .card { border: none !important; box-shadow: none !important; }
+    .print-card .card-header { padding: 0 0 1rem 0 !important; border-bottom: 2px solid #000 !important; }
+    .table-custom td, .table-custom th { padding: 0.5rem !important; }
+    /* Force background colors to print */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
 </style>
 {% endblock %}
