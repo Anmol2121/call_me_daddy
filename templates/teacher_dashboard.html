@@ -26,28 +26,44 @@
 {% set classes_taken = assigned_classes|selectattr('attendance_taken')|list|length %}
 {% set avg_attendance = (assigned_classes|sum(attribute='stats.attendance_rate') / total_classes) if total_classes > 0 else 0 %}
 
-<!-- Professional Welcome Banner – compact and clean -->
+<!-- Professional Welcome Banner – enhanced, attractive, responsive -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm bg-white">
-            <div class="card-body p-4">
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                            <i class="fas fa-chalkboard-teacher fa-lg"></i>
-                        </div>
-                        <div>
-                            <h4 class="fw-bold text-dark mb-1">Welcome back, {{ current_user.full_name.split(' ')[0] }}!</h4>
-                            <p class="text-muted mb-0 small">
-                                <i class="fas fa-school me-1"></i>{{ context.school.name }} · 
-                                <i class="fas fa-calendar-alt me-1 ms-2"></i>{{ context.current_session.name }}
-                            </p>
+        <div class="card border-0 shadow-sm overflow-hidden" style="background: linear-gradient(135deg, #f6f9fc 0%, #e9f0f9 100%);">
+            <div class="card-body p-4 p-md-5 position-relative">
+                <!-- Decorative abstract shape (hidden on mobile) -->
+                <div class="position-absolute top-0 end-0 opacity-10 d-none d-md-block">
+                    <i class="fas fa-chalkboard-teacher fa-10x" style="transform: rotate(10deg);"></i>
+                </div>
+                <div class="row align-items-center g-4">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <i class="fas fa-chalkboard-teacher fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h2 class="display-6 fw-bold text-dark mb-0">Welcome back, {{ current_user.full_name.split(' ')[0] }}!</h2>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-school me-1"></i>{{ context.school.name }} · 
+                                    <i class="fas fa-calendar-alt me-1 ms-2"></i>{{ context.current_session.name }}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <div class="d-flex gap-4">
-                        <div class="text-center">
-                            <div class="fw-bold text-dark">{{ classes_taken }}/{{ total_classes }}</div>
-                            <div class="small text-muted">Today's Attendance</div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-md-end align-items-center">
+                            <div class="text-center p-3 bg-white rounded-3 shadow-sm w-100" style="max-width: 200px;">
+                                <div class="small text-uppercase text-muted fw-semibold tracking-wide">Today's Attendance</div>
+                                <div class="d-flex align-items-center justify-content-center gap-2 mt-1">
+                                    <span class="display-6 fw-bold text-dark">{{ classes_taken }}/{{ total_classes }}</span>
+                                    <span class="badge bg-success bg-opacity-15 text-success px-2 py-1 rounded-pill">
+                                        <i class="fas fa-arrow-up me-1"></i>{{ ((classes_taken/total_classes)*100)|round|int if total_classes>0 else 0 }}%
+                                    </span>
+                                </div>
+                                <div class="progress mt-2" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: {{ ((classes_taken/total_classes)*100)|round|int if total_classes>0 else 0 }}%;"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -56,7 +72,7 @@
     </div>
 </div>
 
-<!-- Metric Cards – now the primary place for key numbers -->
+<!-- Metric Cards -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4">
         <div class="metric-card p-3 p-md-4">
@@ -451,6 +467,14 @@
 /* Ensure touch targets are at least 44px */
 .btn, .bottom-nav-item, .list-group-item, .dropdown-item {
     min-height: 44px;
+}
+
+/* Additional utilities for welcome banner */
+.tracking-wide {
+    letter-spacing: 0.05em;
+}
+.bg-opacity-15 {
+    --bs-bg-opacity: 0.15;
 }
 </style>
 
