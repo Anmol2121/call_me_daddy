@@ -5,38 +5,44 @@
 {% block content %}
 <style>
     /* =========================================================
-       OFFICIAL ACADEMIC TRANSCRIPT STYLES
+       PRESTIGIOUS INSTITUTIONAL TRANSCRIPT STYLES
        ========================================================= */
+    :root {
+        --primary-navy: #0A2540;     /* Deep Royal Navy */
+        --accent-crimson: #8B1A1A;   /* Official Crimson Red */
+        --accent-gold: #C5A059;      /* Antique Gold */
+        --table-row-alt: #F3F7F9;    /* Faint Ice Blue for rows */
+        --bg-parchment: #FCFBF9;     /* Very subtle warm white paper */
+    }
+
     .print-controls { 
         margin-bottom: 30px; 
         text-align: right; 
     }
     
     .report-card-container {
-        /* Secure Academic Transcript Blue - Official Board Paper Color */
-        background-color: #F4F8FB; 
+        background-color: var(--bg-parchment);
         
-        /* Advanced Anti-Copy Security Micro-Mesh Pattern */
+        /* Subtle Guilloche Security Background */
         background-image: 
-            radial-gradient(circle at 50% 50%, #ffffff 0%, transparent 85%),
-            repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(21, 67, 96, 0.03) 2px, rgba(21, 67, 96, 0.03) 4px),
-            repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(21, 67, 96, 0.03) 2px, rgba(21, 67, 96, 0.03) 4px);
+            repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(10, 37, 64, 0.02) 2px, rgba(10, 37, 64, 0.02) 4px),
+            repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(10, 37, 64, 0.02) 2px, rgba(10, 37, 64, 0.02) 4px);
         
         width: 100%;
         max-width: 210mm; /* Standard A4 Width */
         margin: 0 auto 50px auto;
         padding: 40px;
         
-        /* Formal outer border */
-        border: 1px solid #000;
-        outline: 4px solid #000;
-        outline-offset: -10px;
+        /* Prestigious Double Navy Border */
+        border: 2px solid var(--primary-navy);
+        outline: 6px solid var(--primary-navy);
+        outline-offset: -14px;
         
-        font-family: Arial, Helvetica, sans-serif;
-        color: #111111;
+        font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+        color: #111;
         position: relative;
         z-index: 1;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         page-break-after: always;
         box-sizing: border-box;
     }
@@ -44,17 +50,29 @@
     /* --- HEADER --- */
     .rc-header {
         text-align: center;
-        border-bottom: 3px double #000;
+        border-bottom: 4px solid var(--primary-navy);
         padding-bottom: 20px;
-        margin-bottom: 35px; 
+        margin-bottom: 30px; 
         margin-top: 15px;
+        position: relative;
     }
     
+    /* Decorative Gold Line under header */
+    .rc-header::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: var(--accent-gold);
+    }
+
     .rc-header h1 { 
         margin: 0 0 10px 0; 
-        font-size: 36px; 
-        color: #000; 
-        font-weight: bold; 
+        font-size: 38px; 
+        color: var(--primary-navy); 
+        font-weight: 800; 
         font-family: 'Times New Roman', Times, serif; 
         text-transform: uppercase; 
         letter-spacing: 2px;
@@ -62,17 +80,22 @@
     
     .rc-header h3 { 
         margin: 0 0 8px 0; 
-        font-size: 16px; 
-        color: #2c3e50; 
+        font-size: 18px; 
+        color: var(--accent-crimson); 
         font-weight: bold;
-        letter-spacing: 5px; 
+        letter-spacing: 4px; 
         text-transform: uppercase;
     }
     
     .rc-header .academic-session { 
         font-size: 14px;
         font-weight: bold; 
-        color: #000; 
+        color: #444; 
+        background-color: #eee;
+        display: inline-block;
+        padding: 4px 15px;
+        border-radius: 20px;
+        margin-top: 5px;
     }
 
     /* --- STUDENT DETAILS --- */
@@ -80,114 +103,140 @@
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 30px;
-        border: 2px solid #000;
-        background-color: rgba(255, 255, 255, 0.6); /* Slight white tint to pop text */
+        border: 2px solid var(--primary-navy);
+        background-color: #fff;
     }
 
     .student-details-table th, 
     .student-details-table td {
-        padding: 8px 12px;
-        border: 1px solid #000;
+        padding: 10px 12px;
+        border: 1px solid var(--primary-navy);
         font-size: 13px;
     }
 
     .student-details-table th {
         text-align: left;
-        background-color: #EAF2F8; /* Icy Blue Header to match security paper */
+        background-color: #E8EEF2; /* Soft Navy Tint */
+        color: var(--primary-navy);
         width: 20%;
         text-transform: uppercase;
         font-size: 11px;
         letter-spacing: 0.5px;
-        color: #000;
+        font-weight: bold;
     }
 
     .student-details-table td {
         width: 30%;
         font-weight: bold;
         text-transform: capitalize;
+        color: #222;
     }
 
     /* --- ACADEMIC RECORD TABLE --- */
     .rc-table { 
         width: 100%; 
         border-collapse: collapse; 
-        margin-bottom: 30px; 
-        border: 2px solid #000;
-        background-color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 35px; 
+        border: 2px solid var(--primary-navy);
+        background-color: #fff;
     }
     
     .rc-table th, .rc-table td {
-        padding: 10px;
+        padding: 12px 10px;
         text-align: center;
         font-size: 13px;
-        border: 1px solid #000;
+        border: 1px solid var(--primary-navy);
     }
     
     .rc-table th { 
-        background-color: #EAF2F8; /* Icy Blue Header */
-        color: #000; 
+        background-color: var(--primary-navy); 
+        color: #ffffff; 
         text-transform: uppercase; 
         font-weight: bold; 
         font-size: 12px;
-        border-bottom: 2px solid #000;
+        letter-spacing: 1px;
     }
     
+    /* Zebra Striping for readability */
+    .rc-table tbody tr:nth-child(even) {
+        background-color: var(--table-row-alt);
+    }
+
     .rc-table td.subject-name { 
         text-align: left; 
         font-weight: bold; 
         text-transform: uppercase;
+        color: var(--primary-navy);
+    }
+
+    .rc-table td strong {
+        color: var(--accent-crimson);
+        font-size: 14px;
     }
 
     /* --- RESULT SUMMARY --- */
     .result-section {
         display: flex;
-        border: 2px solid #000;
-        margin-bottom: 50px;
-        background-color: #EAF2F8; /* Icy Blue Highlighting */
+        border: 2px solid var(--primary-navy);
+        margin-bottom: 60px;
+        background-color: #fff;
+        box-shadow: 4px 4px 0px rgba(10, 37, 64, 0.1);
     }
 
     .result-box {
         flex: 1;
         text-align: center;
-        padding: 15px;
-        border-right: 1px solid #000;
+        padding: 18px 10px;
+        border-right: 1px solid var(--primary-navy);
     }
     .result-box:last-child { border-right: none; }
+
+    /* Highlight the Final Grade box */
+    .result-box.highlight {
+        background-color: var(--accent-gold);
+        color: #fff;
+    }
 
     .result-box span {
         display: block;
         font-size: 11px;
         text-transform: uppercase;
         font-weight: bold;
-        color: #444;
-        margin-bottom: 5px;
+        color: #555;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
     }
+
+    .result-box.highlight span { color: #fff; }
 
     .result-box strong {
         display: block;
-        font-size: 20px;
-        color: #000;
+        font-size: 24px;
+        color: var(--primary-navy);
     }
+    .result-box.highlight strong { color: var(--primary-navy); font-size: 28px; }
 
     /* --- SIGNATURES --- */
     .rc-signatures {
         display: flex;
         justify-content: space-between;
         margin-top: 80px;
-        padding: 0 20px;
+        padding: 0 30px;
     }
     
     .sig-block {
         text-align: center;
-        width: 220px;
+        width: 200px;
     }
 
     .sig-line {
-        border-top: 1px solid #000;
-        padding-top: 5px;
+        border-top: 1px solid var(--primary-navy);
+        padding-top: 8px;
         font-weight: bold;
         font-size: 12px;
+        color: var(--primary-navy);
         text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     /* ========== RIGOROUS PRINT STYLES ========== */
@@ -201,7 +250,6 @@
             background: #fff; 
             margin: 0; 
             padding: 15mm; 
-            font-family: Arial, Helvetica, sans-serif;
         }
 
         nav, header:not(.rc-header), footer, aside, .sidebar, 
@@ -217,9 +265,9 @@
         }
 
         .report-card-container { 
-            border: 1px solid #000 !important;
-            outline: 4px solid #000 !important;
-            outline-offset: -10px !important;
+            border: 2px solid var(--primary-navy) !important;
+            outline: 6px solid var(--primary-navy) !important;
+            outline-offset: -14px !important;
             box-shadow: none !important; 
             padding: 30px !important; 
             margin: 0 !important; 
@@ -230,10 +278,11 @@
             page-break-inside: avoid;
         }
         
-        /* Forces the printer to print the Blue background and Security Pattern */
+        /* Forces the printer to print background colors exactly as coded */
         * { 
             -webkit-print-color-adjust: exact !important; 
             print-color-adjust: exact !important; 
+            color-adjust: exact !important;
         }
     }
 </style>
@@ -329,12 +378,12 @@
             <strong>{{ data.overall_percentage }}%</strong>
         </div>
         <div class="result-box">
-            <span>Final Grade</span>
-            <strong>{{ data.overall_grade }}</strong>
-        </div>
-        <div class="result-box">
             <span>Rank in Class</span>
             <strong>{{ data.rank }}</strong>
+        </div>
+        <div class="result-box highlight">
+            <span>Final Grade</span>
+            <strong>{{ data.overall_grade }}</strong>
         </div>
     </div>
 
