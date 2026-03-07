@@ -3,86 +3,176 @@
 {% block header %}Manage Exams{% endblock %}
 
 {% block content %}
-<div class="card shadow mb-4 border-left-primary">
-    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Exam List & Marks Portals</h6>
-        <a href="{{ url_for('create_exam') }}" class="btn btn-sm btn-primary shadow-sm">
-            <i class="fas fa-plus fa-sm text-white-50"></i> Create New Exam
+<style>
+    /* Premium UI Custom Styles */
+    .premium-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+    .premium-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1.5rem;
+    }
+    .premium-table th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #edf2f7;
+        padding: 1rem;
+    }
+    .premium-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: #495057;
+        border-bottom: 1px solid #edf2f7;
+    }
+    .premium-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .premium-table tbody tr:hover {
+        background-color: #fcfcfc;
+    }
+    .status-badge {
+        font-weight: 600;
+        padding: 0.5em 0.85em;
+        border-radius: 50rem;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .badge-soft-success {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    .badge-soft-danger {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    .action-btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.4rem 0.75rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+    }
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+    .empty-state-icon {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="card premium-card mb-4">
+    <div class="card-header premium-header d-flex flex-row align-items-center justify-content-between">
+        <h5 class="m-0 fw-bold text-dark">Exam List & Marks Portals</h5>
+        <a href="{{ url_for('create_exam') }}" class="btn btn-primary action-btn shadow-sm">
+            <i class="fas fa-plus fa-sm"></i> Create New Exam
         </a>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-dark">
+            <table class="table premium-table mb-0">
+                <thead>
                     <tr>
                         <th>Exam Name</th>
                         <th>Class</th>
                         <th>Term</th>
                         <th>Dates</th>
-                        <th>Marks Portal Status</th>
-                        <th>Actions</th>
+                        <th>Marks Portal</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for exam in exams %}
                     <tr>
-                        <td class="font-weight-bold">{{ exam.name }}</td>
-                        <td>{{ exam.class_.name }} ({{ exam.class_.code }})</td>
+                        <td class="fw-bold text-dark">{{ exam.name }}</td>
+                        <td>
+                            <span class="bg-light rounded px-2 py-1 text-secondary fw-semibold border">
+                                {{ exam.class_.name }} ({{ exam.class_.code }})
+                            </span>
+                        </td>
                         <td>{{ exam.term or '—' }}</td>
                         <td>
                             {% if exam.start_date %}
-                                {{ exam.start_date.strftime('%d %b %Y') }} - {{ exam.end_date.strftime('%d %b %Y') }}
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="far fa-calendar-alt text-muted"></i>
+                                    <span class="small">{{ exam.start_date.strftime('%d %b %Y') }} - {{ exam.end_date.strftime('%d %b %Y') }}</span>
+                                </div>
                             {% else %}
-                                <span class="text-muted">Not Set</span>
+                                <span class="text-muted fst-italic small">Not Set</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if exam.marks_entry_open %}
-                                <span class="badge bg-success" style="font-size: 14px;"><i class="fas fa-unlock"></i> OPEN</span>
+                                <span class="status-badge badge-soft-success">
+                                    <i class="fas fa-unlock fa-sm"></i> OPEN
+                                </span>
                             {% else %}
-                                <span class="badge bg-danger" style="font-size: 14px;"><i class="fas fa-lock"></i> CLOSED</span>
+                                <span class="status-badge badge-soft-danger">
+                                    <i class="fas fa-lock fa-sm"></i> CLOSED
+                                </span>
                             {% endif %}
                         </td>
                         <td>
-                            <form action="{{ url_for('toggle_exam_marks_entry', exam_id=exam.id) }}" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-sm {% if exam.marks_entry_open %}btn-warning{% else %}btn-success{% endif %} shadow-sm">
-                                    {% if exam.marks_entry_open %}
-                                       <i class="fas fa-lock"></i> Close Portal
-                                    {% else %}
-                                       <i class="fas fa-lock-open"></i> Open Portal
-                                    {% endif %}
+                            <div class="d-flex justify-content-end gap-2">
+                                <form action="{{ url_for('toggle_exam_marks_entry', exam_id=exam.id) }}" method="POST" class="m-0">
+                                    <button type="submit" class="btn btn-sm action-btn {% if exam.marks_entry_open %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="Toggle Portal">
+                                        {% if exam.marks_entry_open %}
+                                            <i class="fas fa-lock"></i> Close
+                                        {% else %}
+                                            <i class="fas fa-lock-open"></i> Open
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                
+                                <a href="{{ url_for('enter_marks', exam_id=exam.id) }}" class="btn btn-sm btn-outline-info action-btn" title="Edit Marks">
+                                    <i class="fas fa-edit"></i> Marks
+                                </a>
+                                
+                                <a href="{{ url_for('class_report_card', class_id=exam.class_id) }}" class="btn btn-sm btn-outline-secondary action-btn" title="Report Cards">
+                                    <i class="fas fa-file-alt"></i> Reports
+                                </a>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-danger action-btn" data-bs-toggle="modal" data-bs-target="#deleteExamModal{{ exam.id }}" title="Delete Exam">
+                                    <i class="fas fa-trash"></i>
                                 </button>
-                            </form>
-                            
-                            <a href="{{ url_for('enter_marks', exam_id=exam.id) }}" class="btn btn-sm btn-info shadow-sm">
-                               <i class="fas fa-edit"></i> Admin Edit Marks
-                            </a>
-                            
-                            <a href="{{ url_for('class_report_card', class_id=exam.class_id) }}" class="btn btn-sm btn-secondary shadow-sm">
-                               <i class="fas fa-file-alt"></i> Report Cards
-                            </a>
-                            
-                            <!-- Delete button with confirmation modal trigger -->
-                            <button type="button" class="btn btn-sm btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#deleteExamModal{{ exam.id }}">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                            
-                            <!-- Delete confirmation modal -->
+                            </div>
+
                             <div class="modal fade" id="deleteExamModal{{ exam.id }}" tabindex="-1" aria-labelledby="deleteExamModalLabel{{ exam.id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header bg-danger text-white">
-                                            <h5 class="modal-title" id="deleteExamModalLabel{{ exam.id }}">Confirm Delete</h5>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 rounded-4 shadow">
+                                        <div class="modal-header border-bottom-0 pb-0">
+                                            <h5 class="modal-title fw-bold text-danger" id="deleteExamModalLabel{{ exam.id }}">
+                                                <i class="fas fa-exclamation-circle me-2"></i>Confirm Deletion
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body">
-                                            <p>Are you sure you want to delete the exam <strong>"{{ exam.name }}"</strong> for class <strong>{{ exam.class_.name }}</strong>?</p>
-                                            <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> This will permanently delete all marks entered for this exam. This action cannot be undone.</p>
+                                        <div class="modal-body pt-4">
+                                            <p class="mb-1">Are you sure you want to delete the exam <strong>"{{ exam.name }}"</strong> for class <strong>{{ exam.class_.name }}</strong>?</p>
+                                            <p class="text-danger small bg-danger bg-opacity-10 p-3 rounded-3 mt-3 mb-0">
+                                                <i class="fas fa-exclamation-triangle me-1"></i> This will permanently delete all marks entered for this exam. This action cannot be undone.
+                                            </p>
                                         </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <div class="modal-footer border-top-0 pt-0">
+                                            <button type="button" class="btn btn-light rounded-3 fw-medium px-4" data-bs-dismiss="modal">Cancel</button>
                                             <form action="{{ url_for('delete_exam', exam_id=exam.id) }}" method="POST">
-                                                <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                                                <button type="submit" class="btn btn-danger rounded-3 fw-medium px-4">Delete Permanently</button>
                                             </form>
                                         </div>
                                     </div>
@@ -92,7 +182,14 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">No exams created for this session yet.</td>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-folder-open empty-state-icon"></i>
+                            <h6 class="text-muted fw-bold mb-1">No exams found</h6>
+                            <p class="text-muted small mb-3">You haven't created any exams for this session yet.</p>
+                            <a href="{{ url_for('create_exam') }}" class="btn btn-sm btn-primary action-btn shadow-sm">
+                                <i class="fas fa-plus fa-sm"></i> Create Your First Exam
+                            </a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
