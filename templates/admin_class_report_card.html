@@ -4,97 +4,214 @@
 
 {% block content %}
 <style>
-    /* Professional Report Card CSS */
-    .print-controls { margin-bottom: 20px; text-align: right; }
+    /* Premium Professional Report Card CSS */
+    .print-controls { 
+        margin-bottom: 30px; 
+        text-align: right; 
+    }
     
     .report-card-container {
-        background: #fff;
+        background-color: #fafbfc; /* Very light, premium stationery background */
         width: 100%;
-        max-width: 900px;
-        margin: 0 auto 40px auto;
-        padding: 40px;
-        border: 2px solid #2c3e50;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        max-width: 950px;
+        margin: 0 auto 50px auto;
+        padding: 50px 60px;
+        border: 1px solid #e2e8f0;
+        border-top: 8px solid #1a365d; /* Official academic top accent */
+        border-radius: 12px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.08);
         page-break-after: always;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #334155;
     }
 
     .rc-header {
         text-align: center;
-        border-bottom: 3px double #2c3e50;
-        padding-bottom: 20px;
-        margin-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 25px;
+        margin-bottom: 30px;
     }
     
-    .rc-header h1 { margin: 0; font-size: 28px; color: #2c3e50; font-weight: 700; text-transform: uppercase; }
-    .rc-header h3 { margin: 5px 0 0 0; font-size: 18px; color: #555; letter-spacing: 2px; }
-    .rc-header .academic-session { font-weight: bold; color: #7f8c8d; margin-top: 5px; }
+    .rc-header h1 { 
+        margin: 0 0 8px 0; 
+        font-size: 32px; 
+        color: #1a365d; 
+        font-weight: 700; 
+        font-family: 'Georgia', serif; /* Serif font for a traditional, prestigious feel */
+        text-transform: uppercase; 
+        letter-spacing: 1px;
+    }
+    
+    .rc-header h3 { 
+        margin: 0; 
+        font-size: 14px; 
+        color: #64748b; 
+        font-weight: 600;
+        letter-spacing: 3px; 
+        text-transform: uppercase;
+    }
+    
+    .rc-header .academic-session { 
+        display: inline-block;
+        margin-top: 15px;
+        padding: 6px 16px;
+        background-color: #f1f5f9;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600; 
+        color: #475569; 
+    }
 
     .rc-student-info {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 30px;
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 6px;
-        border: 1px solid #e9ecef;
+        gap: 20px;
+        margin-bottom: 40px;
+        background: #ffffff;
+        padding: 25px 30px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
     }
 
-    .info-group { display: flex; font-size: 15px; }
-    .info-group strong { width: 140px; color: #34495e; }
-    .info-group span { color: #2c3e50; font-weight: 600; border-bottom: 1px dotted #bdc3c7; flex-grow: 1; }
+    .info-group { 
+        display: flex; 
+        font-size: 14px; 
+        align-items: center;
+    }
+    
+    .info-group strong { 
+        width: 150px; 
+        color: #64748b; 
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-group span { 
+        color: #0f172a; 
+        font-weight: 600; 
+        font-size: 15px;
+        border-bottom: 1px dashed #cbd5e1; 
+        flex-grow: 1; 
+        padding-bottom: 4px;
+    }
 
-    .rc-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .rc-table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-bottom: 40px; 
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+    
     .rc-table th, .rc-table td {
-        border: 1px solid #bdc3c7;
-        padding: 12px;
+        padding: 16px;
         text-align: center;
         font-size: 14px;
+        border-bottom: 1px solid #e2e8f0;
     }
-    .rc-table th { background-color: #2c3e50; color: #ffffff; text-transform: uppercase; font-weight: 600; }
-    .rc-table td.subject-name { text-align: left; font-weight: bold; color: #2c3e50; }
+    
+    .rc-table th { 
+        background-color: #f8fafc; 
+        color: #475569; 
+        text-transform: uppercase; 
+        font-weight: 600; 
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #cbd5e1;
+    }
+    
+    .rc-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .rc-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    
+    .rc-table td.subject-name { 
+        text-align: left; 
+        font-weight: 600; 
+        color: #1a365d; 
+    }
 
     .rc-summary {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
         margin-top: 20px;
-        padding-top: 20px;
-        border-top: 2px solid #2c3e50;
     }
-    .summary-box { text-align: center; padding: 15px 30px; background: #ecf0f1; border-radius: 5px; border: 1px solid #bdc3c7; min-width: 150px; }
-    .summary-box span { display: block; font-size: 13px; color: #7f8c8d; text-transform: uppercase; font-weight: bold;}
-    .summary-box strong { display: block; font-size: 22px; color: #2c3e50; margin-top: 5px; }
+    
+    .summary-box { 
+        text-align: center; 
+        padding: 20px; 
+        background: #ffffff; 
+        border-radius: 8px; 
+        border: 1px solid #e2e8f0; 
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+    }
+    
+    .summary-box span { 
+        display: block; 
+        font-size: 12px; 
+        color: #64748b; 
+        text-transform: uppercase; 
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .summary-box strong { 
+        display: block; 
+        font-size: 26px; 
+        color: #1a365d; 
+        font-weight: 700;
+    }
 
     .rc-signatures {
         display: flex;
         justify-content: space-between;
-        margin-top: 70px;
+        margin-top: 80px;
         padding: 0 20px;
     }
+    
     .sig-line {
-        width: 200px;
-        border-top: 1px solid #2c3e50;
+        width: 220px;
+        border-top: 1px solid #94a3b8;
         text-align: center;
-        padding-top: 5px;
-        font-weight: bold;
-        color: #2c3e50;
+        padding-top: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
     }
 
     @media print {
         body { background: #fff; margin: 0; padding: 0; }
         .print-controls, .navbar, .sidebar, footer { display: none !important; }
-        .report-card-container { border: none; box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
+        .report-card-container { 
+            border: none; 
+            border-top: 8px solid #1a365d; /* Keep top accent for print */
+            box-shadow: none; 
+            padding: 20px 0; 
+            margin: 0; 
+            width: 100%; 
+            max-width: 100%; 
+        }
         /* Forces background colors to print */
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
 </style>
 
 <div class="print-controls">
-    <a href="{{ url_for('manage_classes') }}" class="btn btn-secondary mr-2"><i class="fas fa-arrow-left"></i> Back</a>
-    <button onclick="window.print()" class="btn btn-primary btn-lg shadow-sm">
-        <i class="fas fa-print"></i> Print All Report Cards
+    <a href="{{ url_for('manage_classes') }}" class="btn btn-light border mr-2 fw-medium">
+        <i class="fas fa-arrow-left text-muted"></i> Back
+    </a>
+    <button onclick="window.print()" class="btn btn-primary btn-lg shadow-sm fw-medium">
+        <i class="fas fa-print me-2"></i> Print All Report Cards
     </button>
 </div>
 
@@ -103,33 +220,33 @@
     
     <div class="rc-header">
         <h1>{{ context.school.name|default('School Name') }}</h1>
-        <h3>OFFICIAL STUDENT REPORT CARD</h3>
+        <h3>Official Student Report Card</h3>
         <div class="academic-session">Academic Session: {{ context.current_session.name }}</div>
     </div>
 
     <div class="rc-student-info">
         <div class="info-group">
-            <strong>Student Name:</strong> 
+            <strong>Student Name</strong> 
             <span>{{ data.student.first_name }} {{ data.student.last_name }}</span>
         </div>
         <div class="info-group">
-            <strong>Class & Section:</strong> 
+            <strong>Class & Section</strong> 
             <span>{{ class_obj.name }} ({{ class_obj.code }}) {% if data.student.section %}- Sec {{ data.student.section }}{% endif %}</span>
         </div>
         <div class="info-group">
-            <strong>Father's Name:</strong> 
+            <strong>Father's Name</strong> 
             <span>{{ data.student.father_name|default('N/A', true) }}</span>
         </div>
         <div class="info-group">
-            <strong>Mother's Name:</strong> 
+            <strong>Mother's Name</strong> 
             <span>{{ data.student.mother_name|default('N/A', true) }}</span>
         </div>
         <div class="info-group">
-            <strong>Unique Student ID:</strong> 
+            <strong>Unique ID</strong> 
             <span>STU-{{ "%04d" | format(data.student.id) }}</span>
         </div>
         <div class="info-group">
-            <strong>Class Roll No:</strong> 
+            <strong>Class Roll No</strong> 
             <span>{{ data.roll_number }}</span>
         </div>
     </div>
@@ -157,7 +274,7 @@
                     {% if row[term_key] %}
                         <td>{{ row[term_key].obtained }}</td>
                     {% else %}
-                        <td>-</td>
+                        <td class="text-muted">-</td>
                     {% endif %}
                 {% endfor %}
 
@@ -168,7 +285,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="{{ terms|length + 5 }}" style="padding: 30px; font-style: italic; color: #7f8c8d;">
+                <td colspan="{{ terms|length + 5 }}" style="padding: 40px; text-align: center; font-style: italic; color: #94a3b8;">
                     Marks have not been uploaded for this student yet.
                 </td>
             </tr>
@@ -179,7 +296,7 @@
     <div class="rc-summary">
         <div class="summary-box">
             <span>Overall Score</span>
-            <strong>{{ data.total_obtained }} / {{ data.total_max }}</strong>
+            <strong>{{ data.total_obtained }} <span style="font-size:16px; color:#64748b;">/ {{ data.total_max }}</span></strong>
         </div>
         <div class="summary-box">
             <span>Final Percentage</span>
@@ -196,9 +313,9 @@
     </div>
 
     <div class="rc-signatures">
-        <div class="sig-line">Class Teacher Signature</div>
-        <div class="sig-line">Parent / Guardian Signature</div>
-        <div class="sig-line">Principal Signature</div>
+        <div class="sig-line">Class Teacher</div>
+        <div class="sig-line">Parent / Guardian</div>
+        <div class="sig-line">Principal</div>
     </div>
 
 </div>
