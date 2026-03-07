@@ -188,13 +188,11 @@
     .result-box {
         flex: 1;
         text-align: center;
-        /* Drastically reduced padding to make boxes shorter */
         padding: 10px 8px; 
         border-right: 1px solid var(--primary-navy);
     }
     .result-box:last-child { border-right: none; }
 
-    /* Highlight the Final Grade box */
     .result-box.highlight {
         background-color: var(--accent-gold);
         color: #fff;
@@ -202,12 +200,10 @@
 
     .result-box span {
         display: block;
-        /* Smaller label font */
         font-size: 10px; 
         text-transform: uppercase;
         font-weight: bold;
         color: #555;
-        /* Reduced space between label and number */
         margin-bottom: 4px; 
         letter-spacing: 0.5px;
     }
@@ -216,12 +212,10 @@
 
     .result-box strong {
         display: block;
-        /* Smaller number font */
         font-size: 17px; 
         color: var(--primary-navy);
     }
     
-    /* Slightly larger final grade number, but smaller than before */
     .result-box.highlight strong { 
         color: var(--primary-navy); 
         font-size: 20px; 
@@ -231,7 +225,6 @@
     .rc-signatures {
         display: flex;
         justify-content: space-between;
-        /* Position relative for screen view, absolute for print view */
         margin-top: 50px;
         padding: 0 30px;
     }
@@ -255,14 +248,15 @@
     @media print {
         @page {
             size: A4 portrait;
-            /* 10mm margin fixes the blank first page issue */
-            margin: 10mm; 
+            /* MAGIC TRICK: Setting margin to 0 forces the browser to DELETE the URL, Date, and Page Numbers! */
+            margin: 0 !important; 
         }
 
         body { 
             background: #fff; 
             margin: 0; 
-            padding: 0; 
+            /* We add the safety margin back here so the printer doesn't cut off your borders */
+            padding: 15mm 10mm; 
         }
 
         /* Nuke the web UI */
@@ -281,18 +275,17 @@
         .report-card-container { 
             border: 2px solid var(--primary-navy) !important;
             outline: 6px solid var(--primary-navy) !important;
-            outline-offset: -10px !important; /* Tightened for A4 margin */
+            outline-offset: -10px !important; 
             box-shadow: none !important; 
             
-            /* Give it firm padding */
             padding: 25px 25px 120px 25px !important; 
             margin: 0 !important; 
             width: 100% !important; 
             max-width: 100% !important; 
             
-            /* Strict height lock to guarantee it stays on one page */
-            height: 275mm !important; 
-            max-height: 275mm !important;
+            /* Adjusted height to fit the new body padding perfectly on 1 page */
+            height: 265mm !important; 
+            max-height: 265mm !important;
             overflow: hidden !important;
             
             page-break-after: always !important;
@@ -308,7 +301,7 @@
         /* Lock the signatures to the absolute bottom of the single page */
         .rc-signatures {
             position: absolute !important;
-            bottom: 40px !important;
+            bottom: 30px !important;
             left: 30px !important;
             right: 30px !important;
             margin-top: 0 !important;
