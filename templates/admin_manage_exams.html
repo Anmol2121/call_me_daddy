@@ -61,6 +61,33 @@
                             <a href="{{ url_for('class_report_card', class_id=exam.class_id) }}" class="btn btn-sm btn-secondary shadow-sm">
                                <i class="fas fa-file-alt"></i> Report Cards
                             </a>
+                            
+                            <!-- Delete button with confirmation modal trigger -->
+                            <button type="button" class="btn btn-sm btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#deleteExamModal{{ exam.id }}">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                            
+                            <!-- Delete confirmation modal -->
+                            <div class="modal fade" id="deleteExamModal{{ exam.id }}" tabindex="-1" aria-labelledby="deleteExamModalLabel{{ exam.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title" id="deleteExamModalLabel{{ exam.id }}">Confirm Delete</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to delete the exam <strong>"{{ exam.name }}"</strong> for class <strong>{{ exam.class_.name }}</strong>?</p>
+                                            <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> This will permanently delete all marks entered for this exam. This action cannot be undone.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('delete_exam', exam_id=exam.id) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     {% else %}
