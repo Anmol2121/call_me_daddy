@@ -11,13 +11,13 @@
     }
     
     .report-card-container {
-        background-color: #fafbfc; /* Very light, premium stationery background */
+        background-color: #fafbfc;
         width: 100%;
         max-width: 950px;
         margin: 0 auto 50px auto;
         padding: 50px 60px;
         border: 1px solid #e2e8f0;
-        border-top: 8px solid #1a365d; /* Official academic top accent */
+        border-top: 8px solid #1a365d;
         border-radius: 12px;
         box-shadow: 0 12px 40px rgba(0,0,0,0.08);
         page-break-after: always;
@@ -37,7 +37,7 @@
         font-size: 32px; 
         color: #1a365d; 
         font-weight: 700; 
-        font-family: 'Georgia', serif; /* Serif font for a traditional, prestigious feel */
+        font-family: 'Georgia', serif;
         text-transform: uppercase; 
         letter-spacing: 1px;
     }
@@ -189,20 +189,42 @@
         color: #64748b;
     }
 
+    /* ========== PRINT STYLES ========== */
     @media print {
-        body { background: #fff; margin: 0; padding: 0; }
-        .print-controls, .navbar, .sidebar, footer { display: none !important; }
+        /* Hide all navigation, buttons, and other UI elements */
+        body { 
+            background: #fff; 
+            margin: 0; 
+            padding: 0; 
+        }
+        .print-controls, 
+        .navbar, 
+        .sidebar-desktop, 
+        .sidebar, 
+        footer,
+        .bottom-nav,           /* ← Hides the mobile bottom navigation */
+        .navbar-actions,
+        .page-header,
+        .breadcrumb,
+        .btn,
+        .alert {
+            display: none !important;
+        }
         .report-card-container { 
             border: none; 
-            border-top: 8px solid #1a365d; /* Keep top accent for print */
+            border-top: 8px solid #1a365d;
             box-shadow: none; 
             padding: 20px 0; 
             margin: 0; 
             width: 100%; 
             max-width: 100%; 
+            page-break-after: always;
         }
-        /* Forces background colors to print */
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        /* Ensure background colors print */
+        * { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+        }
     }
 </style>
 
