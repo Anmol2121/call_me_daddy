@@ -31,7 +31,9 @@
         width: 100%;
         max-width: 210mm; /* Standard A4 Width */
         margin: 0 auto 50px auto;
-        padding: 40px;
+        
+        /* Added extra padding at the bottom to make room for absolute signatures */
+        padding: 40px 40px 120px 40px; 
         
         /* Prestigious Double Navy Border */
         border: 2px solid var(--primary-navy);
@@ -116,7 +118,7 @@
 
     .student-details-table th {
         text-align: left;
-        background-color: #E8EEF2; /* Soft Navy Tint */
+        background-color: #E8EEF2; 
         color: var(--primary-navy);
         width: 20%;
         text-transform: uppercase;
@@ -178,7 +180,7 @@
     .result-section {
         display: flex;
         border: 2px solid var(--primary-navy);
-        margin-bottom: 60px;
+        margin-bottom: 30px;
         background-color: #fff;
         box-shadow: 4px 4px 0px rgba(10, 37, 64, 0.1);
     }
@@ -220,13 +222,14 @@
     .rc-signatures {
         display: flex;
         justify-content: space-between;
-        margin-top: 80px;
+        /* Position relative for screen view, absolute for print view */
+        margin-top: 50px;
         padding: 0 30px;
     }
     
     .sig-block {
         text-align: center;
-        width: 200px;
+        width: 180px;
     }
 
     .sig-line {
@@ -243,15 +246,17 @@
     @media print {
         @page {
             size: A4 portrait;
-            margin: 0; 
+            /* 10mm margin fixes the blank first page issue */
+            margin: 10mm; 
         }
 
         body { 
             background: #fff; 
             margin: 0; 
-            padding: 15mm; 
+            padding: 0; 
         }
 
+        /* Nuke the web UI */
         nav, header:not(.rc-header), footer, aside, .sidebar, 
         .print-controls, .fixed-bottom, .bottom-nav, .btn, .alert { 
             display: none !important; 
@@ -267,17 +272,39 @@
         .report-card-container { 
             border: 2px solid var(--primary-navy) !important;
             outline: 6px solid var(--primary-navy) !important;
-            outline-offset: -14px !important;
+            outline-offset: -10px !important; /* Tightened for A4 margin */
             box-shadow: none !important; 
-            padding: 30px !important; 
+            
+            /* Give it firm padding */
+            padding: 25px 25px 120px 25px !important; 
             margin: 0 !important; 
             width: 100% !important; 
             max-width: 100% !important; 
-            min-height: 260mm !important;
-            page-break-after: always;
-            page-break-inside: avoid;
+            
+            /* Strict height lock to guarantee it stays on one page */
+            height: 275mm !important; 
+            max-height: 275mm !important;
+            overflow: hidden !important;
+            
+            page-break-after: always !important;
+            page-break-inside: avoid !important;
+            position: relative !important;
+        }
+
+        /* Prevents a blank piece of paper at the very end of the print job */
+        .report-card-container:last-of-type {
+            page-break-after: auto !important;
         }
         
+        /* Lock the signatures to the absolute bottom of the single page */
+        .rc-signatures {
+            position: absolute !important;
+            bottom: 40px !important;
+            left: 30px !important;
+            right: 30px !important;
+            margin-top: 0 !important;
+        }
+
         /* Forces the printer to print background colors exactly as coded */
         * { 
             -webkit-print-color-adjust: exact !important; 
