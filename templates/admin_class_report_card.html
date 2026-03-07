@@ -4,15 +4,12 @@
 
 {% block content %}
 <style>
-    /* =========================================================
-       PRESTIGIOUS INSTITUTIONAL TRANSCRIPT STYLES
-       ========================================================= */
     :root {
         --primary-navy: #0A2540;     /* Deep Royal Navy */
         --accent-crimson: #8B1A1A;   /* Official Crimson Red */
         --accent-gold: #C5A059;      /* Antique Gold */
-        --table-row-alt: #F3F7F9;    /* Faint Ice Blue for rows */
-        --bg-parchment: #FCFBF9;     /* Very subtle warm white paper */
+        --table-row-alt: #F3F7F9;    /* Faint Ice Blue */
+        --bg-parchment: #FCFBF9;     /* Subtle warm paper */
     }
 
     .print-controls { 
@@ -22,304 +19,148 @@
     
     .report-card-container {
         background-color: var(--bg-parchment);
-        
-        /* Subtle Guilloche Security Background */
         background-image: 
-            repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(10, 37, 64, 0.02) 2px, rgba(10, 37, 64, 0.02) 4px),
-            repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(10, 37, 64, 0.02) 2px, rgba(10, 37, 64, 0.02) 4px);
+            repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(10, 37, 64, 0.01) 2px, rgba(10, 37, 64, 0.01) 4px),
+            repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(10, 37, 64, 0.01) 2px, rgba(10, 37, 64, 0.01) 4px);
         
         width: 100%;
-        max-width: 210mm; /* Standard A4 Width */
+        max-width: 210mm;
         margin: 0 auto 50px auto;
-        
-        /* Added extra padding at the bottom to make room for absolute signatures */
-        padding: 40px 40px 120px 40px; 
-        
-        /* Prestigious Double Navy Border */
+        padding: 40px; 
         border: 2px solid var(--primary-navy);
         outline: 6px solid var(--primary-navy);
         outline-offset: -14px;
-        
-        font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+        font-family: 'Segoe UI', Arial, sans-serif;
         color: #111;
         position: relative;
-        z-index: 1;
         box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        page-break-after: always;
         box-sizing: border-box;
+        page-break-after: always;
+        min-height: 290mm; /* Ensures consistent height for signatures */
+        display: flex;
+        flex-direction: column;
     }
 
     /* --- HEADER --- */
     .rc-header {
         text-align: center;
         border-bottom: 4px solid var(--primary-navy);
-        padding-bottom: 20px;
-        margin-bottom: 30px; 
-        margin-top: 15px;
+        padding-bottom: 15px;
+        margin-bottom: 25px; 
         position: relative;
     }
     
-    /* Decorative Gold Line under header */
     .rc-header::after {
         content: '';
         position: absolute;
-        bottom: -8px;
-        left: 0;
-        right: 0;
+        bottom: -8px; left: 0; right: 0;
         height: 2px;
         background-color: var(--accent-gold);
     }
 
     .rc-header h1 { 
-        margin: 0 0 10px 0; 
-        font-size: 38px; 
+        margin: 0; 
+        font-size: 32px; 
         color: var(--primary-navy); 
-        font-weight: 800; 
-        font-family: 'Times New Roman', Times, serif; 
+        font-family: 'Times New Roman', serif; 
         text-transform: uppercase; 
-        letter-spacing: 2px;
     }
     
     .rc-header h3 { 
-        margin: 0 0 8px 0; 
+        margin: 5px 0; 
         font-size: 18px; 
         color: var(--accent-crimson); 
-        font-weight: bold;
-        letter-spacing: 4px; 
+        letter-spacing: 3px; 
         text-transform: uppercase;
     }
-    
-    .rc-header .academic-session { 
-        font-size: 14px;
-        font-weight: bold; 
-        color: #444; 
-        background-color: #eee;
-        display: inline-block;
-        padding: 4px 15px;
-        border-radius: 20px;
-        margin-top: 5px;
-    }
 
-    /* --- STUDENT DETAILS --- */
-    .student-details-table {
+    /* --- TABLES --- */
+    .student-details-table, .rc-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         border: 2px solid var(--primary-navy);
-        background-color: #fff;
     }
 
-    .student-details-table th, 
-    .student-details-table td {
-        padding: 10px 12px;
+    .student-details-table th, .student-details-table td,
+    .rc-table th, .rc-table td {
+        padding: 10px;
         border: 1px solid var(--primary-navy);
         font-size: 13px;
     }
 
     .student-details-table th {
+        background-color: #E8EEF2;
         text-align: left;
-        background-color: #E8EEF2; 
-        color: var(--primary-navy);
         width: 20%;
-        text-transform: uppercase;
         font-size: 11px;
-        letter-spacing: 0.5px;
-        font-weight: bold;
+        text-transform: uppercase;
     }
 
-    .student-details-table td {
-        width: 30%;
-        font-weight: bold;
-        text-transform: capitalize;
-        color: #222;
-    }
-
-    /* --- ACADEMIC RECORD TABLE --- */
-    .rc-table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin-bottom: 35px; 
-        border: 2px solid var(--primary-navy);
-        background-color: #fff;
-    }
-    
-    .rc-table th, .rc-table td {
-        padding: 12px 10px;
-        text-align: center;
-        font-size: 13px;
-        border: 1px solid var(--primary-navy);
-    }
-    
     .rc-table th { 
         background-color: var(--primary-navy); 
-        color: #ffffff; 
+        color: white; 
         text-transform: uppercase; 
-        font-weight: bold; 
-        font-size: 12px;
-        letter-spacing: 1px;
-    }
-    
-    /* Zebra Striping for readability */
-    .rc-table tbody tr:nth-child(even) {
-        background-color: var(--table-row-alt);
     }
 
-    .rc-table td.subject-name { 
-        text-align: left; 
-        font-weight: bold; 
-        text-transform: uppercase;
-        color: var(--primary-navy);
-    }
+    .rc-table tr:nth-child(even) { background-color: var(--table-row-alt); }
 
-    .rc-table td strong {
-        color: var(--accent-crimson);
-        font-size: 14px;
-    }
-
-    /* --- RESULT SUMMARY --- */
+    /* --- RESULTS SECTION --- */
     .result-section {
         display: flex;
         border: 2px solid var(--primary-navy);
-        margin-bottom: 30px;
-        background-color: #fff;
-        box-shadow: 4px 4px 0px rgba(10, 37, 64, 0.1);
+        margin-top: auto; /* Pushes result and signatures to bottom */
+        margin-bottom: 40px;
     }
 
     .result-box {
         flex: 1;
         text-align: center;
-        padding: 18px 10px;
+        padding: 15px;
         border-right: 1px solid var(--primary-navy);
     }
     .result-box:last-child { border-right: none; }
+    .result-box.highlight { background-color: var(--accent-gold); color: white; }
+    .result-box span { display: block; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+    .result-box strong { font-size: 20px; }
 
-    /* Highlight the Final Grade box */
-    .result-box.highlight {
-        background-color: var(--accent-gold);
-        color: #fff;
-    }
-
-    .result-box span {
-        display: block;
-        font-size: 11px;
-        text-transform: uppercase;
-        font-weight: bold;
-        color: #555;
-        margin-bottom: 8px;
-        letter-spacing: 1px;
-    }
-
-    .result-box.highlight span { color: #fff; }
-
-    .result-box strong {
-        display: block;
-        font-size: 24px;
-        color: var(--primary-navy);
-    }
-    .result-box.highlight strong { color: var(--primary-navy); font-size: 28px; }
-
-    /* --- SIGNATURES --- */
+    /* --- SIGNATURE FIX --- */
     .rc-signatures {
         display: flex;
         justify-content: space-between;
-        /* Position relative for screen view, absolute for print view */
-        margin-top: 50px;
-        padding: 0 30px;
+        align-items: flex-end;
+        padding: 0 10px;
+        margin-bottom: 20px;
     }
     
     .sig-block {
         text-align: center;
-        width: 180px;
+        width: 28%; /* Prevents horizontal overlap */
     }
 
     .sig-line {
-        border-top: 1px solid var(--primary-navy);
+        border-top: 1.5px solid var(--primary-navy);
         padding-top: 8px;
         font-weight: bold;
-        font-size: 12px;
-        color: var(--primary-navy);
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        color: var(--primary-navy);
     }
 
-    /* ========== RIGOROUS PRINT STYLES ========== */
     @media print {
-        @page {
-            size: A4 portrait;
-            /* 10mm margin fixes the blank first page issue */
-            margin: 10mm; 
-        }
-
-        body { 
-            background: #fff; 
-            margin: 0; 
-            padding: 0; 
-        }
-
-        /* Nuke the web UI */
-        nav, header:not(.rc-header), footer, aside, .sidebar, 
-        .print-controls, .fixed-bottom, .bottom-nav, .btn, .alert { 
-            display: none !important; 
-        }
-
-        #content, .content-wrapper, main, .container, .container-fluid {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-
+        @page { size: A4; margin: 10mm; }
+        .print-controls { display: none; }
         .report-card-container { 
-            border: 2px solid var(--primary-navy) !important;
-            outline: 6px solid var(--primary-navy) !important;
-            outline-offset: -10px !important; /* Tightened for A4 margin */
-            box-shadow: none !important; 
-            
-            /* Give it firm padding */
-            padding: 25px 25px 120px 25px !important; 
-            margin: 0 !important; 
-            width: 100% !important; 
-            max-width: 100% !important; 
-            
-            /* Strict height lock to guarantee it stays on one page */
-            height: 275mm !important; 
-            max-height: 275mm !important;
-            overflow: hidden !important;
-            
-            page-break-after: always !important;
-            page-break-inside: avoid !important;
-            position: relative !important;
-        }
-
-        /* Prevents a blank piece of paper at the very end of the print job */
-        .report-card-container:last-of-type {
-            page-break-after: auto !important;
-        }
-        
-        /* Lock the signatures to the absolute bottom of the single page */
-        .rc-signatures {
-            position: absolute !important;
-            bottom: 40px !important;
-            left: 30px !important;
-            right: 30px !important;
-            margin-top: 0 !important;
-        }
-
-        /* Forces the printer to print background colors exactly as coded */
-        * { 
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important; 
-            color-adjust: exact !important;
+            box-shadow: none; 
+            outline-offset: -10px;
+            height: 277mm; 
         }
     }
 </style>
 
 <div class="print-controls">
-    <a href="{{ url_for('manage_classes') }}" class="btn btn-light border mr-2 fw-medium">
-        <i class="fas fa-arrow-left text-muted"></i> Back
-    </a>
-    <button onclick="window.print()" class="btn btn-dark btn-lg shadow-sm fw-medium">
-        <i class="fas fa-print me-2"></i> Print Official Marksheets
+    <button onclick="window.print()" class="btn btn-dark shadow-sm">
+        <i class="fas fa-print me-2"></i> Print Official Report Cards
     </button>
 </div>
 
@@ -327,29 +168,29 @@
 <div class="report-card-container">
     
     <div class="rc-header">
-        <h1>{{ context.school.name|default('School Name') }}</h1>
-        <h3>Statement of Marks</h3>
-        <div class="academic-session">ACADEMIC SESSION: {{ context.current_session.name }}</div>
+        <h1>{{ context.school.name|default('MIT') }}</h1> [cite: 7, 9]
+        <h3>Statement of Marks</h3> [cite: 8]
+        <div class="academic-session">ACADEMIC SESSION: {{ context.current_session.name|default('2026-2027') }}</div> [cite: 9]
     </div>
 
     <table class="student-details-table">
         <tr>
             <th>Student's Name</th>
-            <td>{{ data.student.first_name }} {{ data.student.last_name }}</td>
+            <td>{{ data.student.first_name }} {{ data.student.last_name }}</td> [cite: 10]
             <th>Roll Number</th>
-            <td>{{ data.roll_number }}</td>
+            <td>{{ data.roll_number }}</td> [cite: 10]
         </tr>
         <tr>
             <th>Class & Section</th>
-            <td>{{ class_obj.name }} ({{ class_obj.code }}) {% if data.student.section %} - {{ data.student.section }}{% endif %}</td>
+            <td>{{ class_obj.name }} ({{ class_obj.code }})</td> [cite: 10]
             <th>Registration No.</th>
-            <td>STU-{{ "%04d" | format(data.student.id) }}</td>
+            <td>STU-{{ "%04d" | format(data.student.id) }}</td> [cite: 10]
         </tr>
         <tr>
             <th>Father's Name</th>
-            <td>{{ data.student.father_name|default('N/A', true) }}</td>
+            <td>{{ data.student.father_name }}</td> [cite: 10]
             <th>Mother's Name</th>
-            <td>{{ data.student.mother_name|default('N/A', true) }}</td>
+            <td>{{ data.student.mother_name }}</td> [cite: 10]
         </tr>
     </table>
 
@@ -357,11 +198,8 @@
         <thead>
             <tr>
                 <th style="text-align: left;">Scholastic Subjects</th>
-                {% for term in terms %}
-                    <th>{{ term }}</th>
-                {% endfor %}
-                <th>Marks Obtained</th>
-                <th>Maximum Marks</th>
+                <th>Obtained</th>
+                <th>Maximum</th>
                 <th>Percentage</th>
                 <th>Grade</th>
             </tr>
@@ -369,27 +207,11 @@
         <tbody>
             {% for row in data.subjects %}
             <tr>
-                <td class="subject-name">{{ row.subject.name }}</td>
-                
-                {% for term in terms %}
-                    {% set term_key = term|lower|replace(' ', '') %}
-                    {% if row[term_key] %}
-                        <td>{{ row[term_key].obtained }}</td>
-                    {% else %}
-                        <td>-</td>
-                    {% endif %}
-                {% endfor %}
-
-                <td><strong>{{ row.total_obtained }}</strong></td>
-                <td>{{ row.total_max }}</td>
-                <td>{{ row.percentage }}%</td>
-                <td><strong>{{ row.grade }}</strong></td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="{{ terms|length + 5 }}" style="padding: 40px; text-align: center; color: #555;">
-                    <em>Academic records are pending for this student.</em>
-                </td>
+                <td style="text-align: left; font-weight: bold;">{{ row.subject.name }}</td> 
+                <td>{{ row.total_obtained if row.total_obtained > 0 else '—' }}</td> 
+                <td>{{ row.total_max if row.total_max > 0 else '—' }}</td> 
+                <td>{{ row.percentage if row.total_max > 0 else '—' }}%</td> 
+                <td>{{ row.grade if row.grade != 'N/A' else '—' }}</td> 
             </tr>
             {% endfor %}
         </tbody>
@@ -398,35 +220,34 @@
     <div class="result-section">
         <div class="result-box">
             <span>Grand Total</span>
-            <strong>{{ data.total_obtained }} / {{ data.total_max }}</strong>
+            <strong>{{ data.total_obtained }} / {{ data.total_max }}</strong> [cite: 12, 16]
         </div>
         <div class="result-box">
             <span>Percentage</span>
-            <strong>{{ data.overall_percentage }}%</strong>
+            <strong>{{ data.overall_percentage }}%</strong> [cite: 13, 17]
         </div>
         <div class="result-box">
             <span>Rank in Class</span>
-            <strong>{{ data.rank }}</strong>
+            <strong>{{ data.rank }}</strong> [cite: 14, 18]
         </div>
         <div class="result-box highlight">
             <span>Final Grade</span>
-            <strong>{{ data.overall_grade }}</strong>
+            <strong>{{ data.overall_grade|default('N/A') }}</strong> [cite: 15, 19]
         </div>
     </div>
 
     <div class="rc-signatures">
         <div class="sig-block">
-            <div class="sig-line">Class Teacher</div>
+            <div class="sig-line">Class Teacher</div> [cite: 20]
         </div>
         <div class="sig-block">
-            <div class="sig-line">Parent / Guardian</div>
+            <div class="sig-line">Parent / Guardian</div> [cite: 22]
         </div>
         <div class="sig-block">
-            <div class="sig-line">Principal</div>
+            <div class="sig-line">Principal</div> [cite: 23]
         </div>
     </div>
 
 </div>
 {% endfor %}
-
 {% endblock %}
