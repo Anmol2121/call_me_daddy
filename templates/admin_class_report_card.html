@@ -44,7 +44,6 @@
         color: #111;
         position: relative;
         z-index: 1;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         page-break-after: always;
         box-sizing: border-box;
     }
@@ -53,9 +52,9 @@
     .rc-header {
         text-align: center;
         border-bottom: 4px solid var(--primary-navy);
-        padding-bottom: 20px;
-        margin-bottom: 30px; 
-        margin-top: 15px;
+        padding-bottom: 15px;
+        margin-bottom: 25px; 
+        margin-top: 10px;
         position: relative;
     }
     
@@ -71,8 +70,8 @@
     }
 
     .rc-header h1 { 
-        margin: 0 0 10px 0; 
-        font-size: 38px; 
+        margin: 0 0 8px 0; 
+        font-size: 34px; 
         color: var(--primary-navy); 
         font-weight: 800; 
         font-family: 'Times New Roman', Times, serif; 
@@ -81,8 +80,8 @@
     }
     
     .rc-header h3 { 
-        margin: 0 0 8px 0; 
-        font-size: 18px; 
+        margin: 0 0 6px 0; 
+        font-size: 16px; 
         color: var(--accent-crimson); 
         font-weight: bold;
         letter-spacing: 4px; 
@@ -90,7 +89,7 @@
     }
     
     .rc-header .academic-session { 
-        font-size: 14px;
+        font-size: 13px;
         font-weight: bold; 
         color: #444; 
         background-color: #eee;
@@ -104,16 +103,16 @@
     .student-details-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         border: 2px solid var(--primary-navy);
         background-color: #fff;
     }
 
     .student-details-table th, 
     .student-details-table td {
-        padding: 10px 12px;
+        padding: 8px 10px;
         border: 1px solid var(--primary-navy);
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .student-details-table th {
@@ -138,15 +137,15 @@
     .rc-table { 
         width: 100%; 
         border-collapse: collapse; 
-        margin-bottom: 35px; 
+        margin-bottom: 25px; 
         border: 2px solid var(--primary-navy);
         background-color: #fff;
     }
     
     .rc-table th, .rc-table td {
-        padding: 12px 10px;
+        padding: 10px 8px;
         text-align: center;
-        font-size: 13px;
+        font-size: 12px;
         border: 1px solid var(--primary-navy);
     }
     
@@ -155,7 +154,7 @@
         color: #ffffff; 
         text-transform: uppercase; 
         font-weight: bold; 
-        font-size: 12px;
+        font-size: 11px;
         letter-spacing: 1px;
     }
     
@@ -173,23 +172,25 @@
 
     .rc-table td strong {
         color: var(--accent-crimson);
-        font-size: 14px;
+        font-size: 13px;
     }
 
-    /* --- RESULT SUMMARY (MADE SMALLER AND MORE COMPACT) --- */
+    /* --- ULTRA-COMPACT RESULT RIBBON --- */
     .result-section {
         display: flex;
         border: 2px solid var(--primary-navy);
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         background-color: #fff;
-        box-shadow: 3px 3px 0px rgba(10, 37, 64, 0.1);
     }
 
     .result-box {
         flex: 1;
         text-align: center;
-        padding: 10px 8px; 
+        padding: 6px 5px; /* Extremely tight padding */
         border-right: 1px solid var(--primary-navy);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     .result-box:last-child { border-right: none; }
 
@@ -200,32 +201,33 @@
 
     .result-box span {
         display: block;
-        font-size: 10px; 
+        font-size: 9px; /* Tiny, official label size */
         text-transform: uppercase;
-        font-weight: bold;
-        color: #555;
-        margin-bottom: 4px; 
+        font-weight: 800;
+        color: #666;
+        margin-bottom: 2px; /* Pulled text very close together */
         letter-spacing: 0.5px;
     }
 
-    .result-box.highlight span { color: #fff; }
+    .result-box.highlight span { color: rgba(255,255,255,0.9); }
 
     .result-box strong {
         display: block;
-        font-size: 17px; 
+        font-size: 15px; /* Sleeker numbers */
         color: var(--primary-navy);
+        font-weight: 800;
     }
     
     .result-box.highlight strong { 
         color: var(--primary-navy); 
-        font-size: 20px; 
+        font-size: 16px; 
     }
 
     /* --- SIGNATURES --- */
     .rc-signatures {
         display: flex;
         justify-content: space-between;
-        margin-top: 50px;
+        margin-top: 40px;
         padding: 0 30px;
     }
     
@@ -236,9 +238,9 @@
 
     .sig-line {
         border-top: 1px solid var(--primary-navy);
-        padding-top: 8px;
+        padding-top: 6px;
         font-weight: bold;
-        font-size: 12px;
+        font-size: 11px;
         color: var(--primary-navy);
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -248,18 +250,17 @@
     @media print {
         @page {
             size: A4 portrait;
-            /* MAGIC TRICK: Setting margin to 0 forces the browser to DELETE the URL, Date, and Page Numbers! */
+            /* ZERO margin forces the browser to hide URL/Date automatically! */
             margin: 0 !important; 
         }
 
         body { 
             background: #fff; 
             margin: 0; 
-            /* We add the safety margin back here so the printer doesn't cut off your borders */
+            /* Body padding replaces page margin to keep borders safe */
             padding: 15mm 10mm; 
         }
 
-        /* Nuke the web UI */
         nav, header:not(.rc-header), footer, aside, .sidebar, 
         .print-controls, .fixed-bottom, .bottom-nav, .btn, .alert { 
             display: none !important; 
@@ -278,12 +279,12 @@
             outline-offset: -10px !important; 
             box-shadow: none !important; 
             
-            padding: 25px 25px 120px 25px !important; 
+            padding: 25px 25px 100px 25px !important; 
             margin: 0 !important; 
             width: 100% !important; 
             max-width: 100% !important; 
             
-            /* Adjusted height to fit the new body padding perfectly on 1 page */
+            /* Fits perfectly on 1 page */
             height: 265mm !important; 
             max-height: 265mm !important;
             overflow: hidden !important;
@@ -293,12 +294,10 @@
             position: relative !important;
         }
 
-        /* Prevents a blank piece of paper at the very end of the print job */
         .report-card-container:last-of-type {
             page-break-after: auto !important;
         }
         
-        /* Lock the signatures to the absolute bottom of the single page */
         .rc-signatures {
             position: absolute !important;
             bottom: 30px !important;
@@ -307,7 +306,6 @@
             margin-top: 0 !important;
         }
 
-        /* Forces the printer to print background colors exactly as coded */
         * { 
             -webkit-print-color-adjust: exact !important; 
             print-color-adjust: exact !important; 
