@@ -176,19 +176,20 @@
         font-size: 14px;
     }
 
-    /* --- RESULT SUMMARY --- */
+    /* --- RESULT SUMMARY (MADE SMALLER AND MORE COMPACT) --- */
     .result-section {
         display: flex;
         border: 2px solid var(--primary-navy);
         margin-bottom: 30px;
         background-color: #fff;
-        box-shadow: 4px 4px 0px rgba(10, 37, 64, 0.1);
+        box-shadow: 3px 3px 0px rgba(10, 37, 64, 0.1);
     }
 
     .result-box {
         flex: 1;
         text-align: center;
-        padding: 18px 10px;
+        /* Drastically reduced padding to make boxes shorter */
+        padding: 10px 8px; 
         border-right: 1px solid var(--primary-navy);
     }
     .result-box:last-child { border-right: none; }
@@ -201,22 +202,30 @@
 
     .result-box span {
         display: block;
-        font-size: 11px;
+        /* Smaller label font */
+        font-size: 10px; 
         text-transform: uppercase;
         font-weight: bold;
         color: #555;
-        margin-bottom: 8px;
-        letter-spacing: 1px;
+        /* Reduced space between label and number */
+        margin-bottom: 4px; 
+        letter-spacing: 0.5px;
     }
 
     .result-box.highlight span { color: #fff; }
 
     .result-box strong {
         display: block;
-        font-size: 24px;
+        /* Smaller number font */
+        font-size: 17px; 
         color: var(--primary-navy);
     }
-    .result-box.highlight strong { color: var(--primary-navy); font-size: 28px; }
+    
+    /* Slightly larger final grade number, but smaller than before */
+    .result-box.highlight strong { 
+        color: var(--primary-navy); 
+        font-size: 20px; 
+    }
 
     /* --- SIGNATURES --- */
     .rc-signatures {
