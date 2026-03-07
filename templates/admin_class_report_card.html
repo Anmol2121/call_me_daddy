@@ -13,14 +13,14 @@
     }
     
     .report-card-container {
-        /* Premium Ivory / Official Document Paper Color */
-        background-color: #FAF9F6; 
+        /* Secure Academic Transcript Blue - Official Board Paper Color */
+        background-color: #F4F8FB; 
         
-        /* Banknote / Security Paper Pattern */
+        /* Advanced Anti-Copy Security Micro-Mesh Pattern */
         background-image: 
-            radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.02) 0%, transparent 70%),
-            repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.015) 4px, rgba(0,0,0,0.015) 8px),
-            repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(0,0,0,0.015) 4px, rgba(0,0,0,0.015) 8px);
+            radial-gradient(circle at 50% 50%, #ffffff 0%, transparent 85%),
+            repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(21, 67, 96, 0.03) 2px, rgba(21, 67, 96, 0.03) 4px),
+            repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(21, 67, 96, 0.03) 2px, rgba(21, 67, 96, 0.03) 4px);
         
         width: 100%;
         max-width: 210mm; /* Standard A4 Width */
@@ -36,7 +36,7 @@
         color: #111111;
         position: relative;
         z-index: 1;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15); /* Sleeker web shadow */
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
         page-break-after: always;
         box-sizing: border-box;
     }
@@ -46,7 +46,7 @@
         text-align: center;
         border-bottom: 3px double #000;
         padding-bottom: 20px;
-        margin-bottom: 35px; /* Increased slightly to balance removed date */
+        margin-bottom: 35px; 
         margin-top: 15px;
     }
     
@@ -63,7 +63,7 @@
     .rc-header h3 { 
         margin: 0 0 8px 0; 
         font-size: 16px; 
-        color: #333; 
+        color: #2c3e50; 
         font-weight: bold;
         letter-spacing: 5px; 
         text-transform: uppercase;
@@ -81,7 +81,7 @@
         border-collapse: collapse;
         margin-bottom: 30px;
         border: 2px solid #000;
-        background-color: rgba(255, 255, 255, 0.4); /* Slight transparency to let security pattern show */
+        background-color: rgba(255, 255, 255, 0.6); /* Slight white tint to pop text */
     }
 
     .student-details-table th, 
@@ -93,7 +93,7 @@
 
     .student-details-table th {
         text-align: left;
-        background-color: #EFEFE9; /* Matched to Ivory background */
+        background-color: #EAF2F8; /* Icy Blue Header to match security paper */
         width: 20%;
         text-transform: uppercase;
         font-size: 11px;
@@ -113,7 +113,7 @@
         border-collapse: collapse; 
         margin-bottom: 30px; 
         border: 2px solid #000;
-        background-color: rgba(255, 255, 255, 0.4);
+        background-color: rgba(255, 255, 255, 0.6);
     }
     
     .rc-table th, .rc-table td {
@@ -124,7 +124,7 @@
     }
     
     .rc-table th { 
-        background-color: #EFEFE9; /* Matched to Ivory background */
+        background-color: #EAF2F8; /* Icy Blue Header */
         color: #000; 
         text-transform: uppercase; 
         font-weight: bold; 
@@ -143,7 +143,7 @@
         display: flex;
         border: 2px solid #000;
         margin-bottom: 50px;
-        background-color: #EFEFE9; /* Highlights the final result block */
+        background-color: #EAF2F8; /* Icy Blue Highlighting */
     }
 
     .result-box {
@@ -230,7 +230,7 @@
             page-break-inside: avoid;
         }
         
-        /* Forces the printer to print our Ivory background and Security Pattern */
+        /* Forces the printer to print the Blue background and Security Pattern */
         * { 
             -webkit-print-color-adjust: exact !important; 
             print-color-adjust: exact !important; 
