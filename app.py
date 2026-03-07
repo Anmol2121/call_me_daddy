@@ -506,6 +506,28 @@ def teacher_exams():
     
     return render_template('teacher_exams.html', exam_data=exam_data, context=context)
 
+@app.route('/admin/exams/<int:exam_id>/delete', methods=['POST'])
+@role_required(['admin'])
+@school_active_required
+def delete_exam(exam_id):
+    """Delete an exam and all associated marks."""
+    exam = Exam.query.get_or_404(exam_id)
+    
+    # Verify the exam belongs to the current admin's school
+    if exam.class_.school_id != current_user.school_id:
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('manage_exams'))
+    
+    exam_name = exam.name
+    class_name = exam.class_.name
+    
+    # Delete exam (cascade will remove related marks due to cascade='all, delete-orphan')
+    db.session.delete(exam)
+    db.session.commit()
+    
+    flash(f'Exam "{exam_name}" for class {class_name} has been deleted successfully.', 'success')
+    return redirect(url_for('manage_exams'))
+
 
 @app.route('/teacher/exams/<int:exam_id>/subject/<int:subject_id>/marks', methods=['GET', 'POST'])
 @login_required
@@ -7625,6 +7647,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
