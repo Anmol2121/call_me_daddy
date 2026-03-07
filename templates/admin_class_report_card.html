@@ -46,7 +46,7 @@
         text-align: center;
         border-bottom: 3px double #000;
         padding-bottom: 20px;
-        margin-bottom: 25px;
+        margin-bottom: 35px; /* Increased slightly to balance removed date */
         margin-top: 15px;
     }
     
@@ -190,14 +190,6 @@
         text-transform: uppercase;
     }
 
-    .date-stamp {
-        text-align: left;
-        font-size: 12px;
-        font-weight: bold;
-        margin-top: -30px;
-        margin-bottom: 30px;
-    }
-
     /* ========== RIGOROUS PRINT STYLES ========== */
     @media print {
         @page {
@@ -262,10 +254,6 @@
         <h1>{{ context.school.name|default('School Name') }}</h1>
         <h3>Statement of Marks</h3>
         <div class="academic-session">ACADEMIC SESSION: {{ context.current_session.name }}</div>
-    </div>
-
-    <div class="date-stamp">
-        Issue Date: {{ context.current_date|default('____/____/20__') }}
     </div>
 
     <table class="student-details-table">
