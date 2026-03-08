@@ -675,7 +675,6 @@ def create_subject():
     context = get_school_context()
     view_session = context.get('view_session') or context['current_session']
     
-    # 🛡️ Safety check – ensure a session exists
     if not view_session:
         flash('No active session found. Please create a session first.', 'warning')
         return redirect(url_for('create_session'))
@@ -688,26 +687,34 @@ def create_subject():
     form.class_id.choices = [(c.id, f"{c.name} ({c.code})") for c in classes]
     
     if form.validate_on_submit():
-        # Check for duplicate subject name (case‑insensitive) for the same class & session
+        # Check for duplicate subject name
         existing = Subject.query.filter(
             Subject.class_id == form.class_id.data,
             Subject.session_id == view_session.id,
-            func.lower(Subject.name) == func.lower(form.name.data)   # now works
+            func.lower(Subject.name) == func.lower(form.name.data)
         ).first()
         
         if existing:
             flash(f'A subject with the name "{form.name.data}" already exists for this class.', 'danger')
         else:
-            subject = Subject(
-                name=form.name.data,
-                code=form.code.data,
-                class_id=form.class_id.data,
-                session_id=view_session.id
-            )
-            db.session.add(subject)
-            db.session.commit()
-            flash(f'Subject "{form.name.data}" created.', 'success')
-            return redirect(url_for('manage_subjects'))
+            try:
+                subject = Subject(
+                    name=form.name.data,
+                    code=form.code.data,
+                    class_id=form.class_id.data,
+                    session_id=view_session.id
+                )
+                db.session.add(subject)
+                db.session.commit()
+                flash(f'Subject "{form.name.data}" created.', 'success')
+                return redirect(url_for('manage_subjects'))
+            except Exception as e:
+                db.session.rollback()
+                # Log the error (visible in Render logs)
+                app.logger.error(f"Error creating subject: {str(e)}")
+                # Also print to console for immediate visibility
+                print(f"ERROR creating subject: {e}")
+                flash(f'Database error: {str(e)}', 'danger')
     
     return render_template('admin_create_subject.html',
                          form=form,
@@ -7084,41 +7091,45 @@ def school_details(school_id):
 # ==================== INITIALIZATION ====================
 
 def create_tables():
-    """Create database tables if they don't exist and add missing columns."""
+    """Create database tables and add missing columns."""
     with app.app_context():
         try:
-            # First, create all tables (will skip existing ones)
+            # Create all tables (safe if they already exist)
             db.create_all()
             
-            # Now check for missing columns in existing tables using inspector
             from sqlalchemy import inspect, text
             inspector = inspect(db.engine)
             
-            # ---- Check subjects table for default_max_marks ----
-            subjects_columns = [col['name'] for col in inspector.get_columns('subjects')]
-            if 'default_max_marks' not in subjects_columns:
-                print("Adding default_max_marks column to subjects table...")
-                db.session.execute(text(
-                    'ALTER TABLE subjects ADD COLUMN default_max_marks FLOAT DEFAULT 100.0'
-                ))
-                db.session.commit()
-                print("Column added successfully!")
+            # Get list of existing tables
+            tables = inspector.get_table_names()
             
-            # ---- Check exams table for marks_entry_open (if not present) ----
-            # (Added earlier, but just in case)
-            if 'exams' in inspector.get_table_names():
-                exams_columns = [col['name'] for col in inspector.get_columns('exams')]
-                if 'marks_entry_open' not in exams_columns:
-                    print("Adding marks_entry_open column to exams table...")
+            # ---- SUBJECTS TABLE ----
+            if 'subjects' in tables:
+                columns = [col['name'] for col in inspector.get_columns('subjects')]
+                # Add default_max_marks if missing
+                if 'default_max_marks' not in columns:
+                    print("Adding default_max_marks to subjects table...")
+                    db.session.execute(text(
+                        'ALTER TABLE subjects ADD COLUMN default_max_marks FLOAT DEFAULT 100.0'
+                    ))
+                    db.session.commit()
+                    print("Column added.")
+            
+            # ---- EXAMS TABLE ----
+            if 'exams' in tables:
+                columns = [col['name'] for col in inspector.get_columns('exams')]
+                if 'marks_entry_open' not in columns:
+                    print("Adding marks_entry_open to exams table...")
                     db.session.execute(text(
                         'ALTER TABLE exams ADD COLUMN marks_entry_open BOOLEAN DEFAULT FALSE'
                     ))
                     db.session.commit()
-                    print("Column added successfully!")
+                    print("Column added.")
             
-            # You can add similar checks for any other new columns you've added to models
+            # You can add similar checks for any other new columns you've introduced
+            # For example, if you added 'default_max_marks' to another table, add here.
             
-            # Create developer account if it doesn't exist
+            # ---- Developer account ----
             developer = User.query.filter_by(role='developer').first()
             if not developer:
                 developer = User(
@@ -7127,7 +7138,7 @@ def create_tables():
                     role='developer',
                     must_change_password=False
                 )
-                developer.set_password('developer123')  # Change this in production!
+                developer.set_password('developer123')  # Change in production!
                 db.session.add(developer)
                 db.session.commit()
                 print("Developer account created.")
@@ -7699,6 +7710,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
