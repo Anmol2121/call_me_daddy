@@ -7084,23 +7084,39 @@ def school_details(school_id):
 # ==================== INITIALIZATION ====================
 
 def create_tables():
-    """Create database tables if they don't exist"""
+    """Create database tables if they don't exist and add missing columns."""
     with app.app_context():
         try:
-            # First, check if student_id column exists
+            # First, create all tables (will skip existing ones)
+            db.create_all()
+            
+            # Now check for missing columns in existing tables using inspector
             from sqlalchemy import inspect, text
             inspector = inspect(db.engine)
             
-            # Create all tables first
-            db.create_all()
-            
-            # Check if student_id column needs to be added
-            columns = [col['name'] for col in inspector.get_columns('users')]
-            if 'student_id' not in columns:
-                print("Adding student_id column to users table...")
-                # Add the column manually
-                db.engine.execute(text('ALTER TABLE users ADD COLUMN student_id INTEGER REFERENCES students(id)'))
+            # ---- Check subjects table for default_max_marks ----
+            subjects_columns = [col['name'] for col in inspector.get_columns('subjects')]
+            if 'default_max_marks' not in subjects_columns:
+                print("Adding default_max_marks column to subjects table...")
+                db.session.execute(text(
+                    'ALTER TABLE subjects ADD COLUMN default_max_marks FLOAT DEFAULT 100.0'
+                ))
+                db.session.commit()
                 print("Column added successfully!")
+            
+            # ---- Check exams table for marks_entry_open (if not present) ----
+            # (Added earlier, but just in case)
+            if 'exams' in inspector.get_table_names():
+                exams_columns = [col['name'] for col in inspector.get_columns('exams')]
+                if 'marks_entry_open' not in exams_columns:
+                    print("Adding marks_entry_open column to exams table...")
+                    db.session.execute(text(
+                        'ALTER TABLE exams ADD COLUMN marks_entry_open BOOLEAN DEFAULT FALSE'
+                    ))
+                    db.session.commit()
+                    print("Column added successfully!")
+            
+            # You can add similar checks for any other new columns you've added to models
             
             # Create developer account if it doesn't exist
             developer = User.query.filter_by(role='developer').first()
@@ -7114,10 +7130,10 @@ def create_tables():
                 developer.set_password('developer123')  # Change this in production!
                 db.session.add(developer)
                 db.session.commit()
-                print("Developer account created. Email: developer@schoolerp.com, Password: developer123")
+                print("Developer account created.")
                 
         except Exception as e:
-            print(f"Error creating tables: {e}")
+            print(f"Error during table setup: {e}")
             db.session.rollback()
 
 def setup_logging():
@@ -7683,6 +7699,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
