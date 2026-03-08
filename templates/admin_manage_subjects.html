@@ -3,94 +3,113 @@
 {% block header %}Manage Subjects{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Subjects</li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+<li class="breadcrumb-item active text-muted" aria-current="page">Subjects</li>
 {% endblock %}
 
 {% block actions %}
-<a href="{{ url_for('create_subject') }}" class="btn btn-primary">
+<a href="{{ url_for('create_subject') }}" class="btn btn-primary rounded-pill px-3 shadow-sm">
     <i class="fas fa-plus me-1"></i> Create Subject
 </a>
 {% endblock %}
 
 {% block content %}
-<div class="card shadow-sm">
-    <div class="card-header bg-white py-3">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h5 class="mb-0">Subject List</h5>
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom py-3 px-4">
+        <div class="row align-items-center justify-content-between">
+            <div class="col-md-5 col-12 mb-3 mb-md-0">
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-book-open text-primary me-2"></i>Subject List
+                </h5>
             </div>
-            <div class="col-md-6">
-                <form method="GET" class="d-flex">
-                    <select name="class_id" class="form-select form-select-sm me-2" style="width: auto;" onchange="this.form.submit()">
-                        <option value="">All Classes</option>
-                        {% for class in classes %}
-                        <option value="{{ class.id }}" {% if selected_class == class.id %}selected{% endif %}>
-                            {{ class.name }} ({{ class.code }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button></noscript>
+            <div class="col-md-5 col-12 d-flex justify-content-md-end">
+                <form method="GET" class="w-100" style="max-width: 300px;">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted border-end-0">
+                            <i class="fas fa-filter"></i>
+                        </span>
+                        <select name="class_id" class="form-select border-start-0 shadow-none ps-0" onchange="this.form.submit()">
+                            <option value="">All Classes</option>
+                            {% for class in classes %}
+                            <option value="{{ class.id }}" {% if selected_class == class.id %}selected{% endif %}>
+                                {{ class.name }} ({{ class.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <noscript>
+                            <button type="submit" class="btn btn-outline-secondary">Apply</button>
+                        </noscript>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
+
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+                <thead class="bg-light text-uppercase text-secondary small fw-bold">
                     <tr>
-                        <th>Subject Name</th>
-                        <th>Code</th>
-                        <th>Class</th>
-                        <th>Session</th>
-                        <th>Created</th>
-                        <th class="text-end">Actions</th>
+                        <th class="ps-4 py-3">Subject Name</th>
+                        <th class="py-3">Code</th>
+                        <th class="py-3">Class</th>
+                        <th class="py-3">Session</th>
+                        <th class="py-3">Created</th>
+                        <th class="pe-4 py-3 text-end">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="border-top-0">
                     {% for subject in subjects %}
                     <tr>
-                        <td class="fw-semibold">{{ subject.name }}</td>
-                        <td>{{ subject.code or '—' }}</td>
-                        <td>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">
+                        <td class="ps-4 py-3 fw-semibold text-dark">
+                            {{ subject.name }}
+                        </td>
+                        <td class="py-3">
+                            <span class="text-muted">{{ subject.code or '—' }}</span>
+                        </td>
+                        <td class="py-3">
+                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3 py-2 border border-primary-subtle">
+                                <i class="fas fa-chalkboard text-primary me-1"></i> 
                                 {{ subject.class_.name }} ({{ subject.class_.code }})
                             </span>
                         </td>
-                        <td>{{ subject.session.name }}</td>
-                        <td>{{ subject.created_at.strftime('%d %b %Y') }}</td>
-                        <td>
+                        <td class="py-3 text-muted">
+                            {{ subject.session.name }}
+                        </td>
+                        <td class="py-3 text-muted small">
+                            {{ subject.created_at.strftime('%d %b %Y') }}
+                        </td>
+                        <td class="pe-4 py-3 text-end">
                             <div class="d-flex gap-2 justify-content-end">
-                                {# Removed non-existent edit_subject link #}
-                                
-                                <!-- Delete button with modal trigger -->
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteSubjectModal{{ subject.id }}">
-                                    <i class="fas fa-trash"></i> Delete
+                                <button type="button" class="btn btn-sm btn-light text-danger" data-bs-toggle="modal" data-bs-target="#deleteSubjectModal{{ subject.id }}" title="Delete Subject">
+                                    <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
 
-                            <!-- Delete Confirmation Modal -->
-                            <div class="modal fade" id="deleteSubjectModal{{ subject.id }}" tabindex="-1" aria-labelledby="deleteSubjectModalLabel{{ subject.id }}" aria-hidden="true">
+                            <div class="modal fade text-start" id="deleteSubjectModal{{ subject.id }}" tabindex="-1" aria-labelledby="deleteSubjectModalLabel{{ subject.id }}" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title text-danger" id="deleteSubjectModalLabel{{ subject.id }}">
-                                                <i class="fas fa-exclamation-circle me-2"></i>Confirm Deletion
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header border-bottom-0 pb-0">
+                                            <h5 class="modal-title text-danger fw-bold" id="deleteSubjectModalLabel{{ subject.id }}">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
                                             </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body">
-                                            <p>Are you sure you want to delete the subject <strong>"{{ subject.name }}"</strong> for class <strong>{{ subject.class_.name }}</strong>?</p>
-                                            <p class="text-danger small mb-0 bg-danger bg-opacity-10 p-3 rounded-3">
-                                                <i class="fas fa-exclamation-triangle me-1"></i>
-                                                This will permanently delete all marks entered for this subject. This action cannot be undone.
+                                        <div class="modal-body py-4">
+                                            <p class="mb-3 text-dark">
+                                                Are you sure you want to delete the subject <strong class="text-dark">"{{ subject.name }}"</strong> for class <strong>{{ subject.class_.name }}</strong>?
                                             </p>
+                                            <div class="alert alert-danger d-flex align-items-center mb-0 p-3 rounded-3 border-0" role="alert">
+                                                <i class="fas fa-info-circle fa-lg me-3"></i>
+                                                <div class="small">
+                                                    This will permanently delete all marks entered for this subject. <strong>This action cannot be undone.</strong>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <form action="{{ url_for('delete_subject', subject_id=subject.id) }}" method="POST">
-                                                <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                                        <div class="modal-footer bg-light border-top-0">
+                                            <button type="button" class="btn btn-white border" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('delete_subject', subject_id=subject.id) }}" method="POST" class="m-0">
+                                                <button type="submit" class="btn btn-danger px-4">Delete Permanently</button>
                                             </form>
                                         </div>
                                     </div>
@@ -101,9 +120,16 @@
                     {% else %}
                     <tr>
                         <td colspan="6" class="text-center py-5">
-                            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-                            <h6 class="text-muted">No subjects found</h6>
-                            <p class="text-muted small">Click "Create Subject" to add your first subject.</p>
+                            <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                    <i class="fas fa-book-open fa-2x text-secondary opacity-50"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1">No subjects found</h5>
+                                <p class="text-muted mb-4">You haven't added any subjects to this class yet.</p>
+                                <a href="{{ url_for('create_subject') }}" class="btn btn-outline-primary rounded-pill px-4">
+                                    <i class="fas fa-plus me-1"></i> Create First Subject
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
