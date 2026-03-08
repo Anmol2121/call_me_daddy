@@ -7087,44 +7087,22 @@ def create_tables():
     """Create database tables if they don't exist"""
     with app.app_context():
         try:
+            # First, check if student_id column exists
             from sqlalchemy import inspect, text
             inspector = inspect(db.engine)
             
-            # Create all tables first (ensures tables exist)
+            # Create all tables first
             db.create_all()
             
-            # --- Check and add missing columns to 'subjects' table ---
-            if 'subjects' in inspector.get_table_names():
-                columns = [col['name'] for col in inspector.get_columns('subjects')]
-                if 'default_max_marks' not in columns:
-                    print("Adding 'default_max_marks' column to subjects table...")
-                    db.engine.execute(text(
-                        'ALTER TABLE subjects ADD COLUMN default_max_marks FLOAT DEFAULT 100.0'
-                    ))
-                    print("Column added successfully!")
+            # Check if student_id column needs to be added
+            columns = [col['name'] for col in inspector.get_columns('users')]
+            if 'student_id' not in columns:
+                print("Adding student_id column to users table...")
+                # Add the column manually
+                db.engine.execute(text('ALTER TABLE users ADD COLUMN student_id INTEGER REFERENCES students(id)'))
+                print("Column added successfully!")
             
-            # --- Check and add missing columns to 'exams' table ---
-            if 'exams' in inspector.get_table_names():
-                columns = [col['name'] for col in inspector.get_columns('exams')]
-                if 'marks_entry_open' not in columns:
-                    print("Adding 'marks_entry_open' column to exams table...")
-                    db.engine.execute(text(
-                        'ALTER TABLE exams ADD COLUMN marks_entry_open BOOLEAN DEFAULT FALSE'
-                    ))
-                    print("Column added successfully!")
-            
-            # --- Check for users.student_id column (your existing logic) ---
-            if 'users' in inspector.get_table_names():
-                columns = [col['name'] for col in inspector.get_columns('users')]
-                if 'student_id' not in columns:
-                    print("Adding student_id column to users table...")
-                    db.engine.execute(text(
-                        'ALTER TABLE users ADD COLUMN student_id INTEGER REFERENCES students(id)'
-                    ))
-                    print("Column added successfully!")
-            
-            # --- Create developer account if it doesn't exist ---
-            from models import User  # ensure User model is imported
+            # Create developer account if it doesn't exist
             developer = User.query.filter_by(role='developer').first()
             if not developer:
                 developer = User(
@@ -7133,13 +7111,13 @@ def create_tables():
                     role='developer',
                     must_change_password=False
                 )
-                developer.set_password('developer123')  # Change in production!
+                developer.set_password('developer123')  # Change this in production!
                 db.session.add(developer)
                 db.session.commit()
                 print("Developer account created. Email: developer@schoolerp.com, Password: developer123")
                 
         except Exception as e:
-            print(f"Error during table creation/upgrade: {e}")
+            print(f"Error creating tables: {e}")
             db.session.rollback()
 
 def setup_logging():
@@ -7705,6 +7683,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
