@@ -62,10 +62,7 @@
                         <td>{{ subject.created_at.strftime('%d %b %Y') }}</td>
                         <td>
                             <div class="d-flex gap-2 justify-content-end">
-                                <!-- Edit button (optional – implement if you have edit route) -->
-                                <!-- <a href="{{ url_for('edit_subject', subject_id=subject.id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a> -->
+                                {# Removed non-existent edit_subject link #}
                                 
                                 <!-- Delete button with modal trigger -->
                                 <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteSubjectModal{{ subject.id }}">
