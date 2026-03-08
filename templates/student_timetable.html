@@ -64,7 +64,7 @@
         padding: 0.5rem;
         color: var(--text-muted);
     }
-    .time-val { font-size: 0.65rem; font-weight: 700; }
+    .time-val { font-size: 0.65rem; font-weight: 700; text-align: center; }
     .time-sep { height: 10px; width: 1px; border-left: 1px solid #e2e8f0; margin: 2px 0; }
 
     .tt-cell {
@@ -137,85 +137,122 @@
     }
 
     /* =========================================
-       BEAUTIFUL PRINT STYLES
+       OPTIMIZED PRINT STYLES
        ========================================= */
     @media print {
         @page {
             size: landscape;
-            margin: 12mm; /* Clean margins */
+            margin: 8mm; /* Reduced margins to maximize space */
         }
 
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            box-sizing: border-box !important;
         }
 
-        /* Hide entire web UI */
+        /* Hide all web UI components */
         nav, header, footer, .sidebar, .breadcrumb, .screen-controls {
             display: none !important;
         }
 
-        body {
+        body, html {
             background: white !important;
             font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
             padding: 0 !important;
+            margin: 0 !important;
+            height: 100% !important;
         }
 
-        /* --- Print Specific Layout --- */
+        .container-fluid {
+            padding: 0 !important;
+        }
+
+        /* Crucial: Prevent Bootstrap from cutting off the table in print */
+        .table-responsive {
+            overflow: visible !important;
+        }
+
+        /* Print Header & Footer Setup */
         .print-only-header {
             display: flex !important;
             justify-content: space-between;
             align-items: flex-end;
-            border-bottom: 2px solid #1e293b;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px !important;
+            margin-bottom: 10px !important;
         }
 
         .print-only-footer {
             display: flex !important;
             justify-content: space-between;
             align-items: center;
-            border-top: 1px solid #cbd5e1;
-            padding-top: 10px;
-            margin-top: 20px;
+            border-top: 1px solid #000;
+            padding-top: 8px !important;
+            margin-top: 10px !important;
             font-size: 0.65rem;
-            color: #64748b;
+            color: #000 !important;
         }
 
         /* --- Table Print Optimization --- */
         .timetable-wrapper {
             background: transparent !important;
             padding: 0 !important;
+            margin: 0 !important;
         }
 
         .tt-grid {
             box-shadow: none !important;
-            border: 2px solid #1e293b !important; /* Bold outer border */
-            border-radius: 0 !important; /* Square corners look more professional on paper */
-            grid-template-columns: 60px repeat({{ day_info|length }}, 1fr) !important;
+            border: 2px solid #000 !important;
+            border-radius: 0 !important; /* Square corners */
+            grid-template-columns: 50px repeat({{ day_info|length }}, 1fr) !important;
             width: 100% !important;
-            page-break-inside: avoid; /* Prevents breaking mid-row */
+            /* Force to stay together */
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
         }
 
-        /* Sharp inner borders for readability */
+        /* Sharp inner borders and reduced padding for single-page fit */
         .tt-header-cell, .tt-cell, .tt-time-col {
-            border-right: 1px solid #94a3b8 !important;
-            border-bottom: 1px solid #94a3b8 !important;
+            border-right: 1px solid #000 !important;
+            border-bottom: 1px solid #000 !important;
         }
 
         .tt-header-cell {
             background-color: #f1f5f9 !important;
-            border-bottom: 2px solid #1e293b !important; /* Distinct header line */
+            border-bottom: 2px solid #000 !important;
+            padding: 4px 2px !important;
         }
 
-        /* Make sure subjects and teachers are dark enough */
-        .subject-name { color: #000 !important; font-size: 0.8rem; }
-        .teacher-name { color: #333 !important; }
-        .tt-header-cell .day-name { color: #000 !important; font-size: 0.8rem; }
-        
+        .tt-time-col {
+            padding: 2px !important;
+        }
+
+        .tt-cell {
+            min-height: 0 !important; /* OVERRIDE the 90px to allow dynamic shrinking */
+            height: auto !important;
+            padding: 3px !important;
+        }
+
+        /* Make sure subjects and teachers are dark and compact */
         .tt-entry {
-            border: 1px solid rgba(0,0,0,0.05) !important;
-            border-radius: 0.3rem !important; /* Slight rounding internally */
+            border: 1px solid #94a3b8 !important; /* Force visible border */
+            border-radius: 2px !important;
+            padding: 4px !important;
+            justify-content: center !important;
+        }
+
+        .subject-name { color: #000 !important; font-size: 0.75rem !important; margin-bottom: 1px !important;}
+        .teacher-name { color: #222 !important; font-size: 0.55rem !important; margin-bottom: 2px !important;}
+        .tt-header-cell .day-name { color: #000 !important; font-size: 0.75rem !important; margin-bottom: 0 !important;}
+        .tt-header-cell .day-date { font-size: 0.55rem !important;}
+        .time-val { font-size: 0.55rem !important; }
+        .room-badge { 
+            font-size: 0.5rem !important; 
+            padding: 0px 3px !important; 
+            margin-top: 1px !important; 
+            border: 1px solid #000 !important;
+            color: #000 !important;
         }
     }
 </style>
@@ -224,11 +261,11 @@
     
     <div class="print-only-header">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #1e293b; font-size: 1.5rem; letter-spacing: -0.5px;">Official Timetable</h2>
-            <p class="mb-0" style="color: #64748b; font-size: 0.9rem;"><strong>Class:</strong> {{ class_name }} | <strong>Session:</strong> {{ context.current_session.name }}</p>
+            <h2 class="fw-bold mb-0" style="color: #000; font-size: 1.3rem;">Official Timetable</h2>
+            <p class="mb-0" style="color: #333; font-size: 0.85rem;"><strong>Class:</strong> {{ class_name }} | <strong>Session:</strong> {{ context.current_session.name }}</p>
         </div>
         <div class="text-end">
-            <i class="fas fa-graduation-cap" style="font-size: 2rem; color: #1e293b;"></i>
+            <i class="fas fa-graduation-cap" style="font-size: 1.5rem; color: #000;"></i>
         </div>
     </div>
 
@@ -238,7 +275,7 @@
             <p class="text-muted mb-0" style="font-size: 0.6rem;">Academic Session: {{ context.current_session.name }}</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-dark" onclick="window.print()" style="font-size: 0.75rem; border-radius: 0.5rem; padding: 0.4rem 0.8rem;">
+            <button class="btn btn-sm btn-dark shadow-sm" onclick="window.print()" style="font-size: 0.75rem; border-radius: 0.5rem; padding: 0.4rem 0.8rem;">
                 <i class="fas fa-print me-1"></i> Print Timetable
             </button>
             <div class="stat-pill"><i class="far fa-clock me-1 text-primary"></i> <span id="live-clock">00:00</span></div>
@@ -261,7 +298,7 @@
                     <div class="tt-time-col">
                         <span class="time-val">{{ period.start_time.strftime('%H:%M') }}</span>
                         <div class="time-sep"></div>
-                        <span class="time-val" style="opacity:0.5">{{ period.end_time.strftime('%H:%M') }}</span>
+                        <span class="time-val" style="opacity:0.7">{{ period.end_time.strftime('%H:%M') }}</span>
                     </div>
 
                     {% for day in day_info %}
