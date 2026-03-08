@@ -69,41 +69,6 @@ def school_active_required(f):
     return decorated_function
 
 
-@app.route('/admin/subjects/<int:subject_id>/delete', methods=['POST'])
-@role_required(['admin'])
-@school_active_required
-def delete_subject(subject_id):
-    """Delete a subject and all associated marks."""
-    if current_user.must_change_password:
-        return redirect(url_for('change_password'))
-    
-    context = get_school_context()
-    view_session = context.get('view_session') or context['current_session']
-    if not view_session:
-        flash('No active session.', 'warning')
-        return redirect(url_for('manage_subjects'))
-    
-    subject = Subject.query.get_or_404(subject_id)
-    
-    # Verify subject belongs to the admin's school and current session
-    if subject.class_.school_id != current_user.school_id:
-        flash('Unauthorized access.', 'danger')
-        return redirect(url_for('manage_subjects'))
-    
-    if subject.session_id != view_session.id:
-        flash('This subject belongs to a different academic session.', 'warning')
-        return redirect(url_for('manage_subjects'))
-    
-    subject_name = subject.name
-    class_name = subject.class_.name
-    
-    # Delete (cascade will remove related marks due to cascade='all, delete-orphan')
-    db.session.delete(subject)
-    db.session.commit()
-    
-    flash(f'Subject "{subject_name}" for class {class_name} has been deleted successfully.', 'success')
-    return redirect(url_for('manage_subjects'))
-
 # ========================exam==========================
 class Exam(db.Model):
     __tablename__ = 'exams'
@@ -747,6 +712,41 @@ def create_subject():
     return render_template('admin_create_subject.html',
                          form=form,
                          context=context)
+
+@app.route('/admin/subjects/<int:subject_id>/delete', methods=['POST'])
+@role_required(['admin'])
+@school_active_required
+def delete_subject(subject_id):
+    """Delete a subject and all associated marks."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session.', 'warning')
+        return redirect(url_for('manage_subjects'))
+    
+    subject = Subject.query.get_or_404(subject_id)
+    
+    # Verify subject belongs to the admin's school and current session
+    if subject.class_.school_id != current_user.school_id:
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('manage_subjects'))
+    
+    if subject.session_id != view_session.id:
+        flash('This subject belongs to a different academic session.', 'warning')
+        return redirect(url_for('manage_subjects'))
+    
+    subject_name = subject.name
+    class_name = subject.class_.name
+    
+    # Delete (cascade will remove related marks due to cascade='all, delete-orphan')
+    db.session.delete(subject)
+    db.session.commit()
+    
+    flash(f'Subject "{subject_name}" for class {class_name} has been deleted successfully.', 'success')
+    return redirect(url_for('manage_subjects'))
 
 @app.route('/api/subjects-by-class/<int:class_id>')
 @role_required(['admin'])
@@ -7683,6 +7683,7 @@ with app.app_context():
     create_tables()
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
