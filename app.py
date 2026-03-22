@@ -23,6 +23,9 @@ from datetime import datetime, date, timedelta
 #from wtforms import StringField, PasswordField, SelectField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
 from wtforms import StringField, PasswordField, SelectField, SelectMultipleField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
 
+import csv
+from io import StringIO
+from flask import make_response
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -2289,6 +2292,136 @@ class StudentFee(db.Model):
             self.status = 'overdue'
         else:
             self.status = 'pending'
+
+@app.route('/admin/fees/export')
+@role_required(['admin'])
+@school_active_required
+def export_student_fees():
+    """Export student fees (filtered view) to CSV."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session found', 'warning')
+        return redirect(url_for('admin_dashboard'))
+    
+    # Get filters from request (same as manage_student_fees)
+    status_filter = request.args.get('status', 'all')
+    student_id = request.args.get('student_id', '')
+    class_id = request.args.get('class_id', type=int)
+    
+    # Build query
+    query = StudentFee.query.join(Student).join(FeeStructure).filter(
+        Student.school_id == current_user.school_id,
+        StudentFee.session_id == view_session.id
+    )
+    
+    if status_filter != 'all':
+        query = query.filter(StudentFee.status == status_filter)
+    if student_id:
+        query = query.filter(Student.student_id.like(f'%{student_id}%'))
+    if class_id:
+        enrollments = StudentEnrollment.query.filter_by(
+            class_id=class_id,
+            session_id=view_session.id,
+            is_active=True
+        ).subquery()
+        query = query.filter(Student.id == enrollments.c.student_id)
+    
+    student_fees = query.order_by(StudentFee.due_date).all()
+    
+    # Prepare CSV in memory
+    si = StringIO()
+    writer = csv.writer(si)
+    writer.writerow([
+        'Student ID', 'Student Name', 'Class', 'Fee Type',
+        'Total Amount', 'Discount', 'Paid', 'Balance', 'Due Date', 'Status'
+    ])
+    
+    for fee in student_fees:
+        # Get class name (if applicable)
+        class_name = fee.class_.name if fee.class_ else 'All Classes'
+        if not class_name and fee.student.current_class:
+            class_name = fee.student.current_class.name
+        
+        writer.writerow([
+            fee.student.student_id,
+            f"{fee.student.first_name} {fee.student.last_name}",
+            class_name,
+            fee.fee_structure.name,
+            fee.fee_amount,
+            fee.discount_amount,
+            fee.paid_amount,
+            fee.balance,
+            fee.due_date.strftime('%Y-%m-%d'),
+            fee.status.upper()
+        ])
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=student_fees.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
+
+@app.route('/admin/fees/export-reports')
+@role_required(['admin'])
+@school_active_required
+def export_fee_reports():
+    """Export fee transactions (filtered by date range) to CSV."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session found', 'warning')
+        return redirect(url_for('admin_dashboard'))
+    
+    # Get date range from query string (same as fee_reports)
+    start_date_str = request.args.get('start_date', date.today().replace(day=1).isoformat())
+    end_date_str = request.args.get('end_date', date.today().isoformat())
+    
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        start_date = date.today().replace(day=1)
+        end_date = date.today()
+    
+    transactions = FeeTransaction.query.join(Student).filter(
+        Student.school_id == current_user.school_id,
+        FeeTransaction.transaction_date >= start_date,
+        FeeTransaction.transaction_date <= end_date,
+        FeeTransaction.transaction_type == 'payment',
+        FeeTransaction.status == 'success'
+    ).order_by(FeeTransaction.transaction_date.desc()).all()
+    
+    si = StringIO()
+    writer = csv.writer(si)
+    writer.writerow([
+        'Date', 'Student ID', 'Student Name', 'Fee Type',
+        'Amount', 'Payment Method', 'Receipt Number', 'Transaction ID'
+    ])
+    
+    for txn in transactions:
+        fee_type = txn.student_fee.fee_structure.name if txn.student_fee else 'Fee Payment'
+        writer.writerow([
+            txn.transaction_date.strftime('%Y-%m-%d'),
+            txn.student.student_id,
+            f"{txn.student.first_name} {txn.student.last_name}",
+            fee_type,
+            txn.amount,
+            txn.payment_method,
+            txn.receipt_number,
+            txn.transaction_id
+        ])
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=fee_transactions.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
 
 def get_school_fee_statistics(school_id, session_id):
     """Get comprehensive fee statistics for a school"""
