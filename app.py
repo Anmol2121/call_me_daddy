@@ -6016,10 +6016,10 @@ def fee_analytics():
     ).all()
     
     # Calculate statistics
-    total_fees = sum([f.fee_amount for f in student_fees])
-    total_paid = sum([f.paid_amount for f in student_fees])
-    total_discount = sum([f.discount_amount for f in student_fees])
-    total_fine = sum([f.fine_amount for f in student_fees])
+    total_fees = sum(f.fee_amount for f in student_fees)
+    total_paid = sum(f.paid_amount for f in student_fees)
+    total_discount = sum(f.discount_amount for f in student_fees)
+    total_fine = sum(f.fine_amount for f in student_fees)
     total_due = total_fees - total_paid - total_discount + total_fine
     
     # Get transactions for date range
@@ -6033,31 +6033,25 @@ def fee_analytics():
     # Prepare data for charts
     # Daily collection data
     daily_data = {}
-    for transaction in transactions:
-        date_str = transaction.transaction_date.strftime('%Y-%m-%d')
-        if date_str not in daily_data:
-            daily_data[date_str] = 0
-        daily_data[date_str] += transaction.amount
+    for txn in transactions:
+        date_str = txn.transaction_date.strftime('%Y-%m-%d')
+        daily_data[date_str] = daily_data.get(date_str, 0) + txn.amount
     
     # Payment method distribution
     method_data = {}
-    for transaction in transactions:
-        method = transaction.payment_method or 'unknown'
-        if method not in method_data:
-            method_data[method] = 0
-        method_data[method] += transaction.amount
+    for txn in transactions:
+        method = txn.payment_method or 'unknown'
+        method_data[method] = method_data.get(method, 0) + txn.amount
     
     # Class-wise collection
     class_data = {}
-    for transaction in transactions:
-        if transaction.student_fee and transaction.student_fee.class_info:
-            class_name = transaction.student_fee.class_info.name
+    for txn in transactions:
+        # Safely get class name
+        if txn.student_fee and txn.student_fee.class_:
+            class_name = txn.student_fee.class_.name
         else:
             class_name = 'Unknown'
-        
-        if class_name not in class_data:
-            class_data[class_name] = 0
-        class_data[class_name] += transaction.amount
+        class_data[class_name] = class_data.get(class_name, 0) + txn.amount
     
     return render_template('admin_fee_analytics.html',
                          context=context,
