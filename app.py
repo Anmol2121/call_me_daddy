@@ -4605,7 +4605,7 @@ def attendance_calendar_data():
         })
     return jsonify(events)
 
-@app.route('/admin/session/switch/<int:session_id>', methods=['POST'])
+@app.route('/admin/session/switch/<int:session_id>', methods=['GET', 'POST'])
 @role_required(['admin'])
 def switch_view_session(session_id):
     """Switch the view session for admin"""
@@ -4624,7 +4624,7 @@ def switch_view_session(session_id):
     flash(f'Now viewing session: {session_obj.name}', 'success')
     return redirect(request.referrer or url_for('admin_dashboard'))
 
-@app.route('/admin/session/switch-to-current', methods=['POST'])
+@app.route('/admin/session/switch-to-current', methods=['GET', 'POST'])
 @role_required(['admin'])
 def switch_to_current_session():
     """Switch back to current session view"""
