@@ -58,9 +58,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 def send_email(to_email, subject, html_body, text_body=None):
-    """
-    Send an HTML email with a plain‑text fallback.
-    """
+    """Send an HTML email with a plain‑text fallback."""
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
         app.logger.warning("Email credentials not set. Email not sent.")
         return False
@@ -71,9 +69,8 @@ def send_email(to_email, subject, html_body, text_body=None):
         msg['To'] = to_email
         msg['Subject'] = subject
 
-        # Plain‑text fallback (if not provided, generate from HTML)
+        # Plain‑text fallback (if not provided, strip HTML tags)
         if text_body is None:
-            # Simple conversion: remove HTML tags and decode entities (basic)
             import re
             text_body = re.sub(r'<[^>]+>', '', html_body)
             text_body = text_body.replace('&nbsp;', ' ').replace('&amp;', '&')
@@ -96,37 +93,97 @@ def send_email(to_email, subject, html_body, text_body=None):
         return False
 
 def get_admin_welcome_email(admin_name, school_name, email, temp_password, login_url):
-    html = "<!DOCTYPE html>\n"
-    html += "<html>\n<head>\n"
-    html += "<meta charset='UTF-8'>\n"
-    html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n"
-    html += "<title>Welcome to EduManage Pro</title>\n"
+    html = """<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Welcome to EduManage Pro</title>
+</head>
 
-    html += "<style>\n"
-    html += "body { font-family: Arial; background-color: #f4f7fc; margin:0; padding:0; }\n"
-    html += ".container { max-width:600px; margin:30px auto; background:#fff; border-radius:10px; padding:20px; }\n"
-    html += ".header { background:#1e3c72; color:white; padding:20px; text-align:center; }\n"
-    html += ".btn { display:inline-block; background:#1e3c72; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; }\n"
-    html += "</style>\n"
+<body style="margin:0; padding:0; background-color:#f4f6fb; font-family:Arial, sans-serif;">
 
-    html += "</head>\n<body>\n"
-    html += "<div class='container'>\n"
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6fb; padding:20px 0;">
+<tr>
+<td align="center">
 
-    html += "<div class='header'>\n"
-    html += "<h2>EduManage Pro</h2>\n"
-    html += "</div>\n"
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden;">
 
-    html += f"<p>Dear <b>{admin_name}</b>,</p>\n"
-    html += f"<p>Your admin account for <b>{school_name}</b> has been created.</p>\n"
+<!-- HEADER -->
+<tr>
+<td style="background:linear-gradient(90deg,#1e3c72,#2a5298); padding:30px; text-align:center; color:#ffffff;">
+<h1 style="margin:0; font-size:26px;">🎓 EduManage Pro</h1>
+<p style="margin:5px 0 0; font-size:14px;">Smart School Management System</p>
+</td>
+</tr>
 
-    html += "<h3>Login Details:</h3>\n"
-    html += f"<p>Email: {email}<br>Password: {temp_password}</p>\n"
+<!-- CONTENT -->
+<tr>
+<td style="padding:30px; color:#333333;">
 
-    html += f"<a href='{login_url}' class='btn'>Login</a>\n"
+<p style="font-size:16px;">Dear <strong>{admin_name}</strong>,</p>
 
-    html += "<p>Please change your password after login.</p>\n"
+<p style="font-size:15px; line-height:1.6;">
+Your administrator account for the school 
+<strong>{school_name}</strong> has been successfully created.
+</p>
 
-    html += "</div>\n</body>\n</html>"
+<!-- CREDENTIAL BOX -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5ff; border-radius:8px; padding:15px; margin:20px 0;">
+<tr>
+<td style="font-family:monospace; font-size:14px;">
+<strong>Email:</strong> {email}<br><br>
+<strong>Password:</strong> {temp_password}
+</td>
+</tr>
+</table>
+
+<p style="font-size:14px; color:#555;">
+⚠️ You will be required to change your password after your first login.
+</p>
+
+<!-- BUTTON -->
+<table cellpadding="0" cellspacing="0" align="center" style="margin:25px 0;">
+<tr>
+<td align="center">
+<a href="{login_url}" 
+style="background:#1e3c72; color:#ffffff; padding:12px 30px; text-decoration:none; border-radius:5px; font-size:14px; display:inline-block;">
+Login to Dashboard
+</a>
+</td>
+</tr>
+</table>
+
+<p style="font-size:13px; color:#777; text-align:center;">
+Need help? Contact us at 
+<a href="mailto:support@edumanagepro.com" style="color:#1e3c72;">support@edumanagepro.com</a>
+</p>
+
+</td>
+</tr>
+
+<!-- FOOTER -->
+<tr>
+<td style="background:#f0f2f7; padding:20px; text-align:center; font-size:12px; color:#888;">
+© 2025 EduManage Pro<br>
+This is an automated email, please do not reply.
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+""".format(
+        admin_name=admin_name,
+        school_name=school_name,
+        email=email,
+        temp_password=temp_password,
+        login_url=login_url
+    )
 
     return html
 
