@@ -93,158 +93,119 @@ def send_email(to_email, subject, html_body, text_body=None):
         return False
 
 def get_admin_welcome_email(admin_name, school_name, email, temp_password, login_url):
-    return f"""
-<!DOCTYPE html>
+    html = """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to EduManage Pro</title>
+
 <style>
-    @keyframes fadeInUp {{
-        0% {{ opacity: 0; transform: translateY(30px); }}
-        100% {{ opacity: 1; transform: translateY(0); }}
-    }}
-    @keyframes pulse {{
-        0% {{ transform: scale(1); }}
-        50% {{ transform: scale(1.05); }}
-        100% {{ transform: scale(1); }}
-    }}
-    body {{
-        font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        margin: 0;
-        padding: 20px;
-    }}
-    .container {{
-        max-width: 600px;
-        margin: 30px auto;
-        background: #ffffff;
-        border-radius: 32px;
-        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-        overflow: hidden;
-        animation: fadeInUp 0.6s ease-out;
-    }}
-    .header {{
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        padding: 40px 30px;
-        text-align: center;
-        color: white;
-    }}
-    .logo-icon {{
-        font-size: 64px;
-        margin-bottom: 10px;
-        display: inline-block;
-        animation: pulse 2s ease infinite;
-    }}
-    .header h1 {{
-        margin: 0;
-        font-size: 32px;
-        font-weight: 700;
-    }}
-    .content {{
-        padding: 40px 35px 30px;
-    }}
-    .greeting {{
-        font-size: 22px;
-        font-weight: 600;
-        margin-bottom: 20px;
-        color: #1f2937;
-    }}
-    .credential-card {{
-        background: linear-gradient(120deg, #f9fafb, #ffffff);
-        border-radius: 20px;
-        padding: 5px 20px 20px;
-        margin: 30px 0;
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-        border: 1px solid #e5e7eb;
-    }}
-    .credential-box {{
-        background: #f3f4f6;
-        border-radius: 16px;
-        padding: 16px 20px;
-        font-family: monospace;
-        font-size: 15px;
-        border-left: 4px solid #667eea;
-    }}
-    .credential-box strong {{
-        color: #4f46e5;
-        display: inline-block;
-        width: 70px;
-    }}
-    .login-button {{
-        display: inline-block;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white !important;
-        text-decoration: none;
-        padding: 14px 42px;
-        border-radius: 50px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }}
-    .login-button:hover {{
-        transform: scale(1.05);
-    }}
-    .footer {{
-        background: #f9fafb;
-        padding: 25px 20px;
-        text-align: center;
-        font-size: 13px;
-        color: #6b7280;
-        border-top: 1px solid #e5e7eb;
-    }}
-    @media (max-width: 600px) {{
-        .credential-box strong {{
-            display: block;
-            width: auto;
-            margin-bottom: 5px;
-        }}
-    }}
+body {{
+    font-family: Arial, sans-serif;
+    background-color: #f4f7fc;
+    margin: 0;
+    padding: 0;
+}}
+
+.container {{
+    max-width: 600px;
+    margin: 30px auto;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}}
+
+.header {{
+    background: #1e3c72;
+    color: white;
+    padding: 30px;
+    text-align: center;
+}}
+
+.content {{
+    padding: 30px;
+    color: #333;
+}}
+
+.credential-box {{
+    background: #f1f5ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    font-family: monospace;
+}}
+
+.button {{
+    display: inline-block;
+    padding: 12px 25px;
+    background: #1e3c72;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-top: 20px;
+}}
+
+.footer {{
+    background: #f0f4f8;
+    padding: 15px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}}
 </style>
+
 </head>
+
 <body>
+
 <div class="container">
+
     <div class="header">
-        <div class="logo-icon">🎓✨</div>
-        <h1>EduManage Pro</h1>
-        <p>Complete School Management Ecosystem</p>
+        <h2>🎓 EduManage Pro</h2>
+        <p>School Management System</p>
     </div>
+
     <div class="content">
-        <div class="greeting">
-            Dear <strong>{admin_name}</strong> 👋
+
+        <p>Dear <strong>{admin_name}</strong>,</p>
+
+        <p>Your administrator account for the school <strong>{school_name}</strong> has been created successfully.</p>
+
+        <div class="credential-box">
+            <strong>Email:</strong> {email}<br>
+            <strong>Password:</strong> {temp_password}
         </div>
-        <p style="color:#4b5563; line-height:1.6;">
-            Your administrator account for the school <strong>"{school_name}"</strong> has been successfully created.
-            You're now ready to manage everything from one powerful dashboard.
+
+        <p>Please login using the button below:</p>
+
+        <a href="{login_url}" class="button">Login Now</a>
+
+        <p style="margin-top:20px;">
+            ⚠️ You will be required to change your password after first login.
         </p>
-        <div class="credential-card">
-            <div style="font-size:18px; font-weight:700; color:#1e3c72; margin-bottom:20px;">
-                🔐 Login Credentials
-            </div>
-            <div class="credential-box">
-                <strong>📧 Email:</strong> {email}<br>
-                <strong>🔑 Password:</strong> <span style="background:#e0e7ff; padding:2px 8px; border-radius:8px;">{temp_password}</span>
-            </div>
-            <p style="font-size:13px; color:#6b7280; margin-top:10px;">
-                ⚠️ You will be required to <strong>change your password</strong> on first login.
-            </p>
-        </div>
-        <div style="text-align:center; margin:35px 0;">
-            <a href="{login_url}" class="login-button">🚀 Access Your Dashboard →</a>
-        </div>
-        <hr style="margin:25px 0; border:none; border-top:1px solid #e5e7eb;">
-        <p style="text-align:center; font-size:14px;">
-            Need help? Contact us at <a href="mailto:support@edumanagepro.com" style="color:#667eea;">support@edumanagepro.com</a>
-        </p>
+
     </div>
+
     <div class="footer">
-        © 2025 EduManage Pro – Empowering Education<br>
-        This is an automated message, please do not reply.
+        © 2025 EduManage Pro<br>
+        This is an automated email. Please do not reply.
     </div>
+
 </div>
+
 </body>
 </html>
-"""
+""".format(
+        admin_name=admin_name,
+        school_name=school_name,
+        email=email,
+        temp_password=temp_password,
+        login_url=login_url
+    )
+
+    return html
 
 # ==================== DATABASE MODELS ====================
 
