@@ -5559,7 +5559,8 @@ def create_school():
                 phone=form.phone.data,
                 email=form.email.data,
                 website=form.website.data,
-                established_year=datetime.now().year
+                established_year=datetime.now().year,
+                is_active=True
             )
             db.session.add(school)
             db.session.flush()  # Get school ID
@@ -5573,7 +5574,8 @@ def create_school():
                 full_name=form.admin_name.data,
                 role='admin',
                 school_id=school.id,
-                must_change_password=True
+                must_change_password=True,
+                is_active=True
             )
             admin.set_password(temp_password)
             db.session.add(admin)
@@ -5586,45 +5588,47 @@ def create_school():
                 start_date=date(current_year, 4, 1),
                 end_date=date(current_year + 1, 3, 31),
                 is_current=True,
+                is_active=True,
                 school_id=school.id
             )
             db.session.add(academic_session)
             
             db.session.commit()
             
-            # ----- NEW HTML EMAIL SENDING -----
-            login_url = url_for('login', _external=True)
-            html_email = get_admin_welcome_email(
-                admin_name=form.admin_name.data,
-                school_name=form.school_name.data,
-                email=form.admin_email.data,
-                temp_password=temp_password,
-                login_url=login_url
-            )
-            
-            email_sent = send_email(
-                to_email=form.admin_email.data,
-                subject=f"Welcome to EduManage Pro – Your Admin Account for {form.school_name.data}",
-                html_body=html_email
-            )
+            # Attempt to send email (but don't fail if it doesn't work)
+            email_sent = False
+            try:
+                login_url = url_for('login', _external=True)
+                html_email = get_admin_welcome_email(
+                    admin_name=form.admin_name.data,
+                    school_name=form.school_name.data,
+                    email=form.admin_email.data,
+                    temp_password=temp_password,
+                    login_url=login_url
+                )
+                email_sent = send_email(
+                    to_email=form.admin_email.data,
+                    subject=f"Welcome to EduManage Pro – Your Admin Account for {form.school_name.data}",
+                    html_body=html_email
+                )
+            except Exception as email_err:
+                app.logger.error(f"Email sending failed: {email_err}")
+                email_sent = False
             
             if email_sent:
-                flash(
-                    f"School created successfully! Admin credentials have been sent to {form.admin_email.data}.",
-                    "success"
-                )
+                flash(f"School created successfully! Admin credentials have been sent to {form.admin_email.data}.", "success")
             else:
-                flash(
-                    f"School created but email could not be sent. Temporary password: {temp_password}",
-                    "warning"
-                )
+                flash(f"School created but email could not be sent. Temporary password for admin: {temp_password}", "warning")
             
             return redirect(url_for('developer_dashboard'))
             
         except Exception as e:
             db.session.rollback()
+            app.logger.error(f"Error creating school: {str(e)}")
             flash(f"Error creating school: {str(e)}", "danger")
+            return render_template('developer_create_school.html', form=form)
     
+    # For GET request or validation errors
     return render_template('developer_create_school.html', form=form)
 
 @app.route('/developer/schools')
