@@ -45,6 +45,44 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+
+# Email configuration (for sending notifications)
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.environ.get('supportyourerp@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('rsgfbydmxqefdrze')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@schoolerp.com')
+
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+def send_email(to_email, subject, body):
+    """Send an email using SMTP (supports TLS)."""
+    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
+        app.logger.warning("Email credentials not set. Email not sent.")
+        return False
+
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = app.config['MAIL_DEFAULT_SENDER']
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
+        if app.config['MAIL_USE_TLS']:
+            server.starttls()
+        server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+        server.send_message(msg)
+        server.quit()
+        app.logger.info(f"Email sent to {to_email}")
+        return True
+    except Exception as e:
+        app.logger.error(f"Failed to send email: {e}")
+        return False
+
 # ==================== DATABASE MODELS ====================
 
 def role_required(roles):
