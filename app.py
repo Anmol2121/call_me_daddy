@@ -1,4 +1,3 @@
-this is app.py file code
 # app.py - Complete School ERP System
 import os
 import secrets
