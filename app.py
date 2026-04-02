@@ -38,12 +38,14 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 
 # Email configuration
-app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True') == 'True'
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'supportyourerp@gmail.com')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'rsgfbydmxqefdrze')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@schoolerp.com')
+# Email configuration - HARDCODED for direct use
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'supportyourerp@gmail.com'
+app.config['MAIL_PASSWORD'] = 'rsgfbydmxqefdrze'
+app.config['MAIL_DEFAULT_SENDER'] = 'supportyourerp@gmail.com'
+app.config['MAIL_ENABLED'] = True
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
