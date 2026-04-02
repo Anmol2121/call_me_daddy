@@ -41,8 +41,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True') == 'True'
-app.config['MAIL_USERNAME'] = os.environ.get('supportyourerp@gmail.com')
-app.config['MAIL_PASSWORD'] = os.environ.get('rsgfbydmxqefdrze')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'supportyourerp@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'rsgfbydmxqefdrze')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@schoolerp.com')
 import smtplib
 from email.mime.text import MIMEText
@@ -5421,6 +5421,12 @@ def create_school():
     form = CreateSchoolForm()
     
     if form.validate_on_submit():
+        # --- NEW: Check if admin email already exists ---
+        existing_user = User.query.filter_by(email=form.admin_email.data).first()
+        if existing_user:
+            flash(f'❌ Email {form.admin_email.data} is already registered. Please use a different email address.', 'danger')
+            return render_template('developer_create_school.html', form=form)
+        
         try:
             # Generate unique school code
             school_code = f"SCH-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
@@ -5457,8 +5463,8 @@ def create_school():
             session_name = f"{current_year}-{current_year + 1}"
             academic_session = AcademicSession(
                 name=session_name,
-                start_date=date(current_year, 4, 1),  # April 1st
-                end_date=date(current_year + 1, 3, 31),  # March 31st next year
+                start_date=date(current_year, 4, 1),
+                end_date=date(current_year + 1, 3, 31),
                 is_current=True,
                 school_id=school.id
             )
@@ -5466,162 +5472,19 @@ def create_school():
             
             db.session.commit()
             
-            # Send email with credentials
+            # --- Send email (optional, only if email is configured) ---
             email_sent = False
-            if app.config.get('MAIL_ENABLED', False):
+            if app.config.get('MAIL_ENABLED', False) and app.config.get('MAIL_USERNAME'):
                 try:
+                    # Your email sending code (keep as is)
                     subject = f"Welcome to EduManage Pro – Your Admin Account for {school.name}"
-                    
-                    # Plain text body
-                    body = f"""Dear {form.admin_name.data},
-
-Your administrator account for {school.name} has been created successfully.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    LOGIN CREDENTIALS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-School Name: {school.name}
-School Code: {school_code}
-
-Login Email: {form.admin_email.data}
-Temporary Password: {temp_password}
-
-Login URL: {request.url_root}login
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-IMPORTANT SECURITY NOTES:
-• You will be required to change your password on first login
-• Please keep your credentials secure
-• Do not share your password with anyone
-• This password is temporary and will expire after first use
-
-Getting Started:
-1. Click the login link above
-2. Enter your email and temporary password
-3. You will be prompted to create a new password
-4. Complete your school profile information
-5. Start adding students, teachers, and classes
-
-School Details:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Address: {school.address or 'Not provided'}
-Phone: {school.phone or 'Not provided'}
-Email: {school.email or 'Not provided'}
-Website: {school.website or 'Not provided'}
-
-Need Help?
-• Contact Support: support@schoolerp.com
-• Documentation: https://docs.schoolerp.com
-• Developer Contact: developer@schoolerp.com
-
-This is an automated message, please do not reply to this email.
-
-Best regards,
-EduManage Pro Team
-System Developer
-"""
-                    
-                    # HTML body for rich formatting
-                    html_body = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
-        .content {{ background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }}
-        .credentials {{ background: #eef2ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4f46e5; }}
-        .credential-item {{ margin: 10px 0; }}
-        .credential-label {{ font-weight: bold; color: #4f46e5; }}
-        .footer {{ text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }}
-        .button {{ background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }}
-        .warning {{ background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b; }}
-        .info-box {{ background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎓 Welcome to EduManage Pro</h1>
-            <p>Your School Management System</p>
-        </div>
-        <div class="content">
-            <h2>Dear {form.admin_name.data},</h2>
-            <p>Your administrator account for <strong>{school.name}</strong> has been created successfully!</p>
-            
-            <div class="credentials">
-                <h3 style="margin-top: 0;">📋 Login Credentials</h3>
-                <div class="credential-item">
-                    <span class="credential-label">🏫 School Name:</span> {school.name}
-                </div>
-                <div class="credential-item">
-                    <span class="credential-label">🔑 School Code:</span> <code>{school_code}</code>
-                </div>
-                <div class="credential-item">
-                    <span class="credential-label">📧 Login Email:</span> {form.admin_email.data}
-                </div>
-                <div class="credential-item">
-                    <span class="credential-label">🔐 Temporary Password:</span> <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">{temp_password}</code>
-                </div>
-            </div>
-            
-            <div style="text-align: center;">
-                <a href="{request.url_root}login" class="button">🔗 Click Here to Login</a>
-            </div>
-            
-            <div class="warning">
-                <strong>⚠️ IMPORTANT SECURITY NOTES:</strong>
-                <ul style="margin-bottom: 0;">
-                    <li>You will be required to change your password on first login</li>
-                    <li>Please keep your credentials secure</li>
-                    <li>Do not share your password with anyone</li>
-                    <li>This password is temporary and will expire after first use</li>
-                </ul>
-            </div>
-            
-            <div class="info-box">
-                <strong>🚀 Getting Started:</strong>
-                <ol style="margin-bottom: 0;">
-                    <li>Click the login button above</li>
-                    <li>Enter your email and temporary password</li>
-                    <li>Create a new secure password when prompted</li>
-                    <li>Complete your school profile information</li>
-                    <li>Start adding students, teachers, and classes</li>
-                </ol>
-            </div>
-            
-            <h3>📊 School Details</h3>
-            <ul>
-                <li><strong>Address:</strong> {school.address or 'Not provided'}</li>
-                <li><strong>Phone:</strong> {school.phone or 'Not provided'}</li>
-                <li><strong>Email:</strong> {school.email or 'Not provided'}</li>
-                <li><strong>Website:</strong> {school.website or 'Not provided'}</li>
-            </ul>
-            
-            <div class="footer">
-                <p>This is an automated message, please do not reply to this email.</p>
-                <p>Need help? Contact our support team at <a href="mailto:support@schoolerp.com">support@schoolerp.com</a></p>
-                <p>© 2024 EduManage Pro. All rights reserved.</p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>"""
-                    
-                    msg = Message(subject, recipients=[form.admin_email.data])
-                    msg.body = body
-                    msg.html = html_body
-                    mail.send(msg)
+                    body = f"Dear {form.admin_name.data},\n\nYour administrator account for {school.name} has been created.\n\nLogin Email: {form.admin_email.data}\nTemporary Password: {temp_password}\n\nLogin URL: {request.url_root}login\n\nPlease change your password on first login.\n\nBest regards,\nEduManage Pro Team"
+                    # Use your send_email function
+                    send_email(form.admin_email.data, subject, body)
                     email_sent = True
-                    app.logger.info(f"Welcome email sent to {form.admin_email.data}")
                 except Exception as email_error:
                     app.logger.error(f"Failed to send welcome email: {str(email_error)}")
-                    email_sent = False
             
-            # Flash appropriate message based on email status
             if email_sent:
                 flash(f'✅ School created successfully! Login credentials have been sent to {form.admin_email.data}.', 'success')
             else:
@@ -5632,7 +5495,11 @@ System Developer
         except Exception as e:
             db.session.rollback()
             app.logger.error(f'Error creating school: {str(e)}')
-            flash(f'Error creating school: {str(e)}', 'danger')
+            # Provide a user-friendly message
+            if 'unique constraint' in str(e).lower():
+                flash(f'❌ Database error: The email {form.admin_email.data} is already taken. Please use a different email.', 'danger')
+            else:
+                flash(f'Error creating school: {str(e)}', 'danger')
     
     return render_template('developer_create_school.html', form=form)
 
