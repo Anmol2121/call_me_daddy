@@ -1,3 +1,4 @@
+this is app.py file code
 # app.py - Complete School ERP System
 import os
 import secrets
@@ -27,7 +28,6 @@ import csv
 from io import StringIO
 from flask import make_response
 
-
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -35,44 +35,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgres
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-
-
-# Email configuration (hardcoded)
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'supportyourerp@gmail.com'
-app.config['MAIL_PASSWORD'] = 'rsgfbydmxqefdrze'
-app.config['MAIL_DEFAULT_SENDER'] = 'supportyourerp@gmail.com'
-app.config['MAIL_ENABLED'] = True
-
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
-def send_email(recipient, subject, body):
-    """Send an email using SMTP configuration."""
-    try:
-        msg = MIMEMultipart()
-        msg['From'] = app.config['MAIL_DEFAULT_SENDER']
-        msg['To'] = recipient
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
-
-        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
-        if app.config['MAIL_USE_TLS']:
-            server.starttls()
-        server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-        server.send_message(msg)
-        server.quit()
-        app.logger.info(f"Email sent to {recipient}")
-        return True
-    except Exception as e:
-        app.logger.error(f"Failed to send email: {str(e)}")
-        return False
-
-
-
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -5419,12 +5381,6 @@ def create_school():
     form = CreateSchoolForm()
     
     if form.validate_on_submit():
-        # --- NEW: Check if admin email already exists ---
-        existing_user = User.query.filter_by(email=form.admin_email.data).first()
-        if existing_user:
-            flash(f'❌ Email {form.admin_email.data} is already registered. Please use a different email address.', 'danger')
-            return render_template('developer_create_school.html', form=form)
-        
         try:
             # Generate unique school code
             school_code = f"SCH-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
@@ -5461,8 +5417,8 @@ def create_school():
             session_name = f"{current_year}-{current_year + 1}"
             academic_session = AcademicSession(
                 name=session_name,
-                start_date=date(current_year, 4, 1),
-                end_date=date(current_year + 1, 3, 31),
+                start_date=date(current_year, 4, 1),  # April 1st
+                end_date=date(current_year + 1, 3, 31),  # March 31st next year
                 is_current=True,
                 school_id=school.id
             )
@@ -5470,34 +5426,12 @@ def create_school():
             
             db.session.commit()
             
-            # --- Send email (optional, only if email is configured) ---
-            email_sent = False
-            if app.config.get('MAIL_ENABLED', False) and app.config.get('MAIL_USERNAME'):
-                try:
-                    # Your email sending code (keep as is)
-                    subject = f"Welcome to EduManage Pro – Your Admin Account for {school.name}"
-                    body = f"Dear {form.admin_name.data},\n\nYour administrator account for {school.name} has been created.\n\nLogin Email: {form.admin_email.data}\nTemporary Password: {temp_password}\n\nLogin URL: {request.url_root}login\n\nPlease change your password on first login.\n\nBest regards,\nEduManage Pro Team"
-                    # Use your send_email function
-                    send_email(form.admin_email.data, subject, body)
-                    email_sent = True
-                except Exception as email_error:
-                    app.logger.error(f"Failed to send welcome email: {str(email_error)}")
-            
-            if email_sent:
-                flash(f'✅ School created successfully! Login credentials have been sent to {form.admin_email.data}.', 'success')
-            else:
-                flash(f'⚠️ School created successfully! However, we could not send the email. Please note the temporary password: {temp_password}', 'warning')
-            
+            flash(f'School created successfully! Admin credentials sent to {form.admin_email.data}. Temporary password: {temp_password}', 'success')
             return redirect(url_for('developer_dashboard'))
             
         except Exception as e:
             db.session.rollback()
-            app.logger.error(f'Error creating school: {str(e)}')
-            # Provide a user-friendly message
-            if 'unique constraint' in str(e).lower():
-                flash(f'❌ Database error: The email {form.admin_email.data} is already taken. Please use a different email.', 'danger')
-            else:
-                flash(f'Error creating school: {str(e)}', 'danger')
+            flash(f'Error creating school: {str(e)}', 'danger')
     
     return render_template('developer_create_school.html', form=form)
 
