@@ -58,39 +58,42 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 def send_email(to_email, subject, html_body, text_body=None):
-    """Send an HTML email with a plain‑text fallback."""
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
-        app.logger.warning("Email credentials not set. Email not sent.")
+        app.logger.warning("Email credentials not set.")
         return False
 
-    try:
-        msg = MIMEMultipart('alternative')
-        msg['From'] = app.config['MAIL_DEFAULT_SENDER']
-        msg['To'] = to_email
-        msg['Subject'] = subject
+    msg = MIMEMultipart('alternative')
+    msg['From'] = app.config['MAIL_DEFAULT_SENDER']
+    msg['To'] = to_email
+    msg['Subject'] = subject
 
-        # Plain‑text fallback (if not provided, strip HTML tags)
-        if text_body is None:
-            import re
-            text_body = re.sub(r'<[^>]+>', '', html_body)
-            text_body = text_body.replace('&nbsp;', ' ').replace('&amp;', '&')
+    if text_body is None:
+        import re
+        text_body = re.sub(r'<[^>]+>', '', html_body)
+        text_body = text_body.replace('&nbsp;', ' ').replace('&amp;', '&')
 
-        part_text = MIMEText(text_body, 'plain')
-        part_html = MIMEText(html_body, 'html')
-        msg.attach(part_text)
-        msg.attach(part_html)
+    part_text = MIMEText(text_body, 'plain')
+    part_html = MIMEText(html_body, 'html')
+    msg.attach(part_text)
+    msg.attach(part_html)
 
-        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
-        if app.config['MAIL_USE_TLS']:
-            server.starttls()
-        server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-        server.send_message(msg)
-        server.quit()
-        app.logger.info(f"Email sent to {to_email}")
-        return True
-    except Exception as e:
-        app.logger.error(f"Failed to send email: {e}")
-        return False
+    # Try TLS (587) first, fallback to SSL (465)
+    for port, use_ssl in [(587, False), (465, True)]:
+        try:
+            if use_ssl:
+                server = smtplib.SMTP_SSL(app.config['MAIL_SERVER'], port)
+            else:
+                server = smtplib.SMTP(app.config['MAIL_SERVER'], port)
+                server.starttls()
+            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+            server.send_message(msg)
+            server.quit()
+            app.logger.info(f"Email sent via {'SSL' if use_ssl else 'TLS'} to {to_email}")
+            return True
+        except Exception as e:
+            app.logger.error(f"Attempt on port {port} failed: {e}")
+            continue
+    return False
 
 def get_admin_welcome_email(admin_name, school_name, email, temp_password, login_url):
     html = """<!DOCTYPE html>
