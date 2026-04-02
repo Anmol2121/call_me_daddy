@@ -97,65 +97,83 @@ def get_admin_welcome_email(admin_name, school_name, email, temp_password, login
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to EduManage Pro</title>
 </head>
 
-<body style="margin:0; padding:0; background-color:#f4f6fb; font-family:Arial, sans-serif;">
+<body style="margin:0; padding:0; background:#f4f6fb; font-family:Arial, sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6fb; padding:20px 0;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
 <tr>
 <td align="center">
 
-<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden;">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
 
 <!-- HEADER -->
 <tr>
-<td style="background:linear-gradient(90deg,#1e3c72,#2a5298); padding:30px; text-align:center; color:#ffffff;">
-<h1 style="margin:0; font-size:26px;">🎓 EduManage Pro</h1>
-<p style="margin:5px 0 0; font-size:14px;">Smart School Management System</p>
+<td style="background:linear-gradient(90deg,#667eea,#764ba2); padding:35px; text-align:center; color:#ffffff;">
+<div style="font-size:40px;">🎓</div>
+<h1 style="margin:10px 0 0; font-size:26px;">EduManage Pro</h1>
+<p style="margin:5px 0 0; font-size:14px; opacity:0.9;">Complete School Management Ecosystem</p>
 </td>
 </tr>
 
 <!-- CONTENT -->
 <tr>
-<td style="padding:30px; color:#333333;">
+<td style="padding:35px; color:#333333;">
 
-<p style="font-size:16px;">Dear <strong>{admin_name}</strong>,</p>
-
-<p style="font-size:15px; line-height:1.6;">
-Your administrator account for the school 
-<strong>{school_name}</strong> has been successfully created.
+<p style="font-size:18px; margin-bottom:10px;">
+Dear <strong>{admin_name}</strong> 👋
 </p>
 
-<!-- CREDENTIAL BOX -->
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5ff; border-radius:8px; padding:15px; margin:20px 0;">
+<p style="font-size:15px; line-height:1.6; color:#555;">
+Your administrator account for the school 
+<strong>{school_name}</strong> has been successfully created.
+You can now manage everything from your dashboard.
+</p>
+
+<!-- CARD -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:25px 0; background:#f8faff; border-radius:12px; padding:20px; border:1px solid #e5e7eb;">
 <tr>
-<td style="font-family:monospace; font-size:14px;">
-<strong>Email:</strong> {email}<br><br>
-<strong>Password:</strong> {temp_password}
+<td>
+
+<p style="margin:0 0 10px; font-weight:bold; color:#1e3c72;">
+🔐 Login Credentials
+</p>
+
+<p style="margin:0; font-family:monospace; font-size:14px;">
+<strong>Email:</strong><br>{email}<br><br>
+<strong>Password:</strong><br>
+<span style="background:#e0e7ff; padding:6px 10px; border-radius:6px; display:inline-block; margin-top:5px;">
+{temp_password}
+</span>
+</p>
+
+<p style="font-size:12px; color:#777; margin-top:10px;">
+⚠️ You must change your password after first login.
+</p>
+
 </td>
 </tr>
 </table>
 
-<p style="font-size:14px; color:#555;">
-⚠️ You will be required to change your password after your first login.
-</p>
-
 <!-- BUTTON -->
-<table cellpadding="0" cellspacing="0" align="center" style="margin:25px 0;">
+<table align="center" cellpadding="0" cellspacing="0" style="margin:30px 0;">
 <tr>
 <td align="center">
 <a href="{login_url}" 
-style="background:#1e3c72; color:#ffffff; padding:12px 30px; text-decoration:none; border-radius:5px; font-size:14px; display:inline-block;">
-Login to Dashboard
+style="background:#667eea; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:8px; font-size:15px; font-weight:bold; display:inline-block;">
+🚀 Access Dashboard
 </a>
 </td>
 </tr>
 </table>
 
-<p style="font-size:13px; color:#777; text-align:center;">
-Need help? Contact us at 
-<a href="mailto:support@edumanagepro.com" style="color:#1e3c72;">support@edumanagepro.com</a>
+<p style="text-align:center; font-size:13px; color:#777;">
+Need help? Contact us at<br>
+<a href="mailto:support@edumanagepro.com" style="color:#667eea;">
+support@edumanagepro.com
+</a>
 </p>
 
 </td>
@@ -163,8 +181,9 @@ Need help? Contact us at
 
 <!-- FOOTER -->
 <tr>
-<td style="background:#f0f2f7; padding:20px; text-align:center; font-size:12px; color:#888;">
+<td style="background:#f1f3f8; padding:20px; text-align:center; font-size:12px; color:#888;">
 © 2025 EduManage Pro<br>
+Empowering Education Digitally<br><br>
 This is an automated email, please do not reply.
 </td>
 </tr>
