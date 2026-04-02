@@ -37,8 +37,7 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 
-# Email configuration
-# Email configuration - HARDCODED for direct use
+# Email configuration (hardcoded)
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -46,23 +45,20 @@ app.config['MAIL_USERNAME'] = 'supportyourerp@gmail.com'
 app.config['MAIL_PASSWORD'] = 'rsgfbydmxqefdrze'
 app.config['MAIL_DEFAULT_SENDER'] = 'supportyourerp@gmail.com'
 app.config['MAIL_ENABLED'] = True
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 def send_email(recipient, subject, body):
     """Send an email using SMTP configuration."""
-    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
-        app.logger.warning("Email not configured. Skipping email send.")
-        return False
-    
     try:
         msg = MIMEMultipart()
         msg['From'] = app.config['MAIL_DEFAULT_SENDER']
         msg['To'] = recipient
         msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'html'))
-        
+        msg.attach(MIMEText(body, 'plain'))
+
         server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
         if app.config['MAIL_USE_TLS']:
             server.starttls()
