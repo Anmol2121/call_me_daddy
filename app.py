@@ -36,6 +36,34 @@ app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True') == 'True'
 app.config['MAIL_USERNAME'] = os.environ.get('supportyourerp@gmail.com')
 app.config['MAIL_PASSWORD'] = os.environ.get('rsgfbydmxqefdrze')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@schoolerp.com')
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+def send_email(recipient, subject, body):
+    """Send an email using SMTP configuration."""
+    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
+        app.logger.warning("Email not configured. Skipping email send.")
+        return False
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = app.config['MAIL_DEFAULT_SENDER']
+        msg['To'] = recipient
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'html'))
+        
+        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
+        if app.config['MAIL_USE_TLS']:
+            server.starttls()
+        server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+        server.send_message(msg)
+        server.quit()
+        app.logger.info(f"Email sent to {recipient}")
+        return True
+    except Exception as e:
+        app.logger.error(f"Failed to send email: {str(e)}")
+        return False
 
 
 # Initialize Flask app
