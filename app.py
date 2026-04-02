@@ -5455,8 +5455,8 @@ def create_school():
             session_name = f"{current_year}-{current_year + 1}"
             academic_session = AcademicSession(
                 name=session_name,
-                start_date=date(current_year, 4, 1),  # April 1st
-                end_date=date(current_year + 1, 3, 31),  # March 31st next year
+                start_date=date(current_year, 4, 1),
+                end_date=date(current_year + 1, 3, 31),
                 is_current=True,
                 school_id=school.id
             )
@@ -5464,12 +5464,42 @@ def create_school():
             
             db.session.commit()
             
-            flash(f'School created successfully! Admin credentials sent to {form.admin_email.data}. Temporary password: {temp_password}', 'success')
+            # ---- Send email with credentials ----
+            login_url = url_for('login', _external=True)
+
+            email_body = f"Dear {form.admin_name.data},\n\n"
+            email_body += f"Your administrator account for the school '{form.school_name.data}' has been created successfully.\n\n"
+            email_body += "Login Credentials:\n"
+            email_body += "------------------------\n"
+            email_body += f"Email    : {form.admin_email.data}\n"
+            email_body += f"Password : {temp_password}\n"
+            email_body += "------------------------\n\n"
+            email_body += f"Please login at: {login_url}\n\n"
+            email_body += "You will be required to change your password on first login.\n\n"
+            email_body += "Best regards,\nEduManage Pro Team"
+
+            email_sent = send_email(
+                to_email=form.admin_email.data,
+                subject="Welcome to EduManage Pro - Your Admin Account",
+                body=email_body
+            )
+            
+            if email_sent:
+                flash(
+                    f"School created successfully! Admin credentials have been sent to {form.admin_email.data}.",
+                    "success"
+                )
+            else:
+                flash(
+                    f"School created but email could not be sent. Temporary password: {temp_password}",
+                    "warning"
+                )
+            
             return redirect(url_for('developer_dashboard'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error creating school: {str(e)}', 'danger')
+            flash(f"Error creating school: {str(e)}", "danger")
     
     return render_template('developer_create_school.html', form=form)
 
