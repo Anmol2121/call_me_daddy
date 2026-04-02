@@ -56,6 +56,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'norep
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import smtplib
 
 def send_email(to_email, subject, html_body, text_body=None):
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
