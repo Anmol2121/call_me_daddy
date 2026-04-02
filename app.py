@@ -54,22 +54,34 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'supportyourerp@gm
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'rsgfbydmxqefdrze')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@schoolerp.com')
 
-import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-def send_email(to_email, subject, body):
-    """Send an email using SMTP (supports TLS)."""
+def send_email(to_email, subject, html_body, text_body=None):
+    """
+    Send an HTML email with a plain‑text fallback.
+    """
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
         app.logger.warning("Email credentials not set. Email not sent.")
         return False
 
     try:
-        msg = MIMEMultipart()
+        msg = MIMEMultipart('alternative')
         msg['From'] = app.config['MAIL_DEFAULT_SENDER']
         msg['To'] = to_email
         msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
+
+        # Plain‑text fallback (if not provided, generate from HTML)
+        if text_body is None:
+            # Simple conversion: remove HTML tags and decode entities (basic)
+            import re
+            text_body = re.sub(r'<[^>]+>', '', html_body)
+            text_body = text_body.replace('&nbsp;', ' ').replace('&amp;', '&')
+
+        part_text = MIMEText(text_body, 'plain')
+        part_html = MIMEText(html_body, 'html')
+        msg.attach(part_text)
+        msg.attach(part_html)
 
         server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
         if app.config['MAIL_USE_TLS']:
@@ -82,6 +94,41 @@ def send_email(to_email, subject, body):
     except Exception as e:
         app.logger.error(f"Failed to send email: {e}")
         return False
+
+def get_admin_welcome_email(admin_name, school_name, email, temp_password, login_url):
+    html = "<!DOCTYPE html>\n"
+    html += "<html>\n<head>\n"
+    html += "<meta charset='UTF-8'>\n"
+    html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n"
+    html += "<title>Welcome to EduManage Pro</title>\n"
+
+    html += "<style>\n"
+    html += "body { font-family: Arial; background-color: #f4f7fc; margin:0; padding:0; }\n"
+    html += ".container { max-width:600px; margin:30px auto; background:#fff; border-radius:10px; padding:20px; }\n"
+    html += ".header { background:#1e3c72; color:white; padding:20px; text-align:center; }\n"
+    html += ".btn { display:inline-block; background:#1e3c72; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; }\n"
+    html += "</style>\n"
+
+    html += "</head>\n<body>\n"
+    html += "<div class='container'>\n"
+
+    html += "<div class='header'>\n"
+    html += "<h2>EduManage Pro</h2>\n"
+    html += "</div>\n"
+
+    html += f"<p>Dear <b>{admin_name}</b>,</p>\n"
+    html += f"<p>Your admin account for <b>{school_name}</b> has been created.</p>\n"
+
+    html += "<h3>Login Details:</h3>\n"
+    html += f"<p>Email: {email}<br>Password: {temp_password}</p>\n"
+
+    html += f"<a href='{login_url}' class='btn'>Login</a>\n"
+
+    html += "<p>Please change your password after login.</p>\n"
+
+    html += "</div>\n</body>\n</html>"
+
+    return html
 
 # ==================== DATABASE MODELS ====================
 
@@ -5464,24 +5511,20 @@ def create_school():
             
             db.session.commit()
             
-            # ---- Send email with credentials ----
+            # ----- NEW HTML EMAIL SENDING -----
             login_url = url_for('login', _external=True)
-
-            email_body = f"Dear {form.admin_name.data},\n\n"
-            email_body += f"Your administrator account for the school '{form.school_name.data}' has been created successfully.\n\n"
-            email_body += "Login Credentials:\n"
-            email_body += "------------------------\n"
-            email_body += f"Email    : {form.admin_email.data}\n"
-            email_body += f"Password : {temp_password}\n"
-            email_body += "------------------------\n\n"
-            email_body += f"Please login at: {login_url}\n\n"
-            email_body += "You will be required to change your password on first login.\n\n"
-            email_body += "Best regards,\nEduManage Pro Team"
-
+            html_email = get_admin_welcome_email(
+                admin_name=form.admin_name.data,
+                school_name=form.school_name.data,
+                email=form.admin_email.data,
+                temp_password=temp_password,
+                login_url=login_url
+            )
+            
             email_sent = send_email(
                 to_email=form.admin_email.data,
-                subject="Welcome to EduManage Pro - Your Admin Account",
-                body=email_body
+                subject=f"Welcome to EduManage Pro – Your Admin Account for {form.school_name.data}",
+                html_body=html_email
             )
             
             if email_sent:
