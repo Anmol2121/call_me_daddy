@@ -211,6 +211,51 @@ body {{
 
     return html
 
+
+def get_student_welcome_email(student_name, student_id, email, temp_password, login_url):
+    html = """<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to EduManage Pro</title>
+<style>
+    body { font-family: Arial, sans-serif; background-color: #f4f7fc; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .header { background: #1e3c72; color: white; padding: 30px; text-align: center; }
+    .content { padding: 30px; color: #333; }
+    .credential-box { background: #f1f5ff; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
+    .button { display: inline-block; padding: 12px 25px; background: #1e3c72; color: white !important; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+    .footer { background: #f0f4f8; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header"><h2>🎓 EduManage Pro</h2><p>Student Account Created</p></div>
+    <div class="content">
+        <p>Dear <strong>{student_name}</strong>,</p>
+        <p>Your student account has been created successfully.</p>
+        <div class="credential-box">
+            <strong>Student ID:</strong> {student_id}<br>
+            <strong>Login Email:</strong> {email}<br>
+            <strong>Temporary Password:</strong> {temp_password}
+        </div>
+        <p>Please login using the button below. You will be required to change your password after first login.</p>
+        <a href="{login_url}" class="button">Login Now</a>
+    </div>
+    <div class="footer">© 2025 EduManage Pro<br>This is an automated email. Please do not reply.</div>
+</div>
+</body>
+</html>""".format(
+        student_name=student_name,
+        student_id=student_id,
+        email=email,
+        temp_password=temp_password,
+        login_url=login_url
+    )
+    return html
+
+
 # ==================== DATABASE MODELS ====================
 
 def role_required(roles):
@@ -6672,9 +6717,8 @@ def create_student():
             random_code = secrets.token_hex(2).upper()
             student_id = f"STU-{year_code}-{school_code}-{random_code}"
             
-            # Check if student ID already exists
-            existing = Student.query.filter_by(student_id=student_id).first()
-            if existing:
+            # Ensure uniqueness
+            while Student.query.filter_by(student_id=student_id).first():
                 random_code = secrets.token_hex(2).upper()
                 student_id = f"STU-{year_code}-{school_code}-{random_code}"
             
@@ -6690,13 +6734,13 @@ def create_student():
             base_email = re.sub(r'[^a-zA-Z0-9._-]', '', base_email)
             student_email = f"{base_email}@{school_domain}"
             
-            # Check if email already exists
+            # Ensure email uniqueness
             counter = 1
             while Student.query.filter_by(email=student_email, school_id=current_user.school_id).first():
                 student_email = f"{base_email}{counter}@{school_domain}"
                 counter += 1
             
-            # Generate password for student
+            # Generate temporary password
             temp_password = secrets.token_urlsafe(8)
             
             # Create student record
@@ -6715,7 +6759,7 @@ def create_student():
                 school_id=current_user.school_id
             )
             db.session.add(student)
-            db.session.flush()  # Get student ID
+            db.session.flush()  # get student.id
             
             # Create user account for student
             user = User(
@@ -6730,12 +6774,11 @@ def create_student():
             db.session.add(user)
             db.session.flush()
             
-            # Update student with user_id
+            # Update student with user_id (if needed)
             student.user_id = user.id
             
             # Automatically enroll student in selected class
             selected_class = Class.query.get(form.class_id.data)
-            
             if not selected_class:
                 flash('Selected class not found.', 'danger')
                 db.session.rollback()
@@ -6769,7 +6812,28 @@ def create_student():
             
             db.session.commit()
             
-            flash(f'Student created successfully! Student ID: {student_id}, Login Email: {student_email}, Temporary Password: {temp_password}, Enrolled in: {selected_class.name}, Roll Number: {max_roll + 1}', 'success')
+            # ---------- SEND EMAIL ----------
+            login_url = url_for('login', _external=True)
+            student_full_name = f"{student.first_name} {student.last_name}"
+            email_html = get_student_welcome_email(
+                student_name=student_full_name,
+                student_id=student.student_id,
+                email=student_email,
+                temp_password=temp_password,
+                login_url=login_url
+            )
+            email_sent = send_email(
+                to_email=student_email,
+                subject=f"Welcome to EduManage Pro – Your Student Account",
+                html_body=email_html
+            )
+            
+            if email_sent:
+                flash(f'Student created successfully! Credentials sent to {student_email}.', 'success')
+            else:
+                flash(f'Student created but email could not be sent. Temporary password: {temp_password}', 'warning')
+            # --------------------------------
+            
             return redirect(url_for('manage_students'))
             
         except Exception as e:
