@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_, func
 import json
 from datetime import datetime, date, timedelta  # ADD timedelta here
 from functools import wraps
+from string import Template
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session, send_file
 from flask_sqlalchemy import SQLAlchemy
@@ -97,7 +98,7 @@ def send_email(to_email, subject, html_body, text_body=None):
     return False
 
 def get_admin_welcome_email(admin_name, school_name, email, temp_password, login_url):
-    html = """<!DOCTYPE html>
+    html_template = """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -173,18 +174,18 @@ body {{
 
     <div class="content">
 
-        <p>Dear <strong>{admin_name}</strong>,</p>
+        <p>Dear <strong>$admin_name</strong>,</p>
 
-        <p>Your administrator account for the school <strong>{school_name}</strong> has been created successfully.</p>
+        <p>Your administrator account for the school <strong>$school_name</strong> has been created successfully.</p>
 
         <div class="credential-box">
-            <strong>Email:</strong> {email}<br>
-            <strong>Password:</strong> {temp_password}
+            <strong>Email:</strong> $email<br>
+            <strong>Password:</strong> $temp_password
         </div>
 
         <p>Please login using the button below:</p>
 
-        <a href="{login_url}" class="button">Login Now</a>
+        <a href="$login_url" class="button">Login Now</a>
 
         <p style="margin-top:20px;">
             ⚠️ You will be required to change your password after first login.
@@ -200,16 +201,15 @@ body {{
 </div>
 
 </body>
-</html>
-""".format(
+</html>"""
+    template = Template(html_template)
+    return template.substitute(
         admin_name=admin_name,
         school_name=school_name,
         email=email,
         temp_password=temp_password,
         login_url=login_url
     )
-
-    return html
 
 
 def get_student_welcome_email(student_name, student_id, email, temp_password, login_url):
@@ -5640,7 +5640,7 @@ def create_school():
             
             db.session.commit()
             
-            # ---------- SEND EMAIL WITH FALLBACK ----------
+            # Attempt to send email (but don't fail if it doesn't work)
             email_sent = False
             try:
                 login_url = url_for('login', _external=True)
@@ -5657,15 +5657,13 @@ def create_school():
                     html_body=html_email
                 )
             except Exception as email_err:
-                app.logger.error(f"Email sending failed: {email_err}")
+                app.logger.error(f"Email generation or sending failed: {email_err}")
                 email_sent = False
             
             if email_sent:
                 flash(f"School created successfully! Admin credentials have been sent to {form.admin_email.data}.", "success")
             else:
-                # Show the password in the flash message (only once, not as a warning but as info)
                 flash(f"School created but email could not be sent. Temporary password for admin: {temp_password}", "warning")
-            # ----------------------------------------------
             
             return redirect(url_for('developer_dashboard'))
             
