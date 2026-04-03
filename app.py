@@ -5640,7 +5640,7 @@ def create_school():
             
             db.session.commit()
             
-            # Attempt to send email (but don't fail if it doesn't work)
+            # ---------- SEND EMAIL WITH FALLBACK ----------
             email_sent = False
             try:
                 login_url = url_for('login', _external=True)
@@ -5663,7 +5663,9 @@ def create_school():
             if email_sent:
                 flash(f"School created successfully! Admin credentials have been sent to {form.admin_email.data}.", "success")
             else:
+                # Show the password in the flash message (only once, not as a warning but as info)
                 flash(f"School created but email could not be sent. Temporary password for admin: {temp_password}", "warning")
+            # ----------------------------------------------
             
             return redirect(url_for('developer_dashboard'))
             
