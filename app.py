@@ -117,104 +117,152 @@ def get_admin_welcome_email(admin_name, school_name, email, temp_password, login
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to EduManage Pro</title>
-
 <style>
-body {{
-    font-family: Arial, sans-serif;
-    background-color: #f4f7fc;
-    margin: 0;
-    padding: 0;
-}}
-
-.container {{
-    max-width: 600px;
-    margin: 30px auto;
-    background: #ffffff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-}}
-
-.header {{
-    background: #1e3c72;
-    color: white;
-    padding: 30px;
-    text-align: center;
-}}
-
-.content {{
-    padding: 30px;
-    color: #333;
-}}
-
-.credential-box {{
-    background: #f1f5ff;
-    padding: 15px;
-    border-radius: 8px;
-    margin: 20px 0;
-    font-family: monospace;
-}}
-
-.button {{
-    display: inline-block;
-    padding: 12px 25px;
-    background: #1e3c72;
-    color: white !important;
-    text-decoration: none;
-    border-radius: 6px;
-    margin-top: 20px;
-}}
-
-.footer {{
-    background: #f0f4f8;
-    padding: 15px;
-    text-align: center;
-    font-size: 12px;
-    color: #666;
-}}
+    /* Base styles */
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f0f2f5;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background: #ffffff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    .header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 40px 30px;
+        text-align: center;
+        color: white;
+    }
+    .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+    .header p {
+        margin: 10px 0 0;
+        opacity: 0.9;
+        font-size: 16px;
+    }
+    .content {
+        padding: 40px 30px;
+        color: #333;
+        line-height: 1.5;
+    }
+    .greeting {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+    .school-name {
+        font-weight: 600;
+        color: #2a5298;
+    }
+    .credential-box {
+        background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
+        border-left: 5px solid #2a5298;
+        padding: 20px;
+        border-radius: 12px;
+        margin: 25px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .credential-box strong {
+        color: #1e3c72;
+        display: inline-block;
+        width: 100px;
+    }
+    .button-container {
+        text-align: center;
+        margin: 30px 0 20px;
+    }
+    .button {
+        display: inline-block;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white !important;
+        text-decoration: none;
+        padding: 14px 32px;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 16px;
+        box-shadow: 0 4px 10px rgba(16,185,129,0.3);
+        transition: transform 0.2s ease;
+    }
+    .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(16,185,129,0.4);
+    }
+    .warning-note {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin: 25px 0;
+        font-size: 14px;
+        color: #78350f;
+    }
+    .footer {
+        background: #f8fafc;
+        padding: 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #64748b;
+        border-top: 1px solid #e2e8f0;
+    }
+    .footer a {
+        color: #2a5298;
+        text-decoration: none;
+    }
+    @media (max-width: 480px) {
+        .header h1 { font-size: 24px; }
+        .content { padding: 25px 20px; }
+        .credential-box strong { width: 80px; }
+        .button { padding: 12px 24px; font-size: 14px; }
+    }
 </style>
-
 </head>
-
 <body>
-
 <div class="container">
-
     <div class="header">
-        <h2>🎓 EduManage Pro</h2>
-        <p>School Management System</p>
+        <h1>🎓 EduManage Pro</h1>
+        <p>Next‑Gen School Management System</p>
     </div>
-
     <div class="content">
-
-        <p>Dear <strong>$admin_name</strong>,</p>
-
-        <p>Your administrator account for the school <strong>$school_name</strong> has been created successfully.</p>
-
-        <div class="credential-box">
-            <strong>Email:</strong> $email<br>
-            <strong>Password:</strong> $temp_password
+        <div class="greeting">
+            Dear <strong>$admin_name</strong>,
         </div>
-
-        <p>Please login using the button below:</p>
-
-        <a href="$login_url" class="button">Login Now</a>
-
-        <p style="margin-top:20px;">
-            ⚠️ You will be required to change your password after first login.
+        <p>Your administrator account for <span class="school-name">$school_name</span> has been successfully created.</p>
+        
+        <div class="credential-box">
+            <div><strong>Email:</strong> $email</div>
+            <div style="margin-top: 8px;"><strong>Password:</strong> <span style="background: #e2e8f0; padding: 4px 8px; border-radius: 6px;">$temp_password</span></div>
+        </div>
+        
+        <div class="button-container">
+            <a href="$login_url" class="button">🔐 Login to Dashboard</a>
+        </div>
+        
+        <div class="warning-note">
+            ⚠️ <strong>First login required:</strong> You will be asked to change your password immediately after your first login.
+        </div>
+        
+        <p style="font-size: 14px; margin-top: 20px;">
+            Need help? Contact our support team at <a href="mailto:support@edumanagepro.com">support@edumanagepro.com</a>
         </p>
-
     </div>
-
     <div class="footer">
-        © 2025 EduManage Pro<br>
-        This is an automated email. Please do not reply.
+        © 2025 EduManage Pro — Secure & Reliable School Management<br>
+        This is an automated message, please do not reply.
     </div>
-
 </div>
-
 </body>
 </html>"""
+    from string import Template
     template = Template(html_template)
     return template.substitute(
         admin_name=admin_name,
