@@ -70,13 +70,16 @@ def send_email(to_email, subject, html_body, text_body=None):
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
         raise Exception("MAIL_USERNAME and MAIL_PASSWORD not configured in environment variables")
     if not app.config['MAIL_DEFAULT_SENDER']:
-        app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']  # fallback
+        # Fallback to MAIL_USERNAME if not set
+        app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']
 
+    # Create message
     msg = MIMEMultipart('alternative')
     msg['From'] = app.config['MAIL_DEFAULT_SENDER']
     msg['To'] = to_email
     msg['Subject'] = subject
 
+    # Generate plain text version from HTML if not provided
     if text_body is None:
         import re
         text_body = re.sub(r'<[^>]+>', '', html_body)
