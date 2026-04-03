@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_, func
 import json
 from datetime import datetime, date, timedelta  # ADD timedelta here
 from functools import wraps
+from string import Template
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session, send_file
 from flask_sqlalchemy import SQLAlchemy
@@ -50,8 +51,8 @@ login_manager.login_view = 'login'
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'supportyourerp@gmail.com')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'rsgfbydmxqefdrze')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'c9748268@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'uzemporsbfeesjpy')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@schoolerp.com')
 
 from email.mime.text import MIMEText
@@ -59,9 +60,17 @@ from email.mime.multipart import MIMEMultipart
 import smtplib
 
 def send_email(to_email, subject, html_body, text_body=None):
+    """
+    Send an email. Raises an exception if configuration is missing or sending fails.
+    Returns True on success.
+    """
+    # Validate configuration
+    if not app.config['MAIL_SERVER']:
+        raise Exception("MAIL_SERVER not configured in environment variables")
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
-        app.logger.warning("Email credentials not set.")
-        return False
+        raise Exception("MAIL_USERNAME and MAIL_PASSWORD not configured in environment variables")
+    if not app.config['MAIL_DEFAULT_SENDER']:
+        app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']  # fallback
 
     msg = MIMEMultipart('alternative')
     msg['From'] = app.config['MAIL_DEFAULT_SENDER']
@@ -79,6 +88,7 @@ def send_email(to_email, subject, html_body, text_body=None):
     msg.attach(part_html)
 
     # Try TLS (587) first, fallback to SSL (465)
+    last_error = None
     for port, use_ssl in [(587, False), (465, True)]:
         try:
             if use_ssl:
@@ -93,11 +103,12 @@ def send_email(to_email, subject, html_body, text_body=None):
             return True
         except Exception as e:
             app.logger.error(f"Attempt on port {port} failed: {e}")
+            last_error = e
             continue
-    return False
+    raise Exception(f"All email attempts failed. Last error: {last_error}")
 
 def get_admin_welcome_email(admin_name, school_name, email, temp_password, login_url):
-    html = """<!DOCTYPE html>
+    html_template = """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -173,18 +184,18 @@ body {{
 
     <div class="content">
 
-        <p>Dear <strong>{admin_name}</strong>,</p>
+        <p>Dear <strong>$admin_name</strong>,</p>
 
-        <p>Your administrator account for the school <strong>{school_name}</strong> has been created successfully.</p>
+        <p>Your administrator account for the school <strong>$school_name</strong> has been created successfully.</p>
 
         <div class="credential-box">
-            <strong>Email:</strong> {email}<br>
-            <strong>Password:</strong> {temp_password}
+            <strong>Email:</strong> $email<br>
+            <strong>Password:</strong> $temp_password
         </div>
 
         <p>Please login using the button below:</p>
 
-        <a href="{login_url}" class="button">Login Now</a>
+        <a href="$login_url" class="button">Login Now</a>
 
         <p style="margin-top:20px;">
             ⚠️ You will be required to change your password after first login.
@@ -200,16 +211,15 @@ body {{
 </div>
 
 </body>
-</html>
-""".format(
+</html>"""
+    template = Template(html_template)
+    return template.substitute(
         admin_name=admin_name,
         school_name=school_name,
         email=email,
         temp_password=temp_password,
         login_url=login_url
     )
-
-    return html
 
 
 def get_student_welcome_email(student_name, student_id, email, temp_password, login_url):
@@ -220,13 +230,13 @@ def get_student_welcome_email(student_name, student_id, email, temp_password, lo
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to EduManage Pro</title>
 <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f7fc; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    .header { background: #1e3c72; color: white; padding: 30px; text-align: center; }
-    .content { padding: 30px; color: #333; }
-    .credential-box { background: #f1f5ff; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
-    .button { display: inline-block; padding: 12px 25px; background: #1e3c72; color: white !important; text-decoration: none; border-radius: 6px; margin-top: 20px; }
-    .footer { background: #f0f4f8; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+    body {{ font-family: Arial, sans-serif; background-color: #f4f7fc; margin: 0; padding: 0; }}
+    .container {{ max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }}
+    .header {{ background: #1e3c72; color: white; padding: 30px; text-align: center; }}
+    .content {{ padding: 30px; color: #333; }}
+    .credential-box {{ background: #f1f5ff; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }}
+    .button {{ display: inline-block; padding: 12px 25px; background: #1e3c72; color: white !important; text-decoration: none; border-radius: 6px; margin-top: 20px; }}
+    .footer {{ background: #f0f4f8; padding: 15px; text-align: center; font-size: 12px; color: #666; }}
 </style>
 </head>
 <body>
@@ -5657,7 +5667,7 @@ def create_school():
                     html_body=html_email
                 )
             except Exception as email_err:
-                app.logger.error(f"Email sending failed: {email_err}")
+                app.logger.error(f"Email generation or sending failed: {email_err}")
                 email_sent = False
             
             if email_sent:
@@ -6717,9 +6727,8 @@ def create_student():
             random_code = secrets.token_hex(2).upper()
             student_id = f"STU-{year_code}-{school_code}-{random_code}"
             
-            # Check if student ID already exists
-            existing = Student.query.filter_by(student_id=student_id).first()
-            if existing:
+            # Ensure uniqueness
+            while Student.query.filter_by(student_id=student_id).first():
                 random_code = secrets.token_hex(2).upper()
                 student_id = f"STU-{year_code}-{school_code}-{random_code}"
             
@@ -6735,13 +6744,13 @@ def create_student():
             base_email = re.sub(r'[^a-zA-Z0-9._-]', '', base_email)
             student_email = f"{base_email}@{school_domain}"
             
-            # Check if email already exists
+            # Ensure email uniqueness
             counter = 1
             while Student.query.filter_by(email=student_email, school_id=current_user.school_id).first():
                 student_email = f"{base_email}{counter}@{school_domain}"
                 counter += 1
             
-            # Generate password for student
+            # Generate temporary password
             temp_password = secrets.token_urlsafe(8)
             
             # Create student record
@@ -6760,7 +6769,7 @@ def create_student():
                 school_id=current_user.school_id
             )
             db.session.add(student)
-            db.session.flush()  # Get student ID
+            db.session.flush()  # get student.id
             
             # Create user account for student
             user = User(
@@ -6775,12 +6784,11 @@ def create_student():
             db.session.add(user)
             db.session.flush()
             
-            # Update student with user_id
+            # Update student with user_id (if needed)
             student.user_id = user.id
             
             # Automatically enroll student in selected class
             selected_class = Class.query.get(form.class_id.data)
-            
             if not selected_class:
                 flash('Selected class not found.', 'danger')
                 db.session.rollback()
@@ -6814,7 +6822,30 @@ def create_student():
             
             db.session.commit()
             
-            flash(f'Student created successfully! Student ID: {student_id}, Login Email: {student_email}, Temporary Password: {temp_password}, Enrolled in: {selected_class.name}, Roll Number: {max_roll + 1}', 'success')
+            # ---------- SEND EMAIL TO PARENT ----------
+            if student.parent_email:
+                login_url = url_for('login', _external=True)
+                student_full_name = f"{student.first_name} {student.last_name}"
+                email_html = get_student_welcome_email(
+                    student_name=student_full_name,
+                    student_id=student.student_id,
+                    email=student_email,          # student's login email
+                    temp_password=temp_password,
+                    login_url=login_url
+                )
+                email_sent = send_email(
+                    to_email=student.parent_email,   # send to parent's email
+                    subject=f"Welcome to EduManage Pro – Your Child's Student Account",
+                    html_body=email_html
+                )
+                if email_sent:
+                    flash(f'Student created successfully! Credentials sent to parent email: {student.parent_email}.', 'success')
+                else:
+                    flash(f'Student created but email could not be sent. Temporary password: {temp_password}', 'warning')
+            else:
+                flash(f'Student created successfully! No parent email provided. Temporary password: {temp_password}', 'warning')
+            # ----------------------------------------
+            
             return redirect(url_for('manage_students'))
             
         except Exception as e:
