@@ -60,9 +60,17 @@ from email.mime.multipart import MIMEMultipart
 import smtplib
 
 def send_email(to_email, subject, html_body, text_body=None):
+    """
+    Send an email. Raises an exception if configuration is missing or sending fails.
+    Returns True on success.
+    """
+    # Validate configuration
+    if not app.config['MAIL_SERVER']:
+        raise Exception("MAIL_SERVER not configured in environment variables")
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
-        app.logger.warning("Email credentials not set.")
-        return False
+        raise Exception("MAIL_USERNAME and MAIL_PASSWORD not configured in environment variables")
+    if not app.config['MAIL_DEFAULT_SENDER']:
+        app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']  # fallback
 
     msg = MIMEMultipart('alternative')
     msg['From'] = app.config['MAIL_DEFAULT_SENDER']
@@ -80,6 +88,7 @@ def send_email(to_email, subject, html_body, text_body=None):
     msg.attach(part_html)
 
     # Try TLS (587) first, fallback to SSL (465)
+    last_error = None
     for port, use_ssl in [(587, False), (465, True)]:
         try:
             if use_ssl:
@@ -94,8 +103,9 @@ def send_email(to_email, subject, html_body, text_body=None):
             return True
         except Exception as e:
             app.logger.error(f"Attempt on port {port} failed: {e}")
+            last_error = e
             continue
-    return False
+    raise Exception(f"All email attempts failed. Last error: {last_error}")
 
 def get_admin_welcome_email(admin_name, school_name, email, temp_password, login_url):
     html_template = """<!DOCTYPE html>
