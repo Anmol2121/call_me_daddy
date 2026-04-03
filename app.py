@@ -220,13 +220,13 @@ def get_student_welcome_email(student_name, student_id, email, temp_password, lo
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to EduManage Pro</title>
 <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f7fc; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    .header { background: #1e3c72; color: white; padding: 30px; text-align: center; }
-    .content { padding: 30px; color: #333; }
-    .credential-box { background: #f1f5ff; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
-    .button { display: inline-block; padding: 12px 25px; background: #1e3c72; color: white !important; text-decoration: none; border-radius: 6px; margin-top: 20px; }
-    .footer { background: #f0f4f8; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+    body {{ font-family: Arial, sans-serif; background-color: #f4f7fc; margin: 0; padding: 0; }}
+    .container {{ max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }}
+    .header {{ background: #1e3c72; color: white; padding: 30px; text-align: center; }}
+    .content {{ padding: 30px; color: #333; }}
+    .credential-box {{ background: #f1f5ff; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }}
+    .button {{ display: inline-block; padding: 12px 25px; background: #1e3c72; color: white !important; text-decoration: none; border-radius: 6px; margin-top: 20px; }}
+    .footer {{ background: #f0f4f8; padding: 15px; text-align: center; font-size: 12px; color: #666; }}
 </style>
 </head>
 <body>
