@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Receptionist Dashboard{% endblock %}
+{% block header %}Visitor Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Receptionist</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-search me-2 text-primary"></i> Student Search</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Search by Student ID, Name, or Parent Email</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="studentSearch" placeholder="Type name, ID, or parent email...">
+                        <button class="btn btn-primary" type="button" id="searchBtn"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                <div id="searchResults" class="mt-3" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Modal for visitor details & OTP -->
+        <div class="modal fade" id="visitorModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i> Create Visitor Pass</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="visitorForm">
+                            <div class="mb-3">
+                                <label class="form-label">Visitor Name *</label>
+                                <input type="text" class="form-control" id="visitorName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Visitor Phone</label>
+                                <input type="tel" class="form-control" id="visitorPhone">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Relationship *</label>
+                                <select class="form-select" id="relationship">
+                                    <option value="Parent">Parent</option>
+                                    <option value="Grandparent">Grandparent</option>
+                                    <option value="Uncle/Aunt">Uncle/Aunt</option>
+                                    <option value="Sibling">Sibling</option>
+                                    <option value="Relative">Relative</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Purpose</label>
+                                <input type="text" class="form-control" id="purpose" value="Pickup">
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-envelope me-2"></i> OTP will be sent to the parent's registered email.
+                            </div>
+                            <button class="btn btn-primary w-100" id="sendOtpBtn">Send OTP &rarr;</button>
+                        </div>
+                        <div id="otpSection" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Enter OTP sent to parent</label>
+                                <input type="text" class="form-control" id="otpCode" placeholder="6-digit code" maxlength="6">
+                            </div>
+                            <button class="btn btn-success w-100" id="verifyOtpBtn">Verify & Generate Pass</button>
+                            <div class="mt-2 text-center">
+                                <button class="btn btn-link btn-sm" id="resendOtpBtn">Resend OTP</button>
+                            </div>
+                        </div>
+                        <div id="passResult" style="display: none;" class="mt-3 text-center">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                                <h5 class="mt-2">Pass Generated!</h5>
+                                <p><strong>Pass Code:</strong> <span id="passCode"></span></p>
+                                <p><strong>Expires:</strong> <span id="expiryTime"></span></p>
+                                <p>Student: <span id="studentName"></span><br>Visitor: <span id="visitorNameDisplay"></span></p>
+                                <button class="btn btn-sm btn-outline-primary" onclick="window.print()"><i class="fas fa-print"></i> Print Pass</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-hourglass-half me-2 text-warning"></i> Active Passes</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for pass in active_passes %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ pass.student.first_name }} {{ pass.student.last_name }}</strong>
+                                <div class="small text-muted">{{ pass.visitor_name }} ({{ pass.relationship }})</div>
+                                <div><small>Expires: {{ pass.expiry_time.strftime('%H:%M') }}</small></div>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary me-2">{{ pass.pass_code }}</span>
+                                {% if not pass.check_in_time %}
+                                <button class="btn btn-sm btn-success checkin-btn" data-id="{{ pass.id }}">Check In</button>
+                                {% elif not pass.check_out_time %}
+                                <button class="btn btn-sm btn-danger checkout-btn" data-id="{{ pass.id }}">Check Out</button>
+                                {% else %}
+                                <span class="badge bg-secondary">Completed</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">No active passes</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2 text-info"></i> Recent Passes</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for pass in recent_passes[:5] %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ pass.student.first_name }} {{ pass.student.last_name }}</strong>
+                                <div class="small">{{ pass.visitor_name }} · {{ pass.relationship }}</div>
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary">{{ pass.status }}</span>
+                                <div class="small">{{ pass.generated_at.strftime('%d/%m %H:%M') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedStudentId = null;
+
+$('#searchBtn').click(function() {
+    const query = $('#studentSearch').val().trim();
+    if (!query) return;
+    $.get('/receptionist/search-student', {q: query}, function(data) {
+        let html = '';
+        if (data.length === 0) {
+            html = '<div class="alert alert-warning">No student found</div>';
+        } else {
+            html = '<ul class="list-group">';
+            data.forEach(s => {
+                html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${s.name}</strong><br>
+                                <small>ID: ${s.student_id} | Class: ${s.class}</small><br>
+                                <small class="text-muted">Parent Email: ${s.parent_email}</small>
+                            </div>
+                            <button class="btn btn-sm btn-primary select-student" data-id="${s.id}" data-name="${s.name}">Select</button>
+                         </li>`;
+            });
+            html += '</ul>';
+        }
+        $('#searchResults').html(html).show();
+    });
+});
+
+$(document).on('click', '.select-student', function() {
+    selectedStudentId = $(this).data('id');
+    const studentName = $(this).data('name');
+    $('#visitorModal').modal('show');
+    $('#visitorForm').show();
+    $('#otpSection').hide();
+    $('#passResult').hide();
+    $('#visitorForm input, #visitorForm select').val('');
+    $('#visitorForm #purpose').val('Pickup');
+});
+
+$('#sendOtpBtn').click(function() {
+    if (!selectedStudentId) return;
+    const data = {
+        student_id: selectedStudentId,
+        visitor_name: $('#visitorName').val(),
+        visitor_phone: $('#visitorPhone').val(),
+        relationship: $('#relationship').val(),
+        purpose: $('#purpose').val()
+    };
+    if (!data.visitor_name || !data.relationship) {
+        alert('Please fill visitor name and relationship');
+        return;
+    }
+    $.post('/receptionist/request-pass', JSON.stringify(data), function(res) {
+        if (res.success) {
+            alert(res.message);
+            $('#visitorForm').hide();
+            $('#otpSection').show();
+        } else {
+            alert('Error: ' + res.error);
+        }
+    }).fail(() => alert('Server error'));
+});
+
+$('#verifyOtpBtn').click(function() {
+    const otp = $('#otpCode').val();
+    if (!otp || otp.length !== 6) {
+        alert('Enter the 6-digit OTP');
+        return;
+    }
+    $.post('/receptionist/verify-otp', JSON.stringify({otp: otp}), function(res) {
+        if (res.success) {
+            $('#otpSection').hide();
+            $('#passCode').text(res.pass_code);
+            $('#expiryTime').text(res.expiry);
+            $('#studentName').text(res.student_name);
+            $('#visitorNameDisplay').text(res.visitor_name);
+            $('#passResult').show();
+            // Reload page after 2 sec to update active passes
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            alert(res.error);
+        }
+    }).fail(() => alert('Verification failed'));
+});
+
+$(document).on('click', '.checkin-btn', function() {
+    const passId = $(this).data('id');
+    $.post(`/receptionist/checkin/${passId}`, function(res) {
+        if (res.success) location.reload();
+        else alert(res.error);
+    });
+});
+$(document).on('click', '.checkout-btn', function() {
+    const passId = $(this).data('id');
+    $.post(`/receptionist/checkout/${passId}`, function(res) {
+        if (res.success) location.reload();
+        else alert(res.error);
+    });
+});
+</script>
+{% endblock %}
