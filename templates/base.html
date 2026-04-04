@@ -875,6 +875,31 @@
                             <span class="menu-badge">Academic</span>
                         </a>
                     </li>
+
+                    <!-- NEW: Visitor Management for Admin -->
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
+                            <i class="fas fa-shield-alt menu-icon"></i>
+                            <span class="menu-text">Visitor Management</span>
+                            <span class="menu-badge">Reception</span>
+                        </a>
+                    </li>
+                    
+                    {% elif current_user.role == 'receptionist' %}
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
+                            <i class="fas fa-tachometer-alt menu-icon"></i>
+                            <span class="menu-text">Dashboard</span>
+                            <span class="menu-badge">Reception</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
+                            <i class="fas fa-shield-alt menu-icon"></i>
+                            <span class="menu-text">Visitor Pass</span>
+                            <span class="menu-badge">Issue</span>
+                        </a>
+                    </li>
                     
                     {% elif current_user.role == 'teacher' %}
                     <li class="menu-item">
@@ -1119,6 +1144,25 @@
             <a class="bottom-nav-item {% if request.endpoint == 'admin_timetable' %}active{% endif %}" href="{{ url_for('admin_timetable') }}">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Timetable</span>
+            </a>
+            <!-- Visitor Management bottom nav for admin -->
+            <a class="bottom-nav-item {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
+                <i class="fas fa-shield-alt"></i>
+                <span>Visitors</span>
+            </a>
+            <a class="bottom-nav-item" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+            
+            {% elif current_user.role == 'receptionist' %}
+            <a class="bottom-nav-item {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="bottom-nav-item" href="{{ url_for('receptionist_dashboard') }}">
+                <i class="fas fa-shield-alt"></i>
+                <span>New Pass</span>
             </a>
             <a class="bottom-nav-item" href="{{ url_for('logout') }}">
                 <i class="fas fa-sign-out-alt"></i>
