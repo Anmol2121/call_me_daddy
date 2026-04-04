@@ -414,7 +414,7 @@ def send_otp_email(parent_email, student_name, visitor_name, otp):
 # ==================== RECEPTIONIST / VISITOR PASS ROUTES ====================
 
 @app.route('/receptionist/dashboard')
-@role_required(['admin', 'receptionist'])   # admin can also access
+@role_required(['receptionist'])   # admin can also access
 @school_active_required
 def receptionist_dashboard():
     if current_user.must_change_password:
@@ -441,7 +441,7 @@ def receptionist_dashboard():
 
 
 @app.route('/receptionist/search-student')
-@role_required(['admin', 'receptionist'])
+@role_required(['receptionist'])
 def receptionist_search_student():
     query = request.args.get('q', '').strip()
     if not query:
@@ -471,7 +471,7 @@ def receptionist_search_student():
 
 
 @app.route('/receptionist/request-pass', methods=['POST'])
-@role_required(['admin', 'receptionist'])
+@role_required(['receptionist'])
 def request_visitor_pass():
     data = request.get_json()
     student_id = data.get('student_id')
@@ -509,7 +509,7 @@ def request_visitor_pass():
 
 
 @app.route('/receptionist/verify-otp', methods=['POST'])
-@role_required(['admin', 'receptionist'])
+@role_required(['receptionist'])
 def verify_otp_and_create_pass():
     data = request.get_json()
     otp_entered = data.get('otp')
@@ -564,7 +564,7 @@ def verify_otp_and_create_pass():
 
 
 @app.route('/receptionist/checkin/<int:pass_id>', methods=['POST'])
-@role_required(['admin', 'receptionist'])
+@role_required(['receptionist'])
 def visitor_checkin(pass_id):
     vpass = VisitorPass.query.get_or_404(pass_id)
     if vpass.student.school_id != current_user.school_id:
@@ -579,7 +579,7 @@ def visitor_checkin(pass_id):
 
 
 @app.route('/receptionist/checkout/<int:pass_id>', methods=['POST'])
-@role_required(['admin', 'receptionist'])
+@role_required(['receptionist'])
 def visitor_checkout(pass_id):
     vpass = VisitorPass.query.get_or_404(pass_id)
     if vpass.student.school_id != current_user.school_id:
@@ -592,6 +592,110 @@ def visitor_checkout(pass_id):
     vpass.status = 'used'
     db.session.commit()
     return jsonify({'success': True, 'message': 'Checked out, pass marked as used'})
+
+
+# ==================== ADMIN MANAGE RECEPTIONISTS ====================
+
+@app.route('/admin/receptionists')
+@role_required(['admin'])
+@school_active_required
+def manage_receptionists():
+    """List all receptionists in the school."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    receptionists = User.query.filter_by(
+        school_id=current_user.school_id,
+        role='receptionist',
+        is_active=True
+    ).all()
+    
+    return render_template('admin_manage_receptionists.html',
+                         receptionists=receptionists,
+                         context=context)
+
+
+@app.route('/admin/receptionists/create', methods=['GET', 'POST'])
+@role_required(['admin'])
+@school_active_required
+def create_receptionist():
+    """Create a new receptionist account."""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    form = CreateReceptionistForm()
+    context = get_school_context()
+    
+    if form.validate_on_submit():
+        # Check if email already exists
+        existing = User.query.filter_by(email=form.email.data).first()
+        if existing:
+            flash('Email already registered', 'danger')
+        else:
+            temp_password = secrets.token_urlsafe(8)
+            receptionist = User(
+                email=form.email.data,
+                full_name=form.full_name.data,
+                phone=form.phone.data,
+                role='receptionist',
+                school_id=current_user.school_id,
+                must_change_password=True
+            )
+            receptionist.set_password(temp_password)
+            db.session.add(receptionist)
+            db.session.commit()
+            
+            flash(f'Receptionist created! Temporary password: {temp_password}', 'success')
+            return redirect(url_for('manage_receptionists'))
+    
+    return render_template('admin_create_receptionist.html',
+                         form=form,
+                         context=context)
+
+
+@app.route('/admin/receptionists/<int:receptionist_id>/reset-password', methods=['GET', 'POST'])
+@role_required(['admin'])
+@school_active_required
+def reset_receptionist_password(receptionist_id):
+    """Admin resets receptionist password."""
+    receptionist = User.query.filter_by(
+        id=receptionist_id,
+        school_id=current_user.school_id,
+        role='receptionist'
+    ).first_or_404()
+    
+    form = ResetReceptionistPasswordForm()
+    if form.validate_on_submit():
+        new_password = secrets.token_urlsafe(8)
+        receptionist.set_password(new_password)
+        receptionist.must_change_password = True
+        db.session.commit()
+        flash(f'Password reset. New temporary password: {new_password}', 'success')
+        return redirect(url_for('manage_receptionists'))
+    
+    return render_template('admin_reset_receptionist_password.html',
+                         form=form,
+                         receptionist=receptionist,
+                         context=get_school_context())
+
+
+@app.route('/admin/receptionists/<int:receptionist_id>/toggle-status', methods=['POST'])
+@role_required(['admin'])
+@school_active_required
+def toggle_receptionist_status(receptionist_id):
+    """Activate/Deactivate a receptionist."""
+    receptionist = User.query.filter_by(
+        id=receptionist_id,
+        school_id=current_user.school_id,
+        role='receptionist'
+    ).first_or_404()
+    
+    receptionist.is_active = not receptionist.is_active
+    db.session.commit()
+    status = "activated" if receptionist.is_active else "deactivated"
+    flash(f'Receptionist {receptionist.full_name} {status}.', 'success')
+    return redirect(url_for('manage_receptionists'))
 #======================================================================
 #======================================================================
 
@@ -638,6 +742,17 @@ def toggle_exam_marks_entry(exam_id):
     flash(f'Marks entry portal has been {status} for {exam.name} ({exam.class_.name}).', 'success')
     
     return redirect(url_for('manage_exams'))
+
+class CreateReceptionistForm(FlaskForm):
+    full_name = StringField('Full Name', validators=[DataRequired()])
+    email = EmailField('Email', validators=[DataRequired(), Email()])
+    phone = StringField('Phone')
+    submit = SubmitField('Create Receptionist')
+
+class ResetReceptionistPasswordForm(FlaskForm):
+    reason = StringField('Reason for Reset')
+    submit = SubmitField('Reset Password')
+
 
 
 class Subject(db.Model):
