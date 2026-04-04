@@ -345,6 +345,258 @@ def school_active_required(f):
     return decorated_function
 
 
+
+#============== Res ==============================================
+#=================================================================
+# ==================== VISITOR / PARENT CONFIRMATION MODELS ====================
+
+class VisitorPass(db.Model):
+    __tablename__ = 'visitor_passes'
+    id = db.Column(db.Integer, primary_key=True)
+    pass_code = db.Column(db.String(50), unique=True, nullable=False)   # e.g. VIS-20250404-ABC123
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    visitor_name = db.Column(db.String(150), nullable=False)
+    visitor_phone = db.Column(db.String(20))
+    relationship = db.Column(db.String(50))          # parent, uncle, etc.
+    purpose = db.Column(db.String(200))
+    requested_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    otp_code = db.Column(db.String(10))              # 6‑digit OTP (plain for demo)
+    otp_verified = db.Column(db.Boolean, default=False)
+    otp_sent_at = db.Column(db.DateTime)
+    verified_at = db.Column(db.DateTime)
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expiry_time = db.Column(db.DateTime, nullable=False)   # 2 hours after generation
+    status = db.Column(db.String(20), default='pending')   # pending, active, expired, used
+    check_in_time = db.Column(db.DateTime)
+    check_out_time = db.Column(db.DateTime)
+    notes = db.Column(db.Text)
+
+    # relationships
+    student = db.relationship('Student', backref='visitor_passes')
+    requester = db.relationship('User', foreign_keys=[requested_by])
+
+    def is_expired(self):
+        return datetime.utcnow() > self.expiry_time
+
+    def generate_pass_code(self):
+        import secrets
+        date_str = datetime.utcnow().strftime('%Y%m%d')
+        random_part = secrets.token_hex(3).upper()
+        self.pass_code = f"VIS-{date_str}-{random_part}"
+
+
+import random
+
+def generate_otp():
+    """Generate a 6‑digit numeric OTP."""
+    return f"{random.randint(100000, 999999)}"
+
+def send_otp_email(parent_email, student_name, visitor_name, otp):
+    """Send OTP to parent's email."""
+    subject = "Child Pickup Verification – OTP Required"
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px;">
+        <h2>Child Pickup Request</h2>
+        <p>A pickup request has been made for <strong>{student_name}</strong> by <strong>{visitor_name}</strong>.</p>
+        <p>To confirm this request, please use the following OTP:</p>
+        <div style="background: #f0f4ff; padding: 15px; text-align: center; font-size: 28px; letter-spacing: 4px;">
+            <strong>{otp}</strong>
+        </div>
+        <p>This OTP is valid for <strong>5 minutes</strong>.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <hr>
+        <small>EduManage Pro – School Management System</small>
+    </div>
+    """
+    send_email(parent_email, subject, html_body)
+
+
+# ==================== RECEPTIONIST / VISITOR PASS ROUTES ====================
+
+@app.route('/receptionist/dashboard')
+@role_required(['admin', 'receptionist'])   # admin can also access
+@school_active_required
+def receptionist_dashboard():
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+
+    # Active passes (not expired, not used)
+    active_passes = VisitorPass.query.join(Student).filter(
+        Student.school_id == current_user.school_id,
+        VisitorPass.status == 'active',
+        VisitorPass.expiry_time > datetime.utcnow()
+    ).order_by(VisitorPass.expiry_time).all()
+
+    recent_passes = VisitorPass.query.join(Student).filter(
+        Student.school_id == current_user.school_id
+    ).order_by(VisitorPass.generated_at.desc()).limit(10).all()
+
+    return render_template('receptionist_dashboard.html',
+                           context=context,
+                           active_passes=active_passes,
+                           recent_passes=recent_passes)
+
+
+@app.route('/receptionist/search-student')
+@role_required(['admin', 'receptionist'])
+def receptionist_search_student():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify([])
+
+    students = Student.query.filter(
+        Student.school_id == current_user.school_id,
+        Student.is_active == True,
+        db.or_(
+            Student.student_id.ilike(f'%{query}%'),
+            Student.first_name.ilike(f'%{query}%'),
+            Student.last_name.ilike(f'%{query}%'),
+            Student.parent_email.ilike(f'%{query}%')
+        )
+    ).limit(10).all()
+
+    result = []
+    for s in students:
+        result.append({
+            'id': s.id,
+            'student_id': s.student_id,
+            'name': f"{s.first_name} {s.last_name}",
+            'class': s.current_class.name if s.current_class else 'Not enrolled',
+            'parent_email': s.parent_email or 'Not registered'
+        })
+    return jsonify(result)
+
+
+@app.route('/receptionist/request-pass', methods=['POST'])
+@role_required(['admin', 'receptionist'])
+def request_visitor_pass():
+    data = request.get_json()
+    student_id = data.get('student_id')
+    visitor_name = data.get('visitor_name')
+    visitor_phone = data.get('visitor_phone')
+    relationship = data.get('relationship')
+    purpose = data.get('purpose', 'Pickup')
+
+    student = Student.query.filter_by(id=student_id, school_id=current_user.school_id).first()
+    if not student:
+        return jsonify({'success': False, 'error': 'Student not found'})
+
+    if not student.parent_email:
+        return jsonify({'success': False, 'error': 'Parent email not registered for this student'})
+
+    # Generate OTP and store in session (or create a pending pass)
+    otp = generate_otp()
+    # Store pending data in session
+    session['pending_visitor'] = {
+        'student_id': student_id,
+        'visitor_name': visitor_name,
+        'visitor_phone': visitor_phone,
+        'relationship': relationship,
+        'purpose': purpose,
+        'otp': otp,
+        'otp_expires': (datetime.utcnow() + timedelta(minutes=5)).timestamp()
+    }
+
+    # Send OTP email
+    try:
+        send_otp_email(student.parent_email, f"{student.first_name} {student.last_name}", visitor_name, otp)
+        return jsonify({'success': True, 'message': f'OTP sent to {student.parent_email}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Failed to send OTP: {str(e)}'})
+
+
+@app.route('/receptionist/verify-otp', methods=['POST'])
+@role_required(['admin', 'receptionist'])
+def verify_otp_and_create_pass():
+    data = request.get_json()
+    otp_entered = data.get('otp')
+
+    pending = session.get('pending_visitor')
+    if not pending:
+        return jsonify({'success': False, 'error': 'No pending request. Please start again.'})
+
+    # Check OTP expiry
+    otp_expires = datetime.fromtimestamp(pending['otp_expires'])
+    if datetime.utcnow() > otp_expires:
+        session.pop('pending_visitor', None)
+        return jsonify({'success': False, 'error': 'OTP has expired. Please request a new one.'})
+
+    if pending['otp'] != otp_entered:
+        return jsonify({'success': False, 'error': 'Invalid OTP'})
+
+    # OTP verified – create permanent pass
+    student = Student.query.get(pending['student_id'])
+    if not student:
+        return jsonify({'success': False, 'error': 'Student not found'})
+
+    expiry = datetime.utcnow() + timedelta(hours=2)   # 2 hours validity
+    pass_obj = VisitorPass(
+        pass_code='',   # will be generated
+        student_id=student.id,
+        visitor_name=pending['visitor_name'],
+        visitor_phone=pending['visitor_phone'],
+        relationship=pending['relationship'],
+        purpose=pending['purpose'],
+        requested_by=current_user.id,
+        otp_code=pending['otp'],
+        otp_verified=True,
+        verified_at=datetime.utcnow(),
+        expiry_time=expiry,
+        status='active'
+    )
+    pass_obj.generate_pass_code()
+    db.session.add(pass_obj)
+    db.session.commit()
+
+    # Clear session
+    session.pop('pending_visitor', None)
+
+    return jsonify({
+        'success': True,
+        'pass_code': pass_obj.pass_code,
+        'expiry': expiry.strftime('%Y-%m-%d %H:%M:%S'),
+        'student_name': f"{student.first_name} {student.last_name}",
+        'visitor_name': pass_obj.visitor_name
+    })
+
+
+@app.route('/receptionist/checkin/<int:pass_id>', methods=['POST'])
+@role_required(['admin', 'receptionist'])
+def visitor_checkin(pass_id):
+    vpass = VisitorPass.query.get_or_404(pass_id)
+    if vpass.student.school_id != current_user.school_id:
+        return jsonify({'success': False, 'error': 'Unauthorized'})
+
+    if vpass.status != 'active':
+        return jsonify({'success': False, 'error': 'Pass is not active'})
+
+    vpass.check_in_time = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Checked in successfully'})
+
+
+@app.route('/receptionist/checkout/<int:pass_id>', methods=['POST'])
+@role_required(['admin', 'receptionist'])
+def visitor_checkout(pass_id):
+    vpass = VisitorPass.query.get_or_404(pass_id)
+    if vpass.student.school_id != current_user.school_id:
+        return jsonify({'success': False, 'error': 'Unauthorized'})
+
+    if vpass.status != 'active':
+        return jsonify({'success': False, 'error': 'Pass is not active'})
+
+    vpass.check_out_time = datetime.utcnow()
+    vpass.status = 'used'
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Checked out, pass marked as used'})
+#======================================================================
+#======================================================================
+
+
+
 # ========================exam==========================
 class Exam(db.Model):
     __tablename__ = 'exams'
@@ -4363,6 +4615,10 @@ class User(UserMixin, db.Model):
     @property
     def is_student(self):
         return self.role == 'student'
+
+    @property
+    def is_receptionist(self):
+        return self.role == 'receptionist'
 
 class ResetTeacherPasswordForm(FlaskForm):
     """Form to reset teacher password"""
