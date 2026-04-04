@@ -796,6 +796,14 @@
                     </li>
                     
                     <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint in ['manage_receptionists', 'create_receptionist'] %}active{% endif %}" href="{{ url_for('manage_receptionists') }}">
+                            <i class="fas fa-user-tie menu-icon"></i>
+                            <span class="menu-text">Receptionists</span>
+                            <span class="menu-badge">Staff</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
                         <a class="menu-link {% if request.endpoint in ['manage_classes', 'create_class'] %}active{% endif %}" href="{{ url_for('manage_classes') }}">
                             <i class="fas fa-chalkboard menu-icon"></i>
                             <span class="menu-text">Classes</span>
@@ -875,15 +883,6 @@
                             <span class="menu-badge">Academic</span>
                         </a>
                     </li>
-
-                    <!-- NEW: Visitor Management for Admin -->
-                    <li class="menu-item">
-                        <a class="menu-link {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
-                            <i class="fas fa-shield-alt menu-icon"></i>
-                            <span class="menu-text">Visitor Management</span>
-                            <span class="menu-badge">Reception</span>
-                        </a>
-                    </li>
                     
                     {% elif current_user.role == 'receptionist' %}
                     <li class="menu-item">
@@ -896,8 +895,8 @@
                     <li class="menu-item">
                         <a class="menu-link {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
                             <i class="fas fa-shield-alt menu-icon"></i>
-                            <span class="menu-text">Visitor Pass</span>
-                            <span class="menu-badge">Issue</span>
+                            <span class="menu-text">Issue Pass</span>
+                            <span class="menu-badge">Visitor</span>
                         </a>
                     </li>
                     
@@ -1137,6 +1136,10 @@
                 <i class="fas fa-chalkboard-teacher"></i>
                 <span>Teachers</span>
             </a>
+            <a class="bottom-nav-item {% if request.endpoint in ['manage_receptionists'] %}active{% endif %}" href="{{ url_for('manage_receptionists') }}">
+                <i class="fas fa-user-tie"></i>
+                <span>Reception</span>
+            </a>
             <a class="bottom-nav-item {% if request.endpoint in ['manage_fee_structures'] %}active{% endif %}" href="{{ url_for('manage_fee_structures') }}">
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Fees</span>
@@ -1144,11 +1147,6 @@
             <a class="bottom-nav-item {% if request.endpoint == 'admin_timetable' %}active{% endif %}" href="{{ url_for('admin_timetable') }}">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Timetable</span>
-            </a>
-            <!-- Visitor Management bottom nav for admin -->
-            <a class="bottom-nav-item {% if request.endpoint == 'receptionist_dashboard' %}active{% endif %}" href="{{ url_for('receptionist_dashboard') }}">
-                <i class="fas fa-shield-alt"></i>
-                <span>Visitors</span>
             </a>
             <a class="bottom-nav-item" href="{{ url_for('logout') }}">
                 <i class="fas fa-sign-out-alt"></i>
