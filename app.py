@@ -5471,6 +5471,8 @@ def dashboard():
         return redirect(url_for('teacher_dashboard'))
     elif current_user.is_student:
         return redirect(url_for('student_dashboard'))
+    elif current_user.is_receptionist:          # <-- ADD THIS
+        return redirect(url_for('receptionist_dashboard'))
     else:
         flash('Unknown user role', 'danger')
         return redirect(url_for('logout'))
