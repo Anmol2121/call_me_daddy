@@ -6021,7 +6021,7 @@ def time_ago_filter(value):
     else:
         return 'Just now'
 
-@app.route('/developer/schools/create', methods=['GET', 'POST'])
+"""@app.route('/developer/schools/create', methods=['GET', 'POST'])
 @role_required(['developer'])
 def create_school():
     if current_user.must_change_password:
@@ -6102,6 +6102,80 @@ def create_school():
                 flash(f"School created successfully! Admin credentials have been sent to {form.admin_email.data}.", "success")
             else:
                 flash(f"School created but email could not be sent. Temporary password for admin: {temp_password}", "warning")
+            
+            return redirect(url_for('developer_dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error creating school: {str(e)}")
+            flash(f"Error creating school: {str(e)}", "danger")
+            return render_template('developer_create_school.html', form=form)
+    
+    # For GET request or validation errors
+    return render_template('developer_create_school.html', form=form)"""
+
+@app.route('/developer/schools/create', methods=['GET', 'POST'])
+@role_required(['developer'])
+def create_school():
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    form = CreateSchoolForm()
+    
+    if form.validate_on_submit():
+        try:
+            # Generate unique school code
+            school_code = f"SCH-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
+            
+            # Create school
+            school = School(
+                name=form.school_name.data,
+                code=school_code,
+                address=form.address.data,
+                phone=form.phone.data,
+                email=form.email.data,
+                website=form.website.data,
+                established_year=datetime.now().year,
+                is_active=True
+            )
+            db.session.add(school)
+            db.session.flush()  # Get school ID
+            
+            # Generate admin password
+            temp_password = generate_password()
+            
+            # Create admin user
+            admin = User(
+                email=form.admin_email.data,
+                full_name=form.admin_name.data,
+                role='admin',
+                school_id=school.id,
+                must_change_password=True,
+                is_active=True
+            )
+            admin.set_password(temp_password)
+            db.session.add(admin)
+            
+            # Create default session for current year
+            current_year = datetime.now().year
+            session_name = f"{current_year}-{current_year + 1}"
+            academic_session = AcademicSession(
+                name=session_name,
+                start_date=date(current_year, 4, 1),
+                end_date=date(current_year + 1, 3, 31),
+                is_current=True,
+                is_active=True,
+                school_id=school.id
+            )
+            db.session.add(academic_session)
+            
+            db.session.commit()
+            
+            # ✅ Display credentials directly to developer (no email)
+            flash("School created successfully! Admin login credentials:", "success")
+            flash(f"Email: {form.admin_email.data}", "info")
+            flash(f"Temporary password: {temp_password}", "warning")
+            flash("Please share these credentials with the school administrator manually.", "info")
             
             return redirect(url_for('developer_dashboard'))
             
