@@ -7335,31 +7335,21 @@ def create_student():
             
             db.session.commit()
             
-            # ---------- SEND EMAIL TO PARENT ----------
-            if student.parent_email:
-                login_url = url_for('login', _external=True)
-                student_full_name = f"{student.first_name} {student.last_name}"
-                email_html = get_student_welcome_email(
-                    student_name=student_full_name,
-                    student_id=student.student_id,
-                    email=student_email,          # student's login email
-                    temp_password=temp_password,
-                    login_url=login_url
-                )
-                email_sent = send_email(
-                    to_email=student.parent_email,   # send to parent's email
-                    subject=f"Welcome to EduManage Pro – Your Child's Student Account",
-                    html_body=email_html
-                )
-                if email_sent:
-                    flash(f'Student created successfully! Credentials sent to parent email: {student.parent_email}.', 'success')
-                else:
-                    flash(f'Student created but email could not be sent. Temporary password: {temp_password}', 'warning')
-            else:
-                flash(f'Student created successfully! No parent email provided. Temporary password: {temp_password}', 'warning')
-            # ----------------------------------------
-            
-            return redirect(url_for('manage_students'))
+            # ---------- SHOW CREDENTIALS IN MODAL (NO EMAIL) ----------
+            credentials = {
+                'student_id': student.student_id,
+                'login_email': student_email,
+                'temp_password': temp_password,
+                'student_name': f"{student.first_name} {student.last_name}",
+                'parent_email': student.parent_email or 'Not provided'
+            }
+            # Re‑render the same form with the modal flag and credentials
+            return render_template('admin_create_student.html',
+                                   form=form,
+                                   context=context,
+                                   classes=classes,
+                                   show_credentials_modal=True,
+                                   credentials=credentials)
             
         except Exception as e:
             db.session.rollback()
