@@ -455,6 +455,22 @@ def receptionist_dashboard():
                            active_passes=active_passes,
                            recent_passes=recent_passes)
 
+@app.route('/admin/fix-receptionist-schools')
+@role_required(['admin'])
+def fix_receptionist_schools():
+    fixed = 0
+    # Find the first admin in the same school
+    admin = User.query.filter_by(role='admin', school_id=current_user.school_id).first()
+    if not admin:
+        return "No admin found in your school."
+    
+    receptionists = User.query.filter_by(role='receptionist', school_id=None).all()
+    for rec in receptionists:
+        rec.school_id = admin.school_id
+        fixed += 1
+    db.session.commit()
+    return f"Fixed {fixed} receptionist(s)."
+
 
 @app.route('/receptionist/search-student')
 @role_required(['receptionist'])
@@ -463,7 +479,13 @@ def receptionist_search_student():
     if not query:
         return jsonify([])
 
-    # Debug: log search parameters
+    # If school_id is missing, try to fetch it from the receptionist’s school association
+    if current_user.school_id is None:
+        # Attempt to recover: find any school where this user is a receptionist (should be only one)
+        # For safety, we can still search but with no results – better to log error
+        app.logger.error(f"Receptionist {current_user.id} has no school_id. Cannot search students.")
+        return jsonify({'error': 'Account misconfiguration – contact administrator'}), 400
+
     app.logger.info(f"Receptionist {current_user.id} (school_id={current_user.school_id}) searching for: '{query}'")
 
     students = Student.query.filter(
@@ -478,16 +500,13 @@ def receptionist_search_student():
     ).limit(10).all()
 
     app.logger.info(f"Found {len(students)} students")
-
-    result = []
-    for s in students:
-        result.append({
-            'id': s.id,
-            'student_id': s.student_id,
-            'name': f"{s.first_name} {s.last_name}",
-            'class': s.current_class.name if s.current_class else 'Not enrolled',
-            'parent_email': s.parent_email or 'Not registered'
-        })
+    result = [{
+        'id': s.id,
+        'student_id': s.student_id,
+        'name': f"{s.first_name} {s.last_name}",
+        'class': s.current_class.name if s.current_class else 'Not enrolled',
+        'parent_email': s.parent_email or 'Not registered'
+    } for s in students]
     return jsonify(result)
 
 @app.route('/receptionist/request-pass', methods=['POST'])
