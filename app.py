@@ -388,6 +388,18 @@ class VisitorPass(db.Model):
         random_part = secrets.token_hex(3).upper()
         self.pass_code = f"VIS-{date_str}-{random_part}"
 
+@app.route('/receptionist/debug-info')
+@role_required(['receptionist'])
+def receptionist_debug():
+    school_id = current_user.school_id
+    students = Student.query.filter_by(school_id=school_id, is_active=True).all()
+    return jsonify({
+        'receptionist_id': current_user.id,
+        'school_id': school_id,
+        'student_count': len(students),
+        'sample_students': [{'id': s.id, 'student_id': s.student_id, 'name': s.first_name} for s in students[:5]]
+    })
+
 
 import random
 
@@ -451,6 +463,9 @@ def receptionist_search_student():
     if not query:
         return jsonify([])
 
+    # Debug: log search parameters
+    app.logger.info(f"Receptionist {current_user.id} (school_id={current_user.school_id}) searching for: '{query}'")
+
     students = Student.query.filter(
         Student.school_id == current_user.school_id,
         Student.is_active == True,
@@ -462,6 +477,8 @@ def receptionist_search_student():
         )
     ).limit(10).all()
 
+    app.logger.info(f"Found {len(students)} students")
+
     result = []
     for s in students:
         result.append({
@@ -472,7 +489,6 @@ def receptionist_search_student():
             'parent_email': s.parent_email or 'Not registered'
         })
     return jsonify(result)
-
 
 @app.route('/receptionist/request-pass', methods=['POST'])
 @role_required(['receptionist'])
