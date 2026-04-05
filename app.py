@@ -6123,6 +6123,12 @@ def create_school():
     form = CreateSchoolForm()
     
     if form.validate_on_submit():
+        # CHECK IF ADMIN EMAIL ALREADY EXISTS
+        existing_user = User.query.filter_by(email=form.admin_email.data).first()
+        if existing_user:
+            flash(f'Email {form.admin_email.data} is already registered to another user. Please use a different email for the school admin.', 'danger')
+            return render_template('developer_create_school.html', form=form)
+        
         try:
             # Generate unique school code
             school_code = f"SCH-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
@@ -6139,7 +6145,7 @@ def create_school():
                 is_active=True
             )
             db.session.add(school)
-            db.session.flush()  # Get school ID
+            db.session.flush()
             
             # Generate admin password
             temp_password = generate_password()
@@ -6156,7 +6162,7 @@ def create_school():
             admin.set_password(temp_password)
             db.session.add(admin)
             
-            # Create default session for current year
+            # Create default session
             current_year = datetime.now().year
             session_name = f"{current_year}-{current_year + 1}"
             academic_session = AcademicSession(
@@ -6171,21 +6177,26 @@ def create_school():
             
             db.session.commit()
             
-            # ✅ Display credentials directly to developer (no email)
-            flash("School created successfully! Admin login credentials:", "success")
-            flash(f"Email: {form.admin_email.data}", "info")
-            flash(f"Temporary password: {temp_password}", "warning")
-            flash("Please share these credentials with the school administrator manually.", "info")
-            
-            return redirect(url_for('developer_dashboard'))
+            # Instead of flashing, render template with credentials for modal
+            return render_template('developer_create_school.html', 
+                                 form=form,
+                                 show_credentials_modal=True,
+                                 credentials={
+                                     'email': admin.email,
+                                     'password': temp_password,
+                                     'school_name': school.name,
+                                     'admin_name': admin.full_name
+                                 })
             
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error creating school: {str(e)}")
-            flash(f"Error creating school: {str(e)}", "danger")
+            if 'duplicate key value violates unique constraint' in str(e) and 'users_email_key' in str(e):
+                flash(f"Email {form.admin_email.data} is already registered. Please use a different email.", "danger")
+            else:
+                flash(f"Error creating school: {str(e)}", "danger")
             return render_template('developer_create_school.html', form=form)
     
-    # For GET request or validation errors
     return render_template('developer_create_school.html', form=form)
 
 @app.route('/developer/schools')
