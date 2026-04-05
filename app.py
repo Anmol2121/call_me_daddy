@@ -479,12 +479,18 @@ def receptionist_search_student():
     if not query:
         return jsonify([])
 
-    # If school_id is missing, try to fetch it from the receptionist’s school association
+    # If school_id is missing, try to find it from the receptionist's school association
     if current_user.school_id is None:
-        # Attempt to recover: find any school where this user is a receptionist (should be only one)
-        # For safety, we can still search but with no results – better to log error
-        app.logger.error(f"Receptionist {current_user.id} has no school_id. Cannot search students.")
-        return jsonify({'error': 'Account misconfiguration – contact administrator'}), 400
+        # Attempt to recover: find the school where this receptionist is assigned
+        # (assumes the receptionist belongs to a school via any admin or student)
+        admin = User.query.filter_by(role='admin', school_id=current_user.school_id).first()
+        if admin and admin.school_id:
+            current_user.school_id = admin.school_id
+            db.session.commit()
+            app.logger.info(f"Auto‑fixed receptionist {current_user.id} with school_id={current_user.school_id}")
+        else:
+            app.logger.error(f"Receptionist {current_user.id} has no school_id and cannot be fixed.")
+            return jsonify({'error': 'Account misconfiguration – contact administrator'}), 400
 
     app.logger.info(f"Receptionist {current_user.id} (school_id={current_user.school_id}) searching for: '{query}'")
 
