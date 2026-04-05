@@ -151,182 +151,200 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-let selectedStudentId = null;
-let currentStudentName = '';
+$(document).ready(function() {
+    // Variables
+    let selectedStudentId = null;
+    let currentStudentName = '';
 
-// Helper to escape HTML (prevent XSS)
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
+    // Helper to escape HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Search button click
+    $('#searchBtn').click(function() {
+        const query = $('#studentSearch').val().trim();
+        if (!query) {
+            $('#searchResults').html('<div class="alert alert-warning">Please enter a search term.</div>').show();
+            return;
+        }
+
+        $('#searchResults').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>').show();
+
+        $.get('/receptionist/search-student', { q: query })
+            .done(function(data) {
+                let html = '';
+                if (data.length === 0) {
+                    html = '<div class="alert alert-warning">No students found. Try a different name, ID, or email.</div>';
+                } else {
+                    html = '<ul class="list-group">';
+                    data.forEach(function(s) {
+                        html += '<li class="list-group-item d-flex justify-content-between align-items-center">' +
+                                    '<div>' +
+                                        '<strong>' + escapeHtml(s.name) + '</strong><br>' +
+                                        '<small>ID: ' + escapeHtml(s.student_id) + ' | Class: ' + escapeHtml(s.class) + '</small><br>' +
+                                        '<small class="text-muted">Parent Email: ' + escapeHtml(s.parent_email) + '</small>' +
+                                    '</div>' +
+                                    '<button class="btn btn-sm btn-primary select-student" data-id="' + s.id + '" data-name="' + escapeHtml(s.name) + '">Select</button>' +
+                                '</li>';
+                    });
+                    html += '</ul>';
+                }
+                $('#searchResults').html(html);
+            })
+            .fail(function(xhr) {
+                let errMsg = 'Server error. Please contact administrator.';
+                if (xhr.responseJSON && xhr.responseJSON.error) errMsg = xhr.responseJSON.error;
+                $('#searchResults').html('<div class="alert alert-danger">' + escapeHtml(errMsg) + '</div>');
+            });
     });
-}
 
-// Search button click
-$('#searchBtn').click(function() {
-    const query = $('#studentSearch').val().trim();
-    if (!query) return;
-    
-    $('#searchResults').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>').show();
-    
-    $.get('/receptionist/search-student', {q: query})
-        .done(function(data) {
-            let html = '';
-            if (data.length === 0) {
-                html = '<div class="alert alert-warning">No student found. Check spelling or try another search term.</div>';
-            } else if (data.error) {
-                html = `<div class="alert alert-danger">${escapeHtml(data.error)}</div>`;
-            } else {
-                html = '<ul class="list-group">';
-                data.forEach(s => {
-                    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>${escapeHtml(s.name)}</strong><br>
-                                    <small>ID: ${escapeHtml(s.student_id)} | Class: ${escapeHtml(s.class)}</small><br>
-                                    <small class="text-muted">Parent Email: ${escapeHtml(s.parent_email)}</small>
-                                </div>
-                                <button class="btn btn-sm btn-primary select-student" data-id="${s.id}" data-name="${escapeHtml(s.name)}">Select</button>
-                             </li>`;
-                });
-                html += '</ul>';
-            }
-            $('#searchResults').html(html).show();
-        })
-        .fail(function(xhr) {
-            let errMsg = 'Server error. Please contact administrator.';
-            if (xhr.responseJSON && xhr.responseJSON.error) errMsg = xhr.responseJSON.error;
-            $('#searchResults').html(`<div class="alert alert-danger">${escapeHtml(errMsg)}</div>`).show();
-        });
-});
+    // Select student and open modal
+    $(document).on('click', '.select-student', function() {
+        selectedStudentId = $(this).data('id');
+        currentStudentName = $(this).data('name');
+        $('#visitorModal').modal('show');
+        $('#visitorForm').show();
+        $('#otpSection').hide();
+        $('#passResult').hide();
+        $('#visitorName').val('');
+        $('#visitorPhone').val('');
+        $('#relationship').val('Parent');
+        $('#purpose').val('Pickup');
+        $('#otpCode').val('');
+    });
 
-// Select student and open modal
-$(document).on('click', '.select-student', function() {
-    selectedStudentId = $(this).data('id');
-    currentStudentName = $(this).data('name');
-    $('#visitorModal').modal('show');
-    $('#visitorForm').show();
-    $('#otpSection').hide();
-    $('#passResult').hide();
-    $('#visitorName').val('');
-    $('#visitorPhone').val('');
-    $('#relationship').val('Parent');
-    $('#purpose').val('Pickup');
-    $('#otpCode').val('');
-});
+    // Send OTP
+    $('#sendOtpBtn').click(function() {
+        if (!selectedStudentId) {
+            alert('No student selected. Please search and select a student first.');
+            return;
+        }
+        const visitorName = $('#visitorName').val().trim();
+        const relationship = $('#relationship').val();
+        if (!visitorName || !relationship) {
+            alert('Please fill visitor name and relationship.');
+            return;
+        }
 
-// Send OTP request
-$('#sendOtpBtn').click(function() {
-    if (!selectedStudentId) {
-        alert('No student selected. Please search and select a student first.');
-        return;
-    }
-    const visitorName = $('#visitorName').val().trim();
-    const relationship = $('#relationship').val();
-    if (!visitorName || !relationship) {
-        alert('Please fill visitor name and relationship');
-        return;
-    }
-    
-    const data = {
-        student_id: selectedStudentId,
-        visitor_name: visitorName,
-        visitor_phone: $('#visitorPhone').val(),
-        relationship: relationship,
-        purpose: $('#purpose').val()
-    };
-    
-    $('#sendOtpBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Sending OTP...');
-    
-    $.post('/receptionist/request-pass', JSON.stringify(data))
-        .done(function(res) {
-            if (res.success) {
-                alert(res.message);
-                $('#visitorForm').hide();
-                $('#otpSection').show();
-            } else {
-                alert('Error: ' + res.error);
-            }
-        })
-        .fail(function(xhr) {
-            let err = 'Server error';
-            if (xhr.responseJSON && xhr.responseJSON.error) err = xhr.responseJSON.error;
-            alert('Failed to send OTP: ' + err);
-        })
-        .always(function() {
-            $('#sendOtpBtn').prop('disabled', false).html('Send OTP &rarr;');
-        });
-});
+        const data = {
+            student_id: selectedStudentId,
+            visitor_name: visitorName,
+            visitor_phone: $('#visitorPhone').val(),
+            relationship: relationship,
+            purpose: $('#purpose').val()
+        };
 
-// Verify OTP and generate pass
-$('#verifyOtpBtn').click(function() {
-    const otp = $('#otpCode').val().trim();
-    if (!otp || otp.length !== 6) {
-        alert('Enter the 6-digit OTP sent to the parent');
-        return;
-    }
-    
-    $('#verifyOtpBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Verifying...');
-    
-    $.post('/receptionist/verify-otp', JSON.stringify({otp: otp}))
-        .done(function(res) {
-            if (res.success) {
-                $('#otpSection').hide();
-                $('#passCode').text(res.pass_code);
-                $('#expiryTime').text(res.expiry);
-                $('#studentName').text(res.student_name);
-                $('#visitorNameDisplay').text(res.visitor_name);
-                $('#passResult').show();
-                // Refresh page after 3 seconds to show the new active pass
-                setTimeout(() => location.reload(), 3000);
-            } else {
-                alert(res.error);
-            }
-        })
-        .fail(function(xhr) {
-            let err = 'Verification failed';
-            if (xhr.responseJSON && xhr.responseJSON.error) err = xhr.responseJSON.error;
-            alert(err);
-        })
-        .always(function() {
-            $('#verifyOtpBtn').prop('disabled', false).html('Verify & Generate Pass');
-        });
-});
+        $('#sendOtpBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Sending OTP...');
 
-// Resend OTP (optional: implement if needed)
-$('#resendOtpBtn').click(function() {
-    // You can re-trigger the same OTP request using the stored data
-    if (!selectedStudentId) return;
-    const data = {
-        student_id: selectedStudentId,
-        visitor_name: $('#visitorName').val(),
-        visitor_phone: $('#visitorPhone').val(),
-        relationship: $('#relationship').val(),
-        purpose: $('#purpose').val()
-    };
-    $.post('/receptionist/request-pass', JSON.stringify(data))
-        .done(function(res) {
-            if (res.success) alert('OTP resent successfully.');
-            else alert('Error: ' + res.error);
-        })
-        .fail(() => alert('Failed to resend OTP.'));
-});
+        $.post('/receptionist/request-pass', JSON.stringify(data))
+            .done(function(res) {
+                if (res.success) {
+                    alert(res.message);
+                    $('#visitorForm').hide();
+                    $('#otpSection').show();
+                } else {
+                    alert('Error: ' + res.error);
+                }
+            })
+            .fail(function(xhr) {
+                let err = 'Server error';
+                if (xhr.responseJSON && xhr.responseJSON.error) err = xhr.responseJSON.error;
+                alert('Failed to send OTP: ' + err);
+            })
+            .always(function() {
+                $('#sendOtpBtn').prop('disabled', false).html('Send OTP &rarr;');
+            });
+    });
 
-// Check-in / Check-out buttons
-$(document).on('click', '.checkin-btn', function() {
-    const passId = $(this).data('id');
-    $.post(`/receptionist/checkin/${passId}`)
-        .done(res => { if (res.success) location.reload(); else alert(res.error); })
-        .fail(() => alert('Check-in failed'));
-});
-$(document).on('click', '.checkout-btn', function() {
-    const passId = $(this).data('id');
-    $.post(`/receptionist/checkout/${passId}`)
-        .done(res => { if (res.success) location.reload(); else alert(res.error); })
-        .fail(() => alert('Check-out failed'));
+    // Verify OTP
+    $('#verifyOtpBtn').click(function() {
+        const otp = $('#otpCode').val().trim();
+        if (!otp || otp.length !== 6) {
+            alert('Enter the 6-digit OTP sent to the parent.');
+            return;
+        }
+
+        $('#verifyOtpBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Verifying...');
+
+        $.post('/receptionist/verify-otp', JSON.stringify({ otp: otp }))
+            .done(function(res) {
+                if (res.success) {
+                    $('#otpSection').hide();
+                    $('#passCode').text(res.pass_code);
+                    $('#expiryTime').text(res.expiry);
+                    $('#studentName').text(res.student_name);
+                    $('#visitorNameDisplay').text(res.visitor_name);
+                    $('#passResult').show();
+                    setTimeout(function() {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    alert(res.error);
+                }
+            })
+            .fail(function(xhr) {
+                let err = 'Verification failed';
+                if (xhr.responseJSON && xhr.responseJSON.error) err = xhr.responseJSON.error;
+                alert(err);
+            })
+            .always(function() {
+                $('#verifyOtpBtn').prop('disabled', false).html('Verify & Generate Pass');
+            });
+    });
+
+    // Resend OTP
+    $('#resendOtpBtn').click(function() {
+        if (!selectedStudentId) return;
+        const data = {
+            student_id: selectedStudentId,
+            visitor_name: $('#visitorName').val(),
+            visitor_phone: $('#visitorPhone').val(),
+            relationship: $('#relationship').val(),
+            purpose: $('#purpose').val()
+        };
+        $.post('/receptionist/request-pass', JSON.stringify(data))
+            .done(function(res) {
+                if (res.success) alert('OTP resent successfully.');
+                else alert('Error: ' + res.error);
+            })
+            .fail(function() {
+                alert('Failed to resend OTP.');
+            });
+    });
+
+    // Check-in / Check-out
+    $(document).on('click', '.checkin-btn', function() {
+        const passId = $(this).data('id');
+        $.post('/receptionist/checkin/' + passId)
+            .done(function(res) {
+                if (res.success) location.reload();
+                else alert(res.error);
+            })
+            .fail(function() {
+                alert('Check-in failed');
+            });
+    });
+
+    $(document).on('click', '.checkout-btn', function() {
+        const passId = $(this).data('id');
+        $.post('/receptionist/checkout/' + passId)
+            .done(function(res) {
+                if (res.success) location.reload();
+                else alert(res.error);
+            })
+            .fail(function() {
+                alert('Check-out failed');
+            });
+    });
 });
 </script>
 {% endblock %}
