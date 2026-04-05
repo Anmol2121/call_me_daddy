@@ -2,88 +2,67 @@
 {% block title %}Create School{% endblock %}
 {% block header %}Create New School{% endblock %}
 
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('developer_dashboard') }}">Developer</a></li>
+<li class="breadcrumb-item active">Create School</li>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('create_school') }}">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST">
                     {{ form.hidden_tag() }}
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">School Name *</label>
-                            {{ form.school_name(class="form-control" + (" is-invalid" if form.school_name.errors else ""), placeholder="Enter school name") }}
-                            {% for error in form.school_name.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">School Email</label>
-                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="school@example.com") }}
-                            {% for error in form.email.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
                     <div class="mb-3">
-                        <label class="form-label">School Address</label>
-                        {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else ""), placeholder="Full address of the school", rows="2") }}
-                        {% for error in form.address.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
+                        {{ form.school_name.label(class="form-label fw-bold") }}
+                        {{ form.school_name(class="form-control", placeholder="e.g., Delhi Public School") }}
+                        {% for error in form.school_name.errors %}
+                            <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Phone Number</label>
-                            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="School phone number") }}
-                            {% for error in form.phone.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
+                            {{ form.admin_name.label(class="form-label fw-bold") }}
+                            {{ form.admin_name(class="form-control", placeholder="Full name of admin") }}
+                            {% for error in form.admin_name.errors %}
+                                <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
-                        
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Website</label>
-                            {{ form.website(class="form-control" + (" is-invalid" if form.website.errors else ""), placeholder="https://school.edu") }}
-                            {% for error in form.website.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
+                            {{ form.admin_email.label(class="form-label fw-bold") }}
+                            {{ form.admin_email(class="form-control", placeholder="admin@school.com") }}
+                            {% for error in form.admin_email.errors %}
+                                <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
                     </div>
                     
-                    <hr class="my-4">
-                    
-                    <h5 class="mb-3">Admin Account Details</h5>
+                    <div class="mb-3">
+                        {{ form.address.label(class="form-label fw-bold") }}
+                        {{ form.address(class="form-control", rows="2", placeholder="School address") }}
+                    </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Admin Name *</label>
-                            {{ form.admin_name(class="form-control" + (" is-invalid" if form.admin_name.errors else ""), placeholder="Full name of admin") }}
-                            {% for error in form.admin_name.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                            {{ form.phone.label(class="form-label fw-bold") }}
+                            {{ form.phone(class="form-control", placeholder="Contact number") }}
                         </div>
-                        
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Admin Email *</label>
-                            {{ form.admin_email(class="form-control" + (" is-invalid" if form.admin_email.errors else ""), placeholder="admin@school.edu") }}
-                            {% for error in form.admin_email.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                            {{ form.email.label(class="form-label fw-bold") }}
+                            {{ form.email(class="form-control", placeholder="school@domain.com") }}
                         </div>
                     </div>
                     
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        A temporary password will be automatically generated and displayed after school creation.
-                        The admin will be required to change it on first login.
+                    <div class="mb-3">
+                        {{ form.website.label(class="form-label fw-bold") }}
+                        {{ form.website(class="form-control", placeholder="https://www.school.com") }}
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{{ url_for('developer_dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <a href="{{ url_for('developer_dashboard') }}" class="btn btn-secondary">Cancel</a>
                         {{ form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
@@ -91,4 +70,93 @@
         </div>
     </div>
 </div>
+
+<!-- CREDENTIALS MODAL -->
+{% if show_credentials_modal and credentials %}
+<div class="modal fade" id="credentialsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="credentialsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="credentialsModalLabel">
+                    <i class="fas fa-check-circle me-2"></i> School Created Successfully!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-light rounded-circle d-inline-flex p-3 mb-3">
+                        <i class="fas fa-school fa-3x text-primary"></i>
+                    </div>
+                    <h4>{{ credentials.school_name }}</h4>
+                    <p class="text-muted">Admin account created for {{ credentials.admin_name }}</p>
+                </div>
+                
+                <div class="alert alert-info border-0">
+                    <i class="fas fa-info-circle me-2"></i> 
+                    <strong>Please save these credentials securely.</strong> The admin will be prompted to change password on first login.
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Email Address</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-light" id="adminEmail" value="{{ credentials.email }}" readonly>
+                        <button class="btn btn-outline-primary copy-btn" data-clipboard-target="#adminEmail">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Temporary Password</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-light" id="adminPassword" value="{{ credentials.password }}" readonly>
+                        <button class="btn btn-outline-primary copy-btn" data-clipboard-target="#adminPassword">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning border-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This password is temporary. The admin must change it after logging in.
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('developer_dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show modal if credentials exist
+    {% if show_credentials_modal %}
+    var modal = new bootstrap.Modal(document.getElementById('credentialsModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    modal.show();
+    {% endif %}
+    
+    // Copy functionality
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-clipboard-target');
+            const input = document.querySelector(targetId);
+            input.select();
+            document.execCommand('copy');
+            
+            // Show tooltip or temporary feedback
+            const originalHtml = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                this.innerHTML = originalHtml;
+            }, 1500);
+        });
+    });
+});
+</script>
+{% endif %}
 {% endblock %}
