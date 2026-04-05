@@ -192,6 +192,67 @@
     </div>
 </div>
 
+<!-- Credentials Modal (appears automatically if show_credentials_modal is True) -->
+{% if show_credentials_modal %}
+<div class="modal fade" id="credentialsModal" tabindex="-1" aria-labelledby="credentialsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="credentialsModalLabel">
+                    <i class="fas fa-check-circle me-2"></i> Student Created Successfully!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar-circle avatar-success mx-auto mb-3" style="width: 70px; height: 70px; font-size: 2rem;">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h4 class="fw-bold">{{ credentials.student_name }}</h4>
+                    <p class="text-muted">Student account has been created</p>
+                </div>
+
+                <div class="credentials-box p-3 bg-light rounded-3 mb-3">
+                    <div class="row mb-2">
+                        <div class="col-5 fw-semibold">Student ID:</div>
+                        <div class="col-7"><code>{{ credentials.student_id }}</code></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 fw-semibold">Login Email:</div>
+                        <div class="col-7"><code>{{ credentials.login_email }}</code></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 fw-semibold">Temporary Password:</div>
+                        <div class="col-7"><code class="bg-warning bg-opacity-25 p-1 rounded">{{ credentials.temp_password }}</code></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 fw-semibold">Parent Email:</div>
+                        <div class="col-7">{{ credentials.parent_email }}</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info small">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Share these credentials with the student/parent. The student will be required to change the password on first login.
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-check me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var modal = new bootstrap.Modal(document.getElementById('credentialsModal'));
+        modal.show();
+    });
+</script>
+{% endif %}
+
 <script>
     // Function to generate email preview
     function generateEmailPreview() {
