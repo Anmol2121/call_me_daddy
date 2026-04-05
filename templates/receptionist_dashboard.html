@@ -2,222 +2,106 @@
 {% block title %}Receptionist Dashboard{% endblock %}
 {% block header %}Visitor Management{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* Mobile-first overrides */
-    @media (max-width: 768px) {
-        .btn, .list-group-item, .form-control {
-            font-size: 16px !important;
-            min-height: 48px;
-        }
-        .btn-sm {
-            min-height: 40px;
-            font-size: 14px;
-        }
-        .sticky-search {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: #f8fafc;
-            padding: 12px 0;
-            margin-top: -12px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .card {
-            border-radius: 20px;
-            margin-bottom: 16px;
-        }
-        .card-header {
-            padding: 16px;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .list-group-item {
-            padding: 16px;
-        }
-        .modal-dialog {
-            margin: 0;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-        }
-        .modal-content {
-            border-radius: 20px 20px 0 0;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .active-passes-list {
-            max-height: 300px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block breadcrumb %}
 <li class="breadcrumb-item active">Receptionist</li>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid px-2">
-    <!-- Sticky search for mobile -->
-    <div class="sticky-search d-block d-md-none">
-        <div class="input-group">
-            <input type="text" class="form-control" id="mobileSearchInput" placeholder="🔍 Search by name, ID, or parent email" autocomplete="off">
-            <button class="btn btn-primary" type="button" id="mobileSearchBtn">Search</button>
-        </div>
-        <div id="mobileSearchResults" class="mt-2" style="display: none;"></div>
-    </div>
-
-    <!-- Desktop search card -->
-    <div class="d-none d-md-block mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="fas fa-search me-2 text-primary"></i> Student Search</h5>
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>🔍 Search Student</h5>
             </div>
             <div class="card-body">
-                <div class="input-group">
-                    <input type="text" class="form-control" id="desktopSearchInput" placeholder="Type name, ID, or parent email...">
-                    <button class="btn btn-primary" type="button" id="desktopSearchBtn"><i class="fas fa-search"></i> Search</button>
+                <div class="input-group mb-3">
+                    <input type="text" id="searchQuery" class="form-control" placeholder="Enter name, ID, or parent email">
+                    <button class="btn btn-primary" id="searchButton">Search</button>
                 </div>
-                <div id="desktopSearchResults" class="mt-3" style="display: none;"></div>
+                <div id="results" style="display: none;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Active & Recent Passes (stack on mobile) -->
-    <div class="row">
-        <div class="col-12 col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-hourglass-half me-2 text-warning"></i> Active Passes</h5>
-                    <span class="badge bg-primary rounded-pill">{{ active_passes|length }}</span>
-                </div>
-                <div class="card-body p-0 active-passes-list">
-                    <div class="list-group list-group-flush">
-                        {% for pass in active_passes %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <div class="mb-2 mb-md-0">
-                                    <strong>{{ pass.student.first_name }} {{ pass.student.last_name }}</strong>
-                                    <div class="small text-muted">{{ pass.visitor_name }} ({{ pass.relationship }})</div>
-                                    <div class="small"><i class="far fa-clock"></i> Expires: {{ pass.expiry_time.strftime('%H:%M') }}</div>
-                                </div>
-                                <div>
-                                    <span class="badge bg-primary me-2 mb-1">{{ pass.pass_code }}</span>
-                                    {% if not pass.check_in_time %}
-                                    <button class="btn btn-sm btn-success checkin-btn" data-id="{{ pass.id }}"><i class="fas fa-sign-in-alt"></i> In</button>
-                                    {% elif not pass.check_out_time %}
-                                    <button class="btn btn-sm btn-danger checkout-btn" data-id="{{ pass.id }}"><i class="fas fa-sign-out-alt"></i> Out</button>
-                                    {% else %}
-                                    <span class="badge bg-secondary">Done</span>
-                                    {% endif %}
-                                </div>
-                            </div>
+    <div class="col-12 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>🟢 Active Passes</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for pass in active_passes %}
+                    <li class="list-group-item">
+                        <b>{{ pass.student.first_name }} {{ pass.student.last_name }}</b><br>
+                        {{ pass.visitor_name }} ({{ pass.relationship }})<br>
+                        Expires: {{ pass.expiry_time.strftime('%H:%M') }}
+                        <div class="mt-1">
+                            <span class="badge bg-primary">{{ pass.pass_code }}</span>
+                            {% if not pass.check_in_time %}
+                            <button class="btn btn-sm btn-success checkin-btn" data-id="{{ pass.id }}">Check In</button>
+                            {% elif not pass.check_out_time %}
+                            <button class="btn btn-sm btn-danger checkout-btn" data-id="{{ pass.id }}">Check Out</button>
+                            {% else %}
+                            <span class="badge bg-secondary">Completed</span>
+                            {% endif %}
                         </div>
-                        {% else %}
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-door-open fa-2x mb-2"></i>
-                            <p>No active passes</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No active passes</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
+    </div>
 
-        <div class="col-12 col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="fas fa-history me-2 text-info"></i> Recent Passes</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        {% for pass in recent_passes[:5] %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <strong>{{ pass.student.first_name }} {{ pass.student.last_name }}</strong>
-                                    <div class="small">{{ pass.visitor_name }} · {{ pass.relationship }}</div>
-                                </div>
-                                <div class="text-end">
-                                    <span class="badge bg-secondary mb-1">{{ pass.status }}</span>
-                                    <div class="small">{{ pass.generated_at.strftime('%d/%m %H:%M') }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="text-center py-4 text-muted">No recent passes</div>
-                        {% endfor %}
-                    </div>
-                </div>
+    <div class="col-12 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>📜 Recent Passes</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for pass in recent_passes[:5] %}
+                    <li class="list-group-item">
+                        <b>{{ pass.student.first_name }} {{ pass.student.last_name }}</b><br>
+                        {{ pass.visitor_name }} · {{ pass.relationship }}<br>
+                        <small>{{ pass.generated_at.strftime('%d/%m %H:%M') }} ({{ pass.status }})</small>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No recent passes</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bottom Sheet Modal -->
-<div class="modal fade" id="visitorModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-bottom">
+<!-- Modal for Visitor Pass -->
+<div class="modal fade" id="visitorModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i> New Visitor Pass</h5>
+                <h5 class="modal-title">Create Visitor Pass</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body pb-4">
+            <div class="modal-body">
                 <div id="visitorForm">
-                    <div class="mb-3">
-                        <label class="form-label">Visitor Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-lg" id="visitorName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Visitor Phone</label>
-                        <input type="tel" class="form-control form-control-lg" id="visitorPhone">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Relationship <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-lg" id="relationship">
-                            <option value="Parent">Parent</option>
-                            <option value="Grandparent">Grandparent</option>
-                            <option value="Uncle/Aunt">Uncle/Aunt</option>
-                            <option value="Sibling">Sibling</option>
-                            <option value="Relative">Relative</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Purpose</label>
-                        <input type="text" class="form-control" id="purpose" value="Pickup">
-                    </div>
-                    <div class="alert alert-info d-flex align-items-center">
-                        <i class="fas fa-envelope fa-lg me-2"></i>
-                        <div>OTP will be sent to parent's registered email.</div>
-                    </div>
-                    <button class="btn btn-primary btn-lg w-100" id="sendOtpBtn">Send OTP &rarr;</button>
+                    <input type="text" id="visitorName" class="form-control mb-2" placeholder="Visitor Name">
+                    <input type="text" id="visitorPhone" class="form-control mb-2" placeholder="Phone">
+                    <select id="relationship" class="form-select mb-2">
+                        <option>Parent</option><option>Grandparent</option><option>Relative</option><option>Other</option>
+                    </select>
+                    <input type="text" id="purpose" class="form-control mb-2" value="Pickup">
+                    <button class="btn btn-primary w-100" id="sendOtpBtn">Send OTP</button>
                 </div>
-                <div id="otpSection" style="display: none;">
-                    <div class="mb-3">
-                        <label class="form-label">Enter OTP (6-digit)</label>
-                        <input type="text" class="form-control form-control-lg text-center" id="otpCode" placeholder="000000" maxlength="6" inputmode="numeric">
-                    </div>
-                    <button class="btn btn-success btn-lg w-100" id="verifyOtpBtn">Verify & Generate Pass</button>
-                    <div class="text-center mt-3">
-                        <button class="btn btn-link" id="resendOtpBtn">Resend OTP</button>
-                    </div>
+                <div id="otpSection" style="display:none;">
+                    <input type="text" id="otpCode" class="form-control mb-2" placeholder="Enter OTP">
+                    <button class="btn btn-success w-100" id="verifyOtpBtn">Verify & Generate Pass</button>
                 </div>
-                <div id="passResult" style="display: none;" class="text-center mt-3">
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle fa-3x mb-2"></i>
-                        <h5>Pass Generated!</h5>
-                        <p><strong>Pass Code:</strong> <span id="passCode"></span></p>
-                        <p><strong>Expires:</strong> <span id="expiryTime"></span></p>
-                        <p>Student: <span id="studentName"></span><br>Visitor: <span id="visitorNameDisplay"></span></p>
-                        <button class="btn btn-outline-primary mt-2" onclick="window.print()"><i class="fas fa-print"></i> Print Pass</button>
-                    </div>
+                <div id="passResult" style="display:none;" class="alert alert-success text-center">
+                    <b>Pass Generated!</b><br>
+                    Code: <span id="passCode"></span><br>
+                    Expires: <span id="expiryTime"></span>
                 </div>
             </div>
         </div>
@@ -225,259 +109,169 @@
 </div>
 
 <script>
-    // Vanilla JS search (no jQuery dependency for critical functions)
-    (function() {
-        let selectedStudentId = null;
+// Pure JavaScript, no jQuery assumptions
+document.addEventListener('DOMContentLoaded', function() {
+    let selectedStudentId = null;
 
-        // Helper: escape HTML
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+    // Search function
+    function searchStudents() {
+        const query = document.getElementById('searchQuery').value.trim();
+        if (query === '') {
+            alert('Please enter a search term');
+            return;
         }
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<div class="text-center">Searching...</div>';
 
-        // Perform search using fetch
-        function performSearch(query, resultsContainerId) {
-            const container = document.getElementById(resultsContainerId);
-            if (!container) {
-                console.error('Container not found:', resultsContainerId);
-                return;
-            }
-            if (!query.trim()) {
-                container.innerHTML = '<div class="alert alert-warning mt-2">Please enter a search term.</div>';
-                container.style.display = 'block';
-                return;
-            }
-
-            container.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i><br>Searching...</div>';
-            container.style.display = 'block';
-
-            fetch(`/receptionist/search-student?q=${encodeURIComponent(query)}`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Search results:', data);
-                    let html = '';
-                    if (data.length === 0) {
-                        html = '<div class="alert alert-warning mt-2">No students found. Try a different name, ID, or email.</div>';
-                    } else if (data.error) {
-                        html = `<div class="alert alert-danger mt-2">${escapeHtml(data.error)}</div>`;
-                    } else {
-                        html = '<div class="list-group mt-2">';
-                        data.forEach(s => {
-                            html += `<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>${escapeHtml(s.name)}</strong><br>
-                                            <small>ID: ${escapeHtml(s.student_id)} | Class: ${escapeHtml(s.class)}</small><br>
-                                            <small class="text-muted">📧 ${escapeHtml(s.parent_email)}</small>
-                                        </div>
-                                        <button class="btn btn-primary select-student-btn" data-id="${s.id}" data-name="${escapeHtml(s.name)}">Select</button>
-                                    </div>`;
-                        });
-                        html += '</div>';
-                    }
-                    container.innerHTML = html;
-                })
-                .catch(error => {
-                    console.error('Fetch error:', error);
-                    container.innerHTML = `<div class="alert alert-danger mt-2">Network error: ${error.message}. Please check console.</div>`;
-                });
-        }
-
-        // Attach event listeners after DOM ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mobile search
-            const mobileBtn = document.getElementById('mobileSearchBtn');
-            const mobileInput = document.getElementById('mobileSearchInput');
-            if (mobileBtn && mobileInput) {
-                mobileBtn.addEventListener('click', function() {
-                    performSearch(mobileInput.value, 'mobileSearchResults');
-                });
-                mobileInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') performSearch(mobileInput.value, 'mobileSearchResults');
-                });
-            }
-
-            // Desktop search
-            const desktopBtn = document.getElementById('desktopSearchBtn');
-            const desktopInput = document document.getElementById('desktopSearchInput');
-            if (desktopBtn && desktopInput) {
-                desktopBtn.addEventListener('click', function() {
-                    performSearch(desktopInput.value, 'desktopSearchResults');
-                });
-                desktopInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') performSearch(desktopInput.value, 'desktopSearchResults');
-                });
-            }
-
-            // Delegate selection of student (dynamic buttons)
-            document.body.addEventListener('click', function(e) {
-                const target = e.target.closest('.select-student-btn');
-                if (target) {
-                    selectedStudentId = target.getAttribute('data-id');
-                    const studentName = target.getAttribute('data-name');
-                    console.log('Selected student:', selectedStudentId, studentName);
-                    // Reset modal
-                    const visitorForm = document.getElementById('visitorForm');
-                    const otpSection = document.getElementById('otpSection');
-                    const passResult = document.getElementById('passResult');
-                    if (visitorForm) visitorForm.style.display = 'block';
-                    if (otpSection) otpSection.style.display = 'none';
-                    if (passResult) passResult.style.display = 'none';
-                    const visitorNameInput = document.getElementById('visitorName');
-                    if (visitorNameInput) visitorNameInput.value = '';
-                    const visitorPhone = document.getElementById('visitorPhone');
-                    if (visitorPhone) visitorPhone.value = '';
-                    const relationship = document.getElementById('relationship');
-                    if (relationship) relationship.value = 'Parent';
-                    const purpose = document.getElementById('purpose');
-                    if (purpose) purpose.value = 'Pickup';
-                    const otpCode = document.getElementById('otpCode');
-                    if (otpCode) otpCode.value = '';
-                    // Show modal using Bootstrap JS
-                    const modalEl = document.getElementById('visitorModal');
-                    if (modalEl) {
-                        const modal = new bootstrap.Modal(modalEl);
-                        modal.show();
-                    }
+        fetch(`/receptionist/search-student?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Search response:', data);
+                if (data.error) {
+                    resultsDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                } else if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="alert alert-warning">No students found.</div>';
+                } else {
+                    let html = '<ul class="list-group">';
+                    data.forEach(student => {
+                        html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${escapeHtml(student.name)}</strong><br>
+                                        <small>ID: ${escapeHtml(student.student_id)} | Class: ${escapeHtml(student.class)}</small><br>
+                                        <small>Parent Email: ${escapeHtml(student.parent_email)}</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary select-student" data-id="${student.id}" data-name="${escapeHtml(student.name)}">Select</button>
+                                </li>`;
+                    });
+                    html += '</ul>';
+                    resultsDiv.innerHTML = html;
                 }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Network error: ${error.message}</div>`;
             });
+    }
 
-            // Send OTP
-            const sendBtn = document.getElementById('sendOtpBtn');
-            if (sendBtn) {
-                sendBtn.addEventListener('click', function() {
-                    if (!selectedStudentId) {
-                        alert('Please select a student first.');
-                        return;
-                    }
-                    const visitorName = document.getElementById('visitorName').value.trim();
-                    const relationship = document.getElementById('relationship').value;
-                    if (!visitorName || !relationship) {
-                        alert('Please fill visitor name and relationship.');
-                        return;
-                    }
-                    const data = {
-                        student_id: selectedStudentId,
-                        visitor_name: visitorName,
-                        visitor_phone: document.getElementById('visitorPhone').value,
-                        relationship: relationship,
-                        purpose: document.getElementById('purpose').value
-                    };
-                    sendBtn.disabled = true;
-                    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-                    fetch('/receptionist/request-pass', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    })
-                    .then(res => res.json())
-                    .then(res => {
-                        if (res.success) {
-                            alert(res.message);
-                            document.getElementById('visitorForm').style.display = 'none';
-                            document.getElementById('otpSection').style.display = 'block';
-                        } else {
-                            alert('Error: ' + res.error);
-                        }
-                    })
-                    .catch(err => {
-                        alert('Failed to send OTP: ' + err.message);
-                    })
-                    .finally(() => {
-                        sendBtn.disabled = false;
-                        sendBtn.innerHTML = 'Send OTP &rarr;';
-                    });
-                });
-            }
+    // Attach search button
+    document.getElementById('searchButton').addEventListener('click', searchStudents);
+    document.getElementById('searchQuery').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchStudents();
+    });
 
-            // Verify OTP
-            const verifyBtn = document.getElementById('verifyOtpBtn');
-            if (verifyBtn) {
-                verifyBtn.addEventListener('click', function() {
-                    const otp = document.getElementById('otpCode').value.trim();
-                    if (!otp || otp.length !== 6) {
-                        alert('Enter the 6-digit OTP.');
-                        return;
-                    }
-                    verifyBtn.disabled = true;
-                    verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-                    fetch('/receptionist/verify-otp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ otp: otp })
-                    })
-                    .then(res => res.json())
-                    .then(res => {
-                        if (res.success) {
-                            document.getElementById('otpSection').style.display = 'none';
-                            document.getElementById('passCode').innerText = res.pass_code;
-                            document.getElementById('expiryTime').innerText = res.expiry;
-                            document.getElementById('studentName').innerText = res.student_name;
-                            document.getElementById('visitorNameDisplay').innerText = res.visitor_name;
-                            document.getElementById('passResult').style.display = 'block';
-                            setTimeout(() => location.reload(), 3000);
-                        } else {
-                            alert(res.error);
-                        }
-                    })
-                    .catch(err => {
-                        alert('Verification failed: ' + err.message);
-                    })
-                    .finally(() => {
-                        verifyBtn.disabled = false;
-                        verifyBtn.innerHTML = 'Verify & Generate Pass';
-                    });
-                });
-            }
+    // Select student
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('select-student')) {
+            selectedStudentId = e.target.getAttribute('data-id');
+            const studentName = e.target.getAttribute('data-name');
+            // Reset modal
+            document.getElementById('visitorForm').style.display = 'block';
+            document.getElementById('otpSection').style.display = 'none';
+            document.getElementById('passResult').style.display = 'none';
+            document.getElementById('visitorName').value = '';
+            document.getElementById('visitorPhone').value = '';
+            document.getElementById('relationship').value = 'Parent';
+            document.getElementById('purpose').value = 'Pickup';
+            document.getElementById('otpCode').value = '';
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('visitorModal'));
+            modal.show();
+        }
+    });
 
-            // Resend OTP
-            const resendBtn = document.getElementById('resendOtpBtn');
-            if (resendBtn) {
-                resendBtn.addEventListener('click', function() {
-                    if (!selectedStudentId) return;
-                    const data = {
-                        student_id: selectedStudentId,
-                        visitor_name: document.getElementById('visitorName').value,
-                        visitor_phone: document.getElementById('visitorPhone').value,
-                        relationship: document.getElementById('relationship').value,
-                        purpose: document.getElementById('purpose').value
-                    };
-                    fetch('/receptionist/request-pass', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    })
-                    .then(res => res.json())
-                    .then(res => {
-                        if (res.success) alert('OTP resent.');
-                        else alert('Error: ' + res.error);
-                    })
-                    .catch(() => alert('Resend failed.'));
-                });
-            }
-
-            // Check-in / Check-out (using jQuery for brevity, but can be vanilla)
-            // We'll keep using jQuery for these because they are simpler
-            if (typeof $ !== 'undefined') {
-                $(document).on('click', '.checkin-btn', function() {
-                    const id = $(this).data('id');
-                    $.post('/receptionist/checkin/' + id).done(res => { if (res.success) location.reload(); else alert(res.error); }).fail(() => alert('Check-in failed'));
-                });
-                $(document).on('click', '.checkout-btn', function() {
-                    const id = $(this).data('id');
-                    $.post('/receptionist/checkout/' + id).done(res => { if (res.success) location.reload(); else alert(res.error); }).fail(() => alert('Check-out failed'));
-                });
+    // Send OTP
+    document.getElementById('sendOtpBtn').addEventListener('click', function() {
+        if (!selectedStudentId) {
+            alert('No student selected');
+            return;
+        }
+        const visitorName = document.getElementById('visitorName').value.trim();
+        if (!visitorName) {
+            alert('Visitor name required');
+            return;
+        }
+        const payload = {
+            student_id: selectedStudentId,
+            visitor_name: visitorName,
+            visitor_phone: document.getElementById('visitorPhone').value,
+            relationship: document.getElementById('relationship').value,
+            purpose: document.getElementById('purpose').value
+        };
+        fetch('/receptionist/request-pass', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                alert(res.message);
+                document.getElementById('visitorForm').style.display = 'none';
+                document.getElementById('otpSection').style.display = 'block';
             } else {
-                console.warn('jQuery not available, check-in/out will not work');
+                alert('Error: ' + res.error);
             }
+        })
+        .catch(err => alert('Request failed: ' + err.message));
+    });
+
+    // Verify OTP
+    document.getElementById('verifyOtpBtn').addEventListener('click', function() {
+        const otp = document.getElementById('otpCode').value.trim();
+        if (!otp) {
+            alert('Enter OTP');
+            return;
+        }
+        fetch('/receptionist/verify-otp', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({otp: otp})
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                document.getElementById('otpSection').style.display = 'none';
+                document.getElementById('passCode').innerText = res.pass_code;
+                document.getElementById('expiryTime').innerText = res.expiry;
+                document.getElementById('passResult').style.display = 'block';
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                alert(res.error);
+            }
+        })
+        .catch(err => alert('Verification failed: ' + err.message));
+    });
+
+    // Check-in/out (using fetch, no jQuery)
+    document.querySelectorAll('.checkin-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            fetch(`/receptionist/checkin/${id}`, {method: 'POST'})
+                .then(res => res.json())
+                .then(res => { if (res.success) location.reload(); else alert(res.error); })
+                .catch(err => alert('Error'));
         });
-    })();
+    });
+    document.querySelectorAll('.checkout-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            fetch(`/receptionist/checkout/${id}`, {method: 'POST'})
+                .then(res => res.json())
+                .then(res => { if (res.success) location.reload(); else alert(res.error); })
+                .catch(err => alert('Error'));
+        });
+    });
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+});
 </script>
 {% endblock %}
