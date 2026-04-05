@@ -5144,8 +5144,8 @@ def get_view_session(school_id):
     return get_current_session(school_id)
 
 def get_school_context():
-    """Get current school and session context for admin/teacher"""
-    if current_user.is_school_admin or current_user.is_teacher:
+    """Get current school and session context for admin/teacher/receptionist"""
+    if current_user.is_school_admin or current_user.is_teacher or current_user.is_receptionist:
         school_id = current_user.school_id
         current_session = get_current_session(school_id)
         view_session = get_view_session(school_id)
