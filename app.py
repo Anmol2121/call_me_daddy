@@ -8009,8 +8009,8 @@ def school_details(school_id):
 
 # ==================== INITIALIZATION ====================
 
-def create_tables():
-    """Create database tables and add missing columns."""
+"""def create_tables():
+    #Create database tables and add missing columns.
     with app.app_context():
         try:
             # Create all tables (safe if they already exist)
@@ -8049,6 +8049,80 @@ def create_tables():
             # For example, if you added 'default_max_marks' to another table, add here.
             
             # ---- Developer account ----
+            developer = User.query.filter_by(role='developer').first()
+            if not developer:
+                developer = User(
+                    email='developer@schoolerp.com',
+                    full_name='System Developer',
+                    role='developer',
+                    must_change_password=False
+                )
+                developer.set_password('developer123')  # Change in production!
+                db.session.add(developer)
+                db.session.commit()
+                print("Developer account created.")
+                
+        except Exception as e:
+            print(f"Error during table setup: {e}")
+            db.session.rollback()"""
+def create_tables():
+    """Create database tables and add missing columns."""
+    with app.app_context():
+        try:
+            # Create all tables (safe if they already exist)
+            db.create_all()
+            
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            
+            # Get list of existing tables
+            tables = inspector.get_table_names()
+            
+            # ---- SUBJECTS TABLE ----
+            if 'subjects' in tables:
+                columns = [col['name'] for col in inspector.get_columns('subjects')]
+                if 'default_max_marks' not in columns:
+                    print("Adding default_max_marks to subjects table...")
+                    db.session.execute(text(
+                        'ALTER TABLE subjects ADD COLUMN default_max_marks FLOAT DEFAULT 100.0'
+                    ))
+                    db.session.commit()
+                    print("Column added.")
+            
+            # ---- EXAMS TABLE ----
+            if 'exams' in tables:
+                columns = [col['name'] for col in inspector.get_columns('exams')]
+                if 'marks_entry_open' not in columns:
+                    print("Adding marks_entry_open to exams table...")
+                    db.session.execute(text(
+                        'ALTER TABLE exams ADD COLUMN marks_entry_open BOOLEAN DEFAULT FALSE'
+                    ))
+                    db.session.commit()
+                    print("Column added.")
+            
+            # ---- FIX RECEPTIONISTS WITH NULL SCHOOL_ID ----
+            null_receptionists = User.query.filter(
+                User.role == 'receptionist',
+                User.school_id.is_(None)
+            ).all()
+            
+            if null_receptionists:
+                # Find an admin with a valid school_id (any school)
+                admin_with_school = User.query.filter(
+                    User.role == 'admin',
+                    User.school_id.isnot(None)
+                ).first()
+                
+                if admin_with_school:
+                    admin_school_id = admin_with_school.school_id
+                    for rec in null_receptionists:
+                        rec.school_id = admin_school_id
+                    db.session.commit()
+                    print(f"Fixed {len(null_receptionists)} receptionist(s) with NULL school_id. Assigned school_id={admin_school_id}")
+                else:
+                    print("No admin with valid school_id found. Cannot auto-fix receptionist school_id.")
+            
+            # ---- DEVELOPER ACCOUNT ----
             developer = User.query.filter_by(role='developer').first()
             if not developer:
                 developer = User(
