@@ -81,11 +81,11 @@
                 <i class="fas fa-user-graduate"></i>
             </div>
             <div class="metric-content">
-                <h3>{{ total_students }}</h3>
+                <h3>{{ total_students|default(0) }}</h3>
                 <p>Total Students</p>
                 <div class="metric-trend">
                     <i class="fas fa-arrow-up text-success"></i>
-                    <span data-bs-toggle="tooltip" title="Students enrolled this session">{{ enrolled_students }} enrolled</span>
+                    <span data-bs-toggle="tooltip" title="Students enrolled this session">{{ enrolled_students|default(0) }} enrolled</span>
                 </div>
             </div>
             <a href="{{ url_for('manage_students') }}" class="metric-link">
@@ -101,11 +101,11 @@
                 <i class="fas fa-chalkboard-teacher text-success"></i>
             </div>
             <div class="metric-content">
-                <h3>{{ total_teachers }}</h3>
+                <h3>{{ total_teachers|default(0) }}</h3>
                 <p>Teachers</p>
                 <div class="metric-trend">
                     <i class="fas fa-users text-info"></i>
-                    <span data-bs-toggle="tooltip" title="Total classes">{{ total_classes }} classes</span>
+                    <span data-bs-toggle="tooltip" title="Total classes">{{ total_classes|default(0) }} classes</span>
                 </div>
             </div>
             <a href="{{ url_for('manage_teachers') }}" class="metric-link">
@@ -231,7 +231,7 @@
         </div>
     </div>
 
-    <!-- Quick Stats (replaces the previous one) -->
+    <!-- Quick Stats -->
     <div class="col-lg-4 mb-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0">
@@ -244,7 +244,7 @@
                             <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
                             <span>Fee Structures</span>
                         </div>
-                        <span class="badge bg-light text-dark">{{ fee_structures_count }}</span>
+                        <span class="badge bg-light text-dark">{{ fee_structures_count|default(0) }}</span>
                     </div>
                     <div class="stat-item d-flex justify-content-between align-items-center mb-3">
                         <div>
@@ -449,7 +449,6 @@
 
 <!-- ========== ADDITIONAL STYLES ========== -->
 <style>
-/* Existing styles plus a few tweaks */
 .metric-card {
     background: white;
     border-radius: 12px;
@@ -534,7 +533,6 @@
 .badge.bg-warning-light { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 .badge.bg-danger-light { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
-/* Mobile tweaks */
 @media (max-width: 768px) {
     .metric-content h3 { font-size: 1.5rem; }
     .metric-icon { width: 48px; height: 48px; font-size: 1.25rem; }
@@ -554,7 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Chart initialization (same as before)
+    // Chart initialization
     const ctx = document.getElementById('collectionChart');
     if (ctx) {
         const chartData = {
@@ -613,7 +611,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Tour function
 function startTour() {
     introJs().setOptions({
         steps: [
@@ -626,7 +623,6 @@ function startTour() {
     }).start();
 }
 
-// Update chart function (placeholder)
 function updateChart(days) {
     alert('This would fetch data for the last ' + days + ' days in a real application.');
 }
