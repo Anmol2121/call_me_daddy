@@ -4587,79 +4587,55 @@ def fee_dashboard():
 # ==================== TEMPLATE HELPER FUNCTIONS ====================
 @app.context_processor
 def utility_processor():
-    """Make functions available to all templates"""
+    """Make utility functions and global variables available to all templates"""
+    
+    # ----- Helper functions (defined inside to capture app context) -----
     def get_overdue_fees_count(school_id):
         """Get count of overdue fees for a school"""
         try:
             from datetime import date
-            from models import StudentFee, Student, Class, Session
-            
-            current_session = Session.query.filter_by(
-                school_id=school_id, 
-                is_current=True
-            ).first()
-            
+            current_session = get_current_session(school_id)
             if not current_session:
                 return 0
-                
             count = db.session.query(StudentFee).join(Student).filter(
                 Student.school_id == school_id,
                 StudentFee.session_id == current_session.id,
                 StudentFee.due_date < date.today(),
                 StudentFee.status.in_(['pending', 'partial'])
             ).count()
-            
             return count
         except Exception as e:
-            print(f"Error in get_overdue_fees_count: {e}")
+            app.logger.error(f"Error in get_overdue_fees_count: {e}")
             return 0
-    
+
     def get_overdue_fees(school_id, limit=5):
         """Get overdue fees for a school"""
         try:
             from datetime import date
-            from models import StudentFee, Student, Class, Session
-            
-            current_session = Session.query.filter_by(
-                school_id=school_id, 
-                is_current=True
-            ).first()
-            
+            current_session = get_current_session(school_id)
             if not current_session:
                 return []
-                
             overdue_fees = StudentFee.query.join(Student).filter(
                 Student.school_id == school_id,
                 StudentFee.session_id == current_session.id,
                 StudentFee.due_date < date.today(),
                 StudentFee.status.in_(['pending', 'partial'])
             ).order_by(StudentFee.due_date).limit(limit).all()
-            
             return overdue_fees
         except Exception as e:
-            print(f"Error in get_overdue_fees: {e}")
+            app.logger.error(f"Error in get_overdue_fees: {e}")
             return []
-    
+
     def get_student_overdue_fees(student_id):
         """Get overdue fee count for a specific student"""
         try:
             from datetime import date
-            from models import StudentFee, Student
-            
             student = Student.query.get(student_id)
             if not student:
                 return 0
-                
-            # Get current session for student's school
-            from models import Session
-            current_session = Session.query.filter_by(
-                school_id=student.school_id, 
-                is_current=True
-            ).first()
-            
+            current_session = get_current_session(student.school_id)
             if not current_session:
                 return 0
-                
             count = StudentFee.query.filter_by(
                 student_id=student_id,
                 session_id=current_session.id
@@ -4667,60 +4643,109 @@ def utility_processor():
                 StudentFee.due_date < date.today(),
                 StudentFee.status.in_(['pending', 'partial'])
             ).count()
-            
             return count
         except Exception as e:
-            print(f"Error in get_student_overdue_fees: {e}")
+            app.logger.error(f"Error in get_student_overdue_fees: {e}")
             return 0
-    
+
     def get_monthly_collection(school_id, session_id):
         """Get monthly collection data for charts"""
         try:
-            from models import FeeTransaction, Student
             from datetime import datetime
             import calendar
-            
-            # Get transactions for the session year
-            session = Session.query.get(session_id)
+            session = AcademicSession.query.get(session_id)
             if not session:
                 return []
-            
             year = session.start_date.year
             monthly_data = []
-            
             for month in range(1, 13):
                 month_start = datetime(year, month, 1)
                 if month == 12:
                     month_end = datetime(year + 1, 1, 1)
                 else:
                     month_end = datetime(year, month + 1, 1)
-                
                 total = db.session.query(db.func.coalesce(db.func.sum(FeeTransaction.amount), 0)).join(
                     Student
                 ).filter(
                     Student.school_id == school_id,
                     FeeTransaction.transaction_date >= month_start,
-                    FeeTransaction.transaction_date < month_end
+                    FeeTransaction.transaction_date < month_end,
+                    FeeTransaction.transaction_type == 'payment',
+                    FeeTransaction.status == 'success'
                 ).scalar()
-                
                 monthly_data.append({
                     'month': calendar.month_abbr[month],
                     'amount': float(total or 0)
                 })
-            
             return monthly_data
         except Exception as e:
-            print(f"Error in get_monthly_collection: {e}")
-            # Return empty data for all months
+            app.logger.error(f"Error in get_monthly_collection: {e}")
             return [{'month': m, 'amount': 0} for m in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                                                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']]
-    
-    return {
+
+    def get_today_attendance_helper(class_id):
+        """Helper function to check if attendance is taken for a class today"""
+        try:
+            from datetime import date
+            attendance = Attendance.query.filter_by(
+                class_id=class_id,
+                date=date.today()
+            ).first()
+            return attendance is not None
+        except Exception as e:
+            app.logger.error(f"Error in get_today_attendance_helper: {e}")
+            return False
+
+    # ----- Global variables for sidebar and common use -----
+    def inject_global_vars():
+        data = {}
+        if current_user.is_authenticated:
+            # Admin sidebar needs total_students, total_teachers, fee_structures_count
+            if current_user.role == 'admin' and current_user.school_id:
+                school_id = current_user.school_id
+                data['total_students'] = Student.query.filter_by(school_id=school_id, is_active=True).count()
+                data['total_teachers'] = User.query.filter_by(school_id=school_id, role='teacher', is_active=True).count()
+                current_session = get_current_session(school_id)
+                if current_session:
+                    data['fee_structures_count'] = FeeStructure.query.filter_by(
+                        school_id=school_id, session_id=current_session.id, is_active=True
+                    ).count()
+                else:
+                    data['fee_structures_count'] = 0
+            # Teacher sidebar needs assigned_classes
+            elif current_user.role == 'teacher' and current_user.school_id:
+                current_session = get_current_session(current_user.school_id)
+                if current_session:
+                    assignments = TeacherAssignment.query.filter_by(
+                        teacher_id=current_user.id,
+                        session_id=current_session.id
+                    ).all()
+                    assigned_classes = []
+                    for assign in assignments:
+                        class_obj = Class.query.get(assign.class_id)
+                        if class_obj:
+                            assigned_classes.append({
+                                'class': class_obj,
+                                'assignment': assign,
+                                'subject': assign.subject
+                            })
+                    data['assigned_classes'] = assigned_classes
+                else:
+                    data['assigned_classes'] = []
+        return data
+
+    # Merge helper functions and global variables
+    context = {
         'get_overdue_fees_count': get_overdue_fees_count,
         'get_overdue_fees': get_overdue_fees,
         'get_student_overdue_fees': get_student_overdue_fees,
-        'get_monthly_collection': get_monthly_collection
+        'get_monthly_collection': get_monthly_collection,
+        'get_today_attendance': get_today_attendance_helper,
+        'date': date
     }
+    # Add global variables (will override any existing keys if conflict)
+    context.update(inject_global_vars())
+    return context
 
 # Add session tracking to User model for teachers
 class User(UserMixin, db.Model):
