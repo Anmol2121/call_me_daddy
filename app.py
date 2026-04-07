@@ -5629,6 +5629,88 @@ def reset_student_password(student_id):
                          form=form, student=student, context=context)
 
 
+"""@app.route('/admin/students/<int:student_id>/edit', methods=['GET', 'POST'])
+@role_required(['admin'])
+@school_active_required
+def edit_student(student_id):
+    
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    
+    
+    student = Student.query.filter_by(
+        id=student_id,
+        school_id=current_user.school_id
+    ).first_or_404()
+    
+   
+    user = User.query.filter_by(student_id=student.id).first()
+    
+    form = EditStudentForm()
+    
+    if request.method == 'GET':
+       
+        form.first_name.data = student.first_name
+        form.last_name.data = student.last_name
+        form.date_of_birth.data = student.date_of_birth
+        form.gender.data = student.gender
+        form.address.data = student.address
+        form.father_name.data = student.father_name
+        form.mother_name.data = student.mother_name
+        form.phone.data = student.phone
+        form.parent_email.data = student.parent_email
+        form.status.data = 'active' if student.is_active else 'inactive'
+    
+    if form.validate_on_submit():
+        try:
+            
+            student.first_name = form.first_name.data
+            student.last_name = form.last_name.data
+            student.date_of_birth = form.date_of_birth.data
+            student.gender = form.gender.data
+            student.address = form.address.data
+            student.father_name = form.father_name.data
+            student.mother_name.data = form.mother_name.data
+            student.phone = form.phone.data
+            student.parent_email = form.parent_email.data
+            student.is_active = (form.status.data == 'active')
+            
+            
+            if user:
+                user.full_name = f"{form.first_name.data} {form.last_name.data}"
+                user.is_active = (form.status.data == 'active')
+            
+            
+            activity_log = {
+                'action': 'student_edit',
+                'admin_id': current_user.id,
+                'student_id': student.id,
+                'changes': {
+                    'old_name': f"{student.first_name} {student.last_name}",
+                    'new_name': f"{form.first_name.data} {form.last_name.data}"
+                },
+                'timestamp': datetime.utcnow().isoformat(),
+                'ip_address': request.remote_addr
+            }
+            
+            if 'admin_actions' not in session:
+                session['admin_actions'] = []
+            session['admin_actions'].append(activity_log)
+            
+            db.session.commit()
+            
+            flash(f'Student {student.first_name} {student.last_name} updated successfully!', 'success')
+            return redirect(url_for('manage_students'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating student: {str(e)}', 'danger')
+    
+    return render_template('admin_edit_student.html', 
+                         form=form, student=student, context=context)"""
+
 @app.route('/admin/students/<int:student_id>/edit', methods=['GET', 'POST'])
 @role_required(['admin'])
 @school_active_required
@@ -5665,14 +5747,14 @@ def edit_student(student_id):
     
     if form.validate_on_submit():
         try:
-            # Update student details
+            # Update student details - FIXED: removed .data from left side
             student.first_name = form.first_name.data
             student.last_name = form.last_name.data
             student.date_of_birth = form.date_of_birth.data
             student.gender = form.gender.data
             student.address = form.address.data
             student.father_name = form.father_name.data
-            student.mother_name.data = form.mother_name.data
+            student.mother_name = form.mother_name.data    # <-- FIXED: removed .data
             student.phone = form.phone.data
             student.parent_email = form.parent_email.data
             student.is_active = (form.status.data == 'active')
@@ -5710,6 +5792,7 @@ def edit_student(student_id):
     
     return render_template('admin_edit_student.html', 
                          form=form, student=student, context=context)
+        
 
 
 @app.route('/admin/students/<int:student_id>/view', methods=['GET'])
