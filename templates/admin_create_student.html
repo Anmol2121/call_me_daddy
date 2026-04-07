@@ -247,52 +247,44 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Get the student database ID from credentials (passed from backend)
-    var studentDbId = {{ credentials.student_db_id|tojson }};
     var modalElement = document.getElementById('credentialsModal');
     var modal = new bootstrap.Modal(modalElement);
     modal.show();
 
-    // Function to delete the student via AJAX
-    function deleteStudentAndResetForm() {
-        fetch('/admin/students/' + studentDbId + '/delete', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Reset the form fields
-                document.getElementById('studentForm').reset();
-                // Also clear any select fields to default (first option)
-                var classSelect = document.querySelector('select[name="class_id"]');
-                if (classSelect) classSelect.selectedIndex = 0;
-                var genderSelect = document.querySelector('select[name="gender"]');
-                if (genderSelect) genderSelect.selectedIndex = 0;
-                // Show a temporary flash message (optional)
-                var flashContainer = document.createElement('div');
-                flashContainer.className = 'alert alert-warning alert-dismissible fade show';
-                flashContainer.innerHTML = '<i class="fas fa-trash-alt me-2"></i> Student record removed. You can now create a new student.';
-                document.querySelector('.main-content').insertBefore(flashContainer, document.querySelector('.main-content').firstChild);
-                setTimeout(function() { flashContainer.remove(); }, 3000);
-            } else {
-                alert('Error deleting student: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Delete error:', error);
-            alert('Failed to delete the student. Please refresh the page.');
-        });
+    // Function to reset the form fields (without deleting the student)
+    function resetForm() {
+        // Reset all text, email, number, date inputs
+        var form = document.getElementById('studentForm');
+        form.reset();
+        
+        // Reset select dropdowns to first option (usually "Choose..." or first valid)
+        var classSelect = document.querySelector('select[name="class_id"]');
+        if (classSelect && classSelect.options.length > 0) {
+            classSelect.selectedIndex = 0;
+        }
+        var genderSelect = document.querySelector('select[name="gender"]');
+        if (genderSelect && genderSelect.options.length > 0) {
+            genderSelect.selectedIndex = 0;
+        }
+        
+        // Clear any validation error messages (optional)
+        var invalidFeedback = document.querySelectorAll('.invalid-feedback');
+        invalidFeedback.forEach(function(el) { el.innerHTML = ''; });
+        
+        // Remove is-invalid class from all inputs
+        var invalidInputs = document.querySelectorAll('.is-invalid');
+        invalidInputs.forEach(function(el) { el.classList.remove('is-invalid'); });
     }
 
-    // Handle close button (X and the Close button)
+    // When modal is closed (by X or by clicking outside, but we use hidden.bs.modal)
     modalElement.addEventListener('hidden.bs.modal', function (e) {
-        deleteStudentAndResetForm();
-        // Remove the modal from DOM to avoid double firing (optional)
-        modalElement.remove();
+        resetForm();
+        // Optional: show a brief success message that form is reset
+        var flash = document.createElement('div');
+        flash.className = 'alert alert-info alert-dismissible fade show mt-3';
+        flash.innerHTML = '<i class="fas fa-undo-alt me-2"></i> Form cleared. You can now add another student.';
+        document.querySelector('.main-content').insertBefore(flash, document.querySelector('.main-content').firstChild);
+        setTimeout(function() { flash.remove(); }, 3000);
     });
 
     // Also handle the "Close" button click
