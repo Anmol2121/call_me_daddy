@@ -8,7 +8,7 @@
     <div class="col-md-10">
         <div class="card">
             <div class="card-body">
-                <form method="POST" action="{{ url_for('create_student') }}">
+                <form method="POST" action="{{ url_for('create_student') }}" id="studentForm">
                     {{ form.hidden_tag() }}
                     
                     <h5 class="mb-4">Student Personal Information</h5>
@@ -237,7 +237,7 @@
                 </div>
             </div>
             <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-primary px-4" id="closeModalBtn">
                     <i class="fas fa-check me-2"></i>Close
                 </button>
             </div>
@@ -246,15 +246,65 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var modal = new bootstrap.Modal(document.getElementById('credentialsModal'));
-        modal.show();
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the student database ID from credentials (passed from backend)
+    var studentDbId = {{ credentials.student_db_id|tojson }};
+    var modalElement = document.getElementById('credentialsModal');
+    var modal = new bootstrap.Modal(modalElement);
+    modal.show();
+
+    // Function to delete the student via AJAX
+    function deleteStudentAndResetForm() {
+        fetch('/admin/students/' + studentDbId + '/delete', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reset the form fields
+                document.getElementById('studentForm').reset();
+                // Also clear any select fields to default (first option)
+                var classSelect = document.querySelector('select[name="class_id"]');
+                if (classSelect) classSelect.selectedIndex = 0;
+                var genderSelect = document.querySelector('select[name="gender"]');
+                if (genderSelect) genderSelect.selectedIndex = 0;
+                // Show a temporary flash message (optional)
+                var flashContainer = document.createElement('div');
+                flashContainer.className = 'alert alert-warning alert-dismissible fade show';
+                flashContainer.innerHTML = '<i class="fas fa-trash-alt me-2"></i> Student record removed. You can now create a new student.';
+                document.querySelector('.main-content').insertBefore(flashContainer, document.querySelector('.main-content').firstChild);
+                setTimeout(function() { flashContainer.remove(); }, 3000);
+            } else {
+                alert('Error deleting student: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            alert('Failed to delete the student. Please refresh the page.');
+        });
+    }
+
+    // Handle close button (X and the Close button)
+    modalElement.addEventListener('hidden.bs.modal', function (e) {
+        deleteStudentAndResetForm();
+        // Remove the modal from DOM to avoid double firing (optional)
+        modalElement.remove();
     });
+
+    // Also handle the "Close" button click
+    document.getElementById('closeModalBtn').addEventListener('click', function() {
+        modal.hide();
+    });
+});
 </script>
 {% endif %}
 
 <script>
-    // Function to generate email preview
+    // Function to generate email preview (same as before)
     function generateEmailPreview() {
         const firstName = document.querySelector('input[name="first_name"]').value.toLowerCase();
         const lastName = document.querySelector('input[name="last_name"]').value.toLowerCase();
@@ -272,7 +322,6 @@
         }
     }
     
-    // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
         const firstNameInput = document.querySelector('input[name="first_name"]');
         const lastNameInput = document.querySelector('input[name="last_name"]');
