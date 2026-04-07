@@ -898,6 +898,14 @@
                             <span class="menu-badge">Exams</span>
                         </a>
                     </li>
+                    <!-- NEW: Syllabus Upload Link for Teachers -->
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'teacher_syllabus' %}active{% endif %}" href="{{ url_for('teacher_syllabus') }}">
+                            <i class="fas fa-book-open menu-icon"></i>
+                            <span class="menu-text">Syllabus</span>
+                            <span class="menu-badge">Upload</span>
+                        </a>
+                    </li>
                     <li class="menu-item">
                         <a class="menu-link {% if request.endpoint == 'teacher_profile' %}active{% endif %}" href="{{ url_for('teacher_profile') }}">
                             <i class="fas fa-user-circle menu-icon"></i>
@@ -933,6 +941,14 @@
                             <i class="fas fa-calendar-alt menu-icon"></i>
                             <span class="menu-text">Timetable</span>
                             <span class="menu-badge">View</span>
+                        </a>
+                    </li>
+                    <!-- NEW: Syllabus View Link for Students -->
+                    <li class="menu-item">
+                        <a class="menu-link {% if request.endpoint == 'student_syllabus' %}active{% endif %}" href="{{ url_for('student_syllabus') }}">
+                            <i class="fas fa-book-open menu-icon"></i>
+                            <span class="menu-text">Syllabus</span>
+                            <span class="menu-badge">Download</span>
                         </a>
                     </li>
                     <li class="menu-item">
@@ -1159,6 +1175,10 @@
                 <i class="fas fa-pen"></i>
                 <span>Marks</span>
             </a>
+            <a class="bottom-nav-item {% if request.endpoint == 'teacher_syllabus' %}active{% endif %}" href="{{ url_for('teacher_syllabus') }}">
+                <i class="fas fa-book-open"></i>
+                <span>Syllabus</span>
+            </a>
             <a class="bottom-nav-item" href="{{ url_for('teacher_profile') }}">
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
@@ -1180,6 +1200,10 @@
             <a class="bottom-nav-item {% if request.endpoint == 'student_timetable' %}active{% endif %}" href="{{ url_for('student_timetable') }}">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Timetable</span>
+            </a>
+            <a class="bottom-nav-item {% if request.endpoint == 'student_syllabus' %}active{% endif %}" href="{{ url_for('student_syllabus') }}">
+                <i class="fas fa-book-open"></i>
+                <span>Syllabus</span>
             </a>
             <a class="bottom-nav-item {% if request.endpoint == 'student_profile' %}active{% endif %}" href="{{ url_for('student_profile') }}">
                 <i class="fas fa-user"></i>
