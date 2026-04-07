@@ -292,6 +292,22 @@
     {% endif %}
 </div>
 
+<!-- ==================== SYLLABUS ACCESS CARD (NEW) ==================== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-book-open fa-2x text-primary mb-2"></i>
+                <h5 class="fw-bold">Access Your Syllabus</h5>
+                <p class="text-muted">Download subject-wise syllabus PDFs</p>
+                <a href="{{ url_for('student_syllabus') }}" class="btn btn-primary">
+                    <i class="fas fa-download me-2"></i> View Syllabus
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== STYLES ==================== -->
 <style>
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
