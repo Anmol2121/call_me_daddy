@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}My Syllabus{% endblock %}
+{% block header %}Subject Syllabus{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Syllabus</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for subject in subjects %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary-light p-3 me-3">
+                        <i class="fas fa-book-open text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0">{{ subject.name }}</h5>
+                        <small class="text-muted">{{ subject.code }}</small>
+                    </div>
+                </div>
+                
+                {% set syllabus = syllabus_by_subject.get(subject.id) %}
+                {% if syllabus %}
+                <p class="card-text small text-muted">{{ syllabus.description or 'No description' }}</p>
+                <div class="mt-3">
+                    <a href="{{ url_for('download_syllabus', syllabus_id=syllabus.id) }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-download me-2"></i> Download Syllabus (PDF)
+                    </a>
+                    <div class="text-muted small mt-2 text-center">
+                        Uploaded: {{ syllabus.uploaded_at.strftime('%d %b %Y') }}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-pdf fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">Syllabus not uploaded yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    {% if not subjects %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i> No subjects found for your class.
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+<style>
+.bg-primary-light {
+    background-color: rgba(79, 70, 229, 0.1);
+}
+</style>
