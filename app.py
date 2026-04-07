@@ -20,6 +20,7 @@ from sqlalchemy import and_, or_
 import logging
 from logging.handlers import RotatingFileHandler
 import uuid
+from werkzeug.utils import secure_filename
 from datetime import datetime, date, timedelta
 #from wtforms import StringField, PasswordField, SelectField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
 from wtforms import StringField, PasswordField, SelectField, SelectMultipleField, IntegerField, EmailField, DateField, BooleanField, SubmitField, ValidationError, FloatField
@@ -37,8 +38,16 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'connect_args': {'sslmode': 'require'}
 }
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#app.config['UPLOAD_FOLDER'] = 'uploads'
+#app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB
+ALLOWED_EXTENSIONS = {'pdf'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -744,7 +753,279 @@ def toggle_receptionist_status(receptionist_id):
 #======================================================================
 #======================================================================
 
+class Syllabus(db.Model):
+    __tablename__ = 'syllabus'
+    id = db.Column(db.Integer, primary_key=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('academic_sessions.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_name = db.Column(db.String(200))
+    file_size = db.Column(db.Integer)  # in bytes
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    # Relationships
+    subject = db.relationship('Subject', backref='syllabus')
+    class_ = db.relationship('Class', backref='syllabus')
+    session = db.relationship('AcademicSession', backref='syllabus')
+    uploader = db.relationship('User', foreign_keys=[uploaded_by])
 
+
+@app.route('/teacher/syllabus')
+@role_required(['teacher'])
+@school_active_required
+def teacher_syllabus():
+    """List all syllabus uploaded by this teacher for current session"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session', 'warning')
+        return redirect(url_for('teacher_dashboard'))
+    
+    # Get subjects assigned to this teacher in current session
+    assignments = TeacherAssignment.query.filter_by(
+        teacher_id=current_user.id,
+        session_id=view_session.id
+    ).all()
+    
+    subject_ids = []
+    for ass in assignments:
+        subj = Subject.query.filter_by(
+            class_id=ass.class_id,
+            name=ass.subject,
+            session_id=view_session.id,
+            is_active=True
+        ).first()
+        if subj:
+            subject_ids.append(subj.id)
+    
+    # Get syllabus for those subjects
+    syllabus_list = Syllabus.query.filter(
+        Syllabus.subject_id.in_(subject_ids),
+        Syllabus.session_id == view_session.id,
+        Syllabus.is_active == True
+    ).order_by(Syllabus.uploaded_at.desc()).all()
+    
+    return render_template('teacher_syllabus.html',
+                         syllabus_list=syllabus_list,
+                         assignments=assignments,
+                         context=context)
+
+
+@app.route('/teacher/syllabus/upload', methods=['GET', 'POST'])
+@role_required(['teacher'])
+@school_active_required
+def upload_syllabus():
+    """Upload a syllabus PDF for a subject"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    context = get_school_context()
+    view_session = context.get('view_session') or context['current_session']
+    if not view_session:
+        flash('No active session', 'warning')
+        return redirect(url_for('teacher_dashboard'))
+    
+    # Get teacher's assignments for current session
+    assignments = TeacherAssignment.query.filter_by(
+        teacher_id=current_user.id,
+        session_id=view_session.id
+    ).all()
+    
+    # Build a list of subjects with class info
+    subject_choices = []
+    for ass in assignments:
+        subj = Subject.query.filter_by(
+            class_id=ass.class_id,
+            name=ass.subject,
+            session_id=view_session.id,
+            is_active=True
+        ).first()
+        if subj:
+            subject_choices.append({
+                'id': subj.id,
+                'name': subj.name,
+                'class_name': ass.class_.name
+            })
+    
+    if request.method == 'POST':
+        subject_id = request.form.get('subject_id')
+        title = request.form.get('title')
+        description = request.form.get('description')
+        file = request.files.get('syllabus_file')
+        
+        if not subject_id or not title or not file:
+            flash('Please fill all required fields', 'danger')
+            return redirect(request.url)
+        
+        # Validate file
+        if file.filename == '':
+            flash('No file selected', 'danger')
+            return redirect(request.url)
+        
+        if not allowed_file(file.filename):
+            flash('Only PDF files are allowed', 'danger')
+            return redirect(request.url)
+        
+        # Check file size (should be handled by MAX_CONTENT_LENGTH, but double-check)
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        if file_size > 2 * 1024 * 1024:
+            flash('File size must be less than 2MB', 'danger')
+            return redirect(request.url)
+        
+        # Get subject and verify it belongs to teacher's assignment
+        subject = Subject.query.get(subject_id)
+        if not subject:
+            flash('Invalid subject', 'danger')
+            return redirect(request.url)
+        
+        # Verify teacher is assigned to this subject in current session
+        assignment = TeacherAssignment.query.filter_by(
+            teacher_id=current_user.id,
+            class_id=subject.class_id,
+            session_id=view_session.id,
+            subject=subject.name
+        ).first()
+        if not assignment:
+            flash('You are not authorized to upload syllabus for this subject', 'danger')
+            return redirect(request.url)
+        
+        # Save file
+        filename = secure_filename(f"syllabus_{subject_id}_{int(datetime.utcnow().timestamp())}.pdf")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Create syllabus record
+        syllabus = Syllabus(
+            subject_id=subject.id,
+            class_id=subject.class_id,
+            session_id=view_session.id,
+            title=title,
+            description=description,
+            file_path=filepath,
+            file_name=file.filename,
+            file_size=file_size,
+            uploaded_by=current_user.id
+        )
+        db.session.add(syllabus)
+        db.session.commit()
+        
+        flash('Syllabus uploaded successfully!', 'success')
+        return redirect(url_for('teacher_syllabus'))
+    
+    return render_template('teacher_upload_syllabus.html',
+                         subject_choices=subject_choices,
+                         context=context)
+
+
+@app.route('/teacher/syllabus/<int:syllabus_id>/delete', methods=['POST'])
+@role_required(['teacher'])
+@school_active_required
+def delete_syllabus(syllabus_id):
+    """Delete a syllabus file (only if uploaded by this teacher)"""
+    syllabus = Syllabus.query.get_or_404(syllabus_id)
+    # Verify ownership
+    if syllabus.uploaded_by != current_user.id:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('teacher_syllabus'))
+    
+    # Delete file from disk
+    if os.path.exists(syllabus.file_path):
+        os.remove(syllabus.file_path)
+    
+    db.session.delete(syllabus)
+    db.session.commit()
+    flash('Syllabus deleted', 'success')
+    return redirect(url_for('teacher_syllabus'))
+
+
+@app.route('/student/syllabus')
+@role_required(['student'])
+@school_active_required
+def student_syllabus():
+    """Show syllabus for all subjects of the student's current class"""
+    if current_user.must_change_password:
+        return redirect(url_for('change_password'))
+    
+    student = Student.query.filter_by(id=current_user.student_id).first()
+    if not student:
+        flash('Student record not found', 'danger')
+        return redirect(url_for('logout'))
+    
+    current_session = get_current_session(student.school_id)
+    if not current_session:
+        flash('No active session', 'warning')
+        return redirect(url_for('student_dashboard'))
+    
+    # Get student's current enrollment
+    enrollment = StudentEnrollment.query.filter_by(
+        student_id=student.id,
+        session_id=current_session.id,
+        is_active=True
+    ).first()
+    if not enrollment:
+        flash('You are not enrolled in any class', 'warning')
+        return redirect(url_for('student_dashboard'))
+    
+    class_id = enrollment.class_id
+    
+    # Get all subjects for this class in current session
+    subjects = Subject.query.filter_by(
+        class_id=class_id,
+        session_id=current_session.id,
+        is_active=True
+    ).all()
+    
+    # Get syllabus for each subject
+    syllabus_by_subject = {}
+    for subj in subjects:
+        syllabus = Syllabus.query.filter_by(
+            subject_id=subj.id,
+            session_id=current_session.id,
+            is_active=True
+        ).order_by(Syllabus.uploaded_at.desc()).first()  # latest only
+        if syllabus:
+            syllabus_by_subject[subj.id] = syllabus
+    
+    return render_template('student_syllabus.html',
+                         subjects=subjects,
+                         syllabus_by_subject=syllabus_by_subject,
+                         student=student,
+                         current_session=current_session,
+                         context={'school': student.school, 'current_session': current_session})
+
+
+@app.route('/student/syllabus/download/<int:syllabus_id>')
+@login_required
+@role_required(['student'])
+def download_syllabus(syllabus_id):
+    """Download syllabus PDF"""
+    syllabus = Syllabus.query.get_or_404(syllabus_id)
+    
+    # Verify student has access to this syllabus (must be enrolled in the same class)
+    student = Student.query.filter_by(id=current_user.student_id).first()
+    if not student:
+        abort(403)
+    
+    enrollment = StudentEnrollment.query.filter_by(
+        student_id=student.id,
+        session_id=syllabus.session_id,
+        is_active=True
+    ).first()
+    
+    if not enrollment or enrollment.class_id != syllabus.class_id:
+        abort(403)
+    
+    return send_file(syllabus.file_path, as_attachment=True, download_name=syllabus.file_name)
 
 # ========================exam==========================
 class Exam(db.Model):
