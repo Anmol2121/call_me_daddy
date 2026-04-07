@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Upload Syllabus{% endblock %}
+{% block header %}Upload Syllabus PDF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('teacher_syllabus') }}">Syllabus</a></li>
+<li class="breadcrumb-item active">Upload</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Select Subject *</label>
+                        <select name="subject_id" class="form-select" required>
+                            <option value="">-- Choose Subject --</option>
+                            {% for subj in subject_choices %}
+                            <option value="{{ subj.id }}">{{ subj.class_name }} - {{ subj.name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not subject_choices %}
+                        <div class="text-danger small mt-1">No subjects assigned to you in current session.</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Title *</label>
+                        <input type="text" name="title" class="form-control" required placeholder="e.g., Term 1 Syllabus, Complete Syllabus 2025">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description (Optional)</label>
+                        <textarea name="description" rows="3" class="form-control" placeholder="Additional info about the syllabus"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">PDF File * (Max 2MB)</label>
+                        <input type="file" name="syllabus_file" class="form-control" accept=".pdf" required>
+                        <div class="form-text">Only PDF files, maximum size 2MB.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('teacher_syllabus') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
