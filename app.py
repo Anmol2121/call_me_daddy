@@ -6296,6 +6296,12 @@ def admin_dashboard():
     
     # Use the actual function defined in the same file
     stats = get_school_fee_statistics(school_id, view_session.id)
+    # Add missing keys that template expects
+    stats['paid_students'] = stats.get('paid_count', 0)
+    stats['pending_students'] = stats.get('pending_count', 0)
+    stats['partial_students'] = stats.get('partial_count', 0)
+    total_net = stats.get('total_net', 0)
+    stats['collection_rate'] = (stats['total_paid'] / total_net * 100) if total_net > 0 else 0
     
     # Additional statistics
     total_students = Student.query.filter_by(
@@ -6327,7 +6333,7 @@ def admin_dashboard():
         is_active=True
     ).count()
     
-    # Get class-wise distribution
+    # Get class-wise distribution (unchanged)
     classes = Class.query.filter_by(
         school_id=school_id,
         session_id=view_session.id,
@@ -6344,7 +6350,6 @@ def admin_dashboard():
         
         student_ids = [e.student_id for e in enrollments]
         
-        # Initialize variables with default values
         class_total_fees = 0
         class_total_paid = 0
         class_total_discount = 0
@@ -6396,6 +6401,28 @@ def admin_dashboard():
     overdue_amount = sum([(f.fee_amount - f.discount_amount + f.fine_amount - f.paid_amount) 
                          for f in overdue_fees])
     
+    # --- NEW: Today's statistics ---
+    today = date.today()
+    today_attendance_count = Attendance.query.filter(
+        Attendance.class_id.in_([c.id for c in classes]),
+        Attendance.date == today
+    ).count()
+    
+    today_collection = db.session.query(db.func.sum(FeeTransaction.amount)).filter(
+        FeeTransaction.student_id == Student.id,
+        Student.school_id == school_id,
+        db.cast(FeeTransaction.transaction_date, db.Date) == today,
+        FeeTransaction.transaction_type == 'payment',
+        FeeTransaction.status == 'success'
+    ).scalar() or 0
+    
+    new_admissions_today = Student.query.filter(
+        Student.school_id == school_id,
+        db.cast(Student.created_at, db.Date) == today
+    ).count()
+    
+    pending_approvals = 0  # You can implement approval system if needed
+    
     # Get recent activities
     recent_activities = []
     
@@ -6427,14 +6454,12 @@ def admin_dashboard():
     # Get real chart data for last 7 days
     daily_collection = get_daily_collection_data(school_id, view_session.id, days=7)
     
-    # Prepare data for fee chart
     chart_labels = [item['day'] for item in daily_collection]
     chart_data = [item['amount'] for item in daily_collection]
     
     # Get payment method distribution
     payment_methods_data = get_payment_method_distribution(school_id, view_session.id)
     
-    # Use the new premium template
     return render_template('admin_dashboard_premium.html',
                          context=context,
                          stats=stats,
@@ -6452,6 +6477,10 @@ def admin_dashboard():
                          chart_labels=chart_labels,
                          chart_data=chart_data,
                          payment_methods_data=payment_methods_data,
+                         today_attendance_count=today_attendance_count,
+                         today_collection=today_collection,
+                         new_admissions_today=new_admissions_today,
+                         pending_approvals=pending_approvals,
                          date=date.today())
 
 # ==================== ENHANCED FEE MANAGEMENT ROUTES ====================
