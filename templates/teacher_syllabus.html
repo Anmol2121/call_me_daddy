@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Manage Syllabus{% endblock %}
+{% block header %}My Syllabus Uploads{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Syllabus</li>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('upload_syllabus') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-upload me-1"></i> Upload New
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if syllabus_list %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Class</th>
+                        <th>Title</th>
+                        <th>Uploaded On</th>
+                        <th>File</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for syl in syllabus_list %}
+                    <tr>
+                        <td>{{ syl.subject.name }}</td>
+                        <td>{{ syl.class_.name }}</td>
+                        <td>{{ syl.title }}</td>
+                        <td>{{ syl.uploaded_at.strftime('%d %b %Y') }}</td>
+                        <td><a href="{{ url_for('download_syllabus', syllabus_id=syl.id) }}" target="_blank"><i class="fas fa-file-pdf text-danger"></i> {{ syl.file_name }}</a></td>
+                        <td>
+                            <form method="POST" action="{{ url_for('delete_syllabus', syllabus_id=syl.id) }}" style="display:inline;" onsubmit="return confirm('Delete this syllabus?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+            <h5>No syllabus uploaded yet</h5>
+            <p class="text-muted">Click "Upload New" to add syllabus PDF for your subjects.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
