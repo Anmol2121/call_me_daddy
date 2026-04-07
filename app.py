@@ -7430,9 +7430,10 @@ def create_student():
             
             db.session.commit()
             
-            # ---------- SHOW CREDENTIALS IN MODAL (NO EMAIL) ----------
+            # ---------- SHOW CREDENTIALS IN MODAL (WITH STUDENT DB ID) ----------
             credentials = {
                 'student_id': student.student_id,
+                'student_db_id': student.id,          # <-- ADDED for delete on close
                 'login_email': student_email,
                 'temp_password': temp_password,
                 'student_name': f"{student.first_name} {student.last_name}",
@@ -7452,7 +7453,6 @@ def create_student():
             flash(f'Error creating student: {str(e)}', 'danger')
     
     return render_template('admin_create_student.html', form=form, context=context, classes=classes)
-
 @app.route('/admin/students/<int:student_id>/delete', methods=['DELETE'])
 @role_required(['admin'])
 @school_active_required
