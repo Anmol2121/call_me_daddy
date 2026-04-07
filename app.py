@@ -7453,6 +7453,24 @@ def create_student():
     
     return render_template('admin_create_student.html', form=form, context=context, classes=classes)
 
+@app.route('/admin/students/<int:student_id>/delete', methods=['DELETE'])
+@role_required(['admin'])
+@school_active_required
+def delete_student_ajax(student_id):
+    """Delete a student (and associated user account) – used when admin cancels after creation."""
+    student = Student.query.filter_by(id=student_id, school_id=current_user.school_id).first_or_404()
+    try:
+        # Delete the linked user account first (if exists)
+        if student.user:
+            db.session.delete(student.user)
+        db.session.delete(student)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Student deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/admin/students')
 @role_required(['admin'])
 def manage_students():
